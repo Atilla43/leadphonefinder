@@ -39,8 +39,8 @@
 │                            ENRICHMENT SERVICE                                 │
 │                                                                               │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │
-│  │  INN Validator  │  │ Sherlock Client │  │ Phone Extractor │              │
-│  │  (checksum)     │  │   (Telethon)    │  │    (regex)      │              │
+│  │  INN Validator  │  │  Dyxless API   │  │ Phone Extractor │              │
+│  │  (checksum)     │  │  (sherlock_api) │  │    (regex)      │              │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
 └───────────────────────────────┼──────────────────────────────────────────────┘
                                 │
@@ -79,16 +79,20 @@ LeadPhoneFinder/
 │   │   ├── file_parser.py         # Парсинг Excel/CSV
 │   │   ├── inn_validator.py       # Валидация ИНН
 │   │   ├── phone_extractor.py     # Извлечение телефонов
-│   │   ├── sherlock_client.py     # Клиент Sherlock (Telethon)
+│   │   ├── sherlock_api.py        # Клиент Dyxless API (HTTP)
+│   │   ├── sherlock_client.py     # Клиент Sherlock (Telethon, legacy)
 │   │   ├── enrichment.py          # Оркестрация обогащения
+│   │   ├── task_storage.py        # Хранилище активных задач
 │   │   └── result_generator.py    # Генерация Excel
 │   ├── models/
 │   │   └── company.py             # Company, EnrichmentStatus
 │   ├── ui/
-│   │   ├── keyboards.py           # Inline клавиатуры
-│   │   └── messages.py            # Текстовые сообщения
+│   │   ├── keyboards.py           # Inline клавиатуры (скраппер)
+│   │   └── messages.py            # Текстовые сообщения (скраппер)
 │   └── utils/
-│       └── config.py              # Pydantic Settings
+│       ├── config.py              # Pydantic Settings
+│       ├── keyboards.py           # Inline клавиатуры (основные)
+│       └── messages.py            # Текстовые сообщения (основные)
 ├── tests/
 │   ├── test_inn_validator.py
 │   ├── test_phone_extractor.py
@@ -180,19 +184,38 @@ class InnFinder:
         # 2. ЕГРЮЛ nalog.ru (fallback)
 ```
 
-### 5. Sherlock Client
+### 5. Dyxless API Client
 
-**Файл:** `bot/services/sherlock_client.py`
+**Файл:** `bot/services/sherlock_api.py`
 
-Получает телефоны ЛПР через OSINT-бота:
+Получает данные по ИНН через Dyxless API (HTTP):
 
 ```python
-class SherlockClient:
-    async def query(self, inn: str) -> Optional[str]:
-        # 1. Отправляем ИНН боту @sherlock_search_bot
-        # 2. Ждём ответ (timeout 30 сек)
-        # 3. Парсим телефон из текста
+@dataclass
+class SherlockResponse:
+    query: str
+    found: bool
+    phones: list[str]
+    emails: list[str]
+    names: list[str]
+    addresses: list[str]
+    sources: list[str]       # baseName из API
+    raw_data: Optional[dict]
+    counts: int
+
+class SherlockApiClient:
+    # POST https://api-dyxless.cfd/query
+    # Body: {"query": "ИНН", "token": "API_KEY"}
+    # Response: {"status": true, "counts": N, "data": [...]}
+
+    async def query_with_retry(self, inn: str) -> SherlockResponse:
+        # 1. POST запрос с токеном
+        # 2. Парсинг: телефоны (number), email, ФИО (fio), адреса, источники (baseName)
+        # 3. Фильтрация: только номера 10-12 цифр, без email в поле phone
+        # 4. Retry при ошибках / rate limit
 ```
+
+**Rate limit:** 100 запросов / 15 минут на IP
 
 ### 6. INN Validator
 
@@ -240,8 +263,27 @@ class ScrapedCompany:
 class Company:
     inn: str
     name: str
-    phone: Optional[str] = None  # Телефон ЛПР
-    status: EnrichmentStatus = EnrichmentStatus.PENDING
+    phone: Optional[str] = None          # Телефоны ЛПР (через запятую)
+    status: EnrichmentStatus = PENDING
+    raw_response: Optional[str] = None   # Сырой ответ API
+    emails: list[str] = []               # Email адреса
+    contact_names: list[str] = []        # ФИО контактных лиц
+    addresses: list[str] = []            # Физические адреса
+    sources: list[str] = []              # Источники данных (baseName)
+    records_count: int = 0               # Количество записей в API
+
+    def to_dict(self) -> dict:
+        return {
+            "ИНН": self.inn,
+            "Название": self.name,
+            "Телефон": self.phone or "",
+            "Email": ", ".join(self.emails),
+            "Контакты (ФИО)": ", ".join(self.contact_names[:3]),
+            "Адреса": ", ".join(self.addresses[:2]),
+            "Источники": ", ".join(set(self.sources)),
+            "Записей найдено": self.records_count,
+            "Статус": self.status.value,
+        }
 
 class EnrichmentStatus(Enum):
     PENDING = "pending"
@@ -258,7 +300,8 @@ class EnrichmentStatus(Enum):
 | Компонент | Технология | Версия |
 |-----------|------------|--------|
 | Бот | aiogram | 3.4.1 |
-| Userbot | Telethon | 1.34.0 |
+| Userbot | Telethon | 1.34.0 (опционально) |
+| Обогащение | Dyxless API | HTTP REST |
 | Парсинг | Playwright | 1.40.0 |
 | HTTP | aiohttp | 3.9.0 |
 | Excel | pandas + openpyxl | 2.2.0 / 3.1.2 |
@@ -298,27 +341,27 @@ query=Ресторан+Причал&region=
 ### Обязательные переменные
 
 ```env
-# Telegram Bot
+# Telegram Bot (получить у @BotFather)
 BOT_TOKEN=1234567890:ABCdef...
 
-# Telethon (для Sherlock)
-TELETHON_API_ID=12345678
-TELETHON_API_HASH=abcdef...
-TELETHON_PHONE=+79001234567
+# Dyxless API (обогащение данных)
+SHERLOCK_API_URL=https://api-dyxless.cfd
+SHERLOCK_API_KEY=your_api_key
 
-# Sherlock
-SHERLOCK_BOT_USERNAME=sherlock_search_bot
+# Whitelist (Telegram ID через запятую)
+ALLOWED_USER_IDS=123456789
 ```
 
 ### Опциональные переменные
 
 ```env
+# Telethon (legacy, для Sherlock через Telegram бота)
+TELETHON_API_ID=12345678
+TELETHON_API_HASH=abcdef...
+TELETHON_PHONE=+79001234567
+
 # DaData (ускоряет поиск ИНН)
 DADATA_TOKEN=your_token
-
-# LLM для сложных запросов
-LLM_PROVIDER=gigachat
-LLM_API_KEY=your_key
 
 # Лимиты
 MAX_ROWS=100
@@ -340,7 +383,7 @@ SCRAPPER_MAX_RESULTS=100
 
 | Операция | Таймаут |
 |----------|---------|
-| Sherlock запрос | 30 сек |
+| Dyxless API запрос | 30 сек |
 | Playwright страница | 30 сек |
 | DaData API | 10 сек |
 | ЕГРЮЛ | 15 сек |

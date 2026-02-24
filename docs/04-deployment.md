@@ -60,38 +60,37 @@ cp .env.example .env
 # Telegram Bot (получить у @BotFather)
 BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 
-# Telethon (получить на https://my.telegram.org)
-TELETHON_API_ID=12345678
-TELETHON_API_HASH=abcdef1234567890abcdef1234567890
-TELETHON_PHONE=+79001234567
-TELETHON_SESSION_NAME=userbot_session
+# Dyxless API (обогащение данных)
+SHERLOCK_API_URL=https://api-dyxless.cfd
+SHERLOCK_API_KEY=your_api_key_here
 
-# Sherlock бот
-SHERLOCK_BOT_USERNAME=sherlock_search_bot
+# Whitelist пользователей (Telegram ID через запятую)
+ALLOWED_USER_IDS=123456789
 
 # === ОПЦИОНАЛЬНО ===
+
+# Telethon (legacy, для обогащения через Telegram бота)
+# TELETHON_API_ID=12345678
+# TELETHON_API_HASH=abcdef1234567890abcdef1234567890
+# TELETHON_PHONE=+79001234567
 
 # DaData (ускоряет поиск ИНН)
 # Получить: https://dadata.ru/api/suggest/party/
 DADATA_TOKEN=
 
-# Whitelist пользователей (через запятую)
-ALLOWED_USER_IDS=123456789,987654321
-
 # Лимиты
-MAX_ROWS=100
+MAX_ROWS=1000
 SCRAPPER_MAX_RESULTS=100
 ```
 
 ### 5. Первый запуск
 
-При первом запуске Telethon запросит код подтверждения:
-
 ```bash
 python -m bot.main
 
-# Введите код из Telegram
-# Сессия сохранится в файл userbot_session.session
+# Бот запустится и выведет:
+# Bot started: @YourBotName
+# Whitelist enabled: N users
 ```
 
 ---
@@ -204,7 +203,7 @@ docker-compose logs -f --tail 100
 |---------|---------------------|
 | Время парсинга 100 компаний | < 5 минут |
 | Процент найденных телефонов | 40-60% |
-| Ошибки Sherlock | < 5% |
+| Ошибки Dyxless API | < 5% |
 | Память бота | < 500 MB |
 
 ### Алерты (опционально)
@@ -228,7 +227,7 @@ async def send_alert(message: str):
 | Файл | Важность | Описание |
 |------|----------|----------|
 | `.env` | Критично | Токены и ключи |
-| `userbot_session.session` | Критично | Сессия Telethon |
+| `*.session` | Высоко | Сессия Telethon (если используется) |
 | `logs/` | Опционально | Логи |
 
 ### Скрипт бэкапа
@@ -306,11 +305,12 @@ jobs:
 2. Проверьте логи: `journalctl -u leadphonefinder -f`
 3. Перезапустите: `systemctl restart leadphonefinder`
 
-### Sherlock не возвращает телефоны
+### Dyxless API не возвращает телефоны
 
-1. Проверьте сессию Telethon
-2. Возможно, бот @sherlock_search_bot изменился
-3. Проверьте задержки (увеличьте `REQUEST_DELAY_SECONDS`)
+1. Проверьте API-ключ (`SHERLOCK_API_KEY` в `.env`)
+2. Проверьте доступность: `curl https://api-dyxless.cfd/query`
+3. Rate limit: 100 запросов / 15 минут на IP
+4. Проверьте баланс API-ключа
 
 ### Playwright падает
 

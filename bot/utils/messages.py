@@ -2,6 +2,7 @@
 
 from bot.models.company import EnrichmentResult, EnrichmentStatus
 from bot.services.phone_extractor import mask_phone
+from bot.utils.config import settings
 
 
 class Messages:
@@ -17,7 +18,7 @@ class Messages:
             "2. Я найду телефоны по каждому ИНН\n"
             "3. Получи готовый файл с результатами\n\n"
             "⬇️ <b>Скачай шаблон файла или загрузи свой:</b>\n\n"
-            "💡 <i>Поддерживаю до 100 компаний за раз</i>"
+            f"💡 <i>Поддерживаю до {settings.max_rows} компаний за раз</i>"
         )
 
     @staticmethod
@@ -34,7 +35,7 @@ class Messages:
             "• Excel (.xlsx) — рекомендуется\n"
             "• CSV — с кодировкой UTF-8\n\n"
             "<b>Ограничения:</b>\n"
-            "• Максимум 100 записей в файле\n"
+            f"• Максимум {settings.max_rows} записей в файле\n"
             "• Максимальный размер файла: 10 МБ\n\n"
             "<b>Статусы результата:</b>\n"
             "• success — телефон найден\n"

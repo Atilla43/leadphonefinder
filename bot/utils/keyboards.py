@@ -11,6 +11,7 @@ class Keyboards:
         """Главное меню."""
         return InlineKeyboardMarkup(
             inline_keyboard=[
+                [InlineKeyboardButton(text="🔍 Поиск компаний", callback_data="start_scrape")],
                 [InlineKeyboardButton(text="📥 Скачать шаблон", callback_data="template")],
                 [InlineKeyboardButton(text="📤 Загрузить файл", callback_data="upload_hint")],
                 [InlineKeyboardButton(text="📋 История", callback_data="history")],
@@ -84,5 +85,23 @@ class Keyboards:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="⬅️ В главное меню", callback_data="back_to_menu")],
+            ]
+        )
+
+    @staticmethod
+    def enrichment_limit() -> InlineKeyboardMarkup:
+        """Выбор лимита обогащения."""
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="50 пробивов", callback_data="enrich_limit:50"),
+                    InlineKeyboardButton(text="100 пробивов", callback_data="enrich_limit:100"),
+                ],
+                [
+                    InlineKeyboardButton(text="200 пробивов", callback_data="enrich_limit:200"),
+                    InlineKeyboardButton(text="Все", callback_data="enrich_limit:0"),
+                ],
+                [InlineKeyboardButton(text="❌ Пропустить обогащение", callback_data="enrich_limit:skip")],
+                [InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_menu")],
             ]
         )

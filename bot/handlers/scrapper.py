@@ -16,13 +16,8 @@ from bot.services.scrapper.models import ScrapperResult
 from bot.services.enrichment import enrich_single
 from bot.services.result_generator import generate_excel
 from bot.utils.config import settings
+from bot.utils.keyboards import Keyboards
 from bot.ui.keyboards import get_scrapper_keyboard, get_source_keyboard
-from bot.ui.messages import (
-    SCRAPPER_START,
-    SCRAPPER_PROGRESS,
-    SCRAPPER_COMPLETE,
-    SCRAPPER_ERROR,
-)
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -33,6 +28,7 @@ class ScrapperStates(StatesGroup):
     waiting_query = State()
     selecting_source = State()
     scrapping = State()
+    selecting_limit = State()
     enriching = State()
 
 
@@ -40,25 +36,40 @@ class ScrapperStates(StatesGroup):
 active_tasks: dict[int, ScrapperResult] = {}
 
 
+SCRAPE_WELCOME = (
+    "🔍 <b>Поиск компаний</b>\n\n"
+    "Введите запрос для поиска, например:\n"
+    "• <code>рестораны Сочи</code>\n"
+    "• <code>автосервисы Москва</code>\n"
+    "• <code>салоны красоты Казань</code>\n\n"
+    "Или выберите популярный запрос:"
+)
+
+
+@router.callback_query(F.data == "start_scrape")
+async def callback_start_scrape(callback: CallbackQuery, state: FSMContext) -> None:
+    """Кнопка 'Поиск компаний' из главного меню."""
+    if settings.allowed_users and callback.from_user.id not in settings.allowed_users:
+        await callback.answer("⛔ У вас нет доступа к этой функции.", show_alert=True)
+        return
+
+    await state.set_state(ScrapperStates.waiting_query)
+    await callback.message.edit_text(
+        SCRAPE_WELCOME,
+        reply_markup=get_scrapper_keyboard(),
+    )
+    await callback.answer()
+
+
 @router.message(Command("scrape"))
 async def cmd_scrape(message: Message, state: FSMContext) -> None:
     """Команда /scrape - начало скраппинга."""
-    # Проверка whitelist
     if settings.allowed_users and message.from_user.id not in settings.allowed_users:
         await message.answer("⛔ У вас нет доступа к этой функции.")
         return
 
     await state.set_state(ScrapperStates.waiting_query)
-
-    await message.answer(
-        "🔍 <b>Поиск компаний</b>\n\n"
-        "Введите запрос для поиска, например:\n"
-        "• <code>рестораны Сочи</code>\n"
-        "• <code>автосервисы Москва</code>\n"
-        "• <code>салоны красоты Казань</code>\n\n"
-        "Или выберите популярный запрос:",
-        reply_markup=get_scrapper_keyboard(),
-    )
+    await message.answer(SCRAPE_WELCOME, reply_markup=get_scrapper_keyboard())
 
 
 @router.message(ScrapperStates.waiting_query)
@@ -197,11 +208,11 @@ async def process_source_selection(callback: CallbackQuery, state: FSMContext) -
             f"• Из Яндекс: {result.from_yandex}\n"
             f"• Время: {result.duration_seconds:.1f} сек\n\n"
             f"Хотите обогатить данные телефонами ЛПР?\n"
-            f"Это займёт ~{len(result.companies) * 3} секунд.",
-            reply_markup=get_enrichment_keyboard(),
+            f"Выберите количество пробивов:",
+            reply_markup=Keyboards.enrichment_limit(),
         )
 
-        await state.set_state(ScrapperStates.enriching)
+        await state.set_state(ScrapperStates.selecting_limit)
 
     except Exception as e:
         logger.error(f"Scrapping error: {e}")
@@ -214,55 +225,66 @@ async def process_source_selection(callback: CallbackQuery, state: FSMContext) -
         await state.clear()
 
 
-@router.callback_query(F.data == "enrich_scraped")
-async def enrich_scraped_companies(callback: CallbackQuery, state: FSMContext) -> None:
-    """Обогащение спарсенных компаний."""
-    result = active_tasks.get(callback.from_user.id)
+@router.callback_query(F.data.startswith("enrich_limit:"))
+async def enrich_with_limit(callback: CallbackQuery, state: FSMContext) -> None:
+    """Обогащение спарсенных компаний с выбранным лимитом."""
+    limit_str = callback.data.split(":")[1]
 
+    # Пропустить обогащение — скачать как есть
+    if limit_str == "skip":
+        await download_raw_results(callback, state)
+        return
+
+    result = active_tasks.get(callback.from_user.id)
     if not result or not result.companies:
         await callback.answer("❌ Результаты не найдены. Начните заново: /scrape")
         return
 
-    await callback.answer("🔄 Начинаю обогащение...")
+    limit = int(limit_str)  # 0 = все
 
-    # Создаём сообщение прогресса
+    await callback.answer("🔄 Начинаю обогащение...")
+    await state.set_state(ScrapperStates.enriching)
+
+    # Конвертируем ScrapedCompany в Company
+    from bot.models.company import Company, EnrichmentStatus
+
+    companies = []
+    for sc in result.companies:
+        company = Company(
+            inn=sc.inn or "",
+            name=sc.name,
+            status=EnrichmentStatus.PENDING if sc.inn else EnrichmentStatus.INVALID_INN,
+        )
+        companies.append(company)
+
+    # Определяем сколько обогащать
+    companies_with_inn = [c for c in companies if c.inn]
+    to_enrich = companies_with_inn[:limit] if limit > 0 else companies_with_inn
+    enrich_count = len(to_enrich)
+
     progress_message = await callback.message.edit_text(
         f"🔄 <b>Обогащение данных</b>\n\n"
-        f"Компаний: {len(result.companies)}\n"
-        f"Прогресс: 0/{len(result.companies)}\n\n"
+        f"Всего компаний: {len(companies)}\n"
+        f"К обогащению: {enrich_count}\n"
+        f"Прогресс: 0/{enrich_count}\n\n"
         f"⏳ Получение телефонов ЛПР..."
     )
 
     try:
-        # Конвертируем ScrapedCompany в Company для enrichment
-        from bot.models.company import Company, EnrichmentStatus
-
-        companies = []
-        for sc in result.companies:
-            company = Company(
-                inn=sc.inn or "",
-                name=sc.name,
-                status=EnrichmentStatus.PENDING if sc.inn else EnrichmentStatus.INVALID_INN,
-            )
-            # Сохраняем дополнительные данные
-            company.address = sc.address
-            company.source_phone = sc.phone
-            company.rating = sc.rating
-            companies.append(company)
-
-        # Запускаем обогащение
         processed = 0
-        for company in companies:
-            if company.inn:
-                await enrich_single(company)
-
+        for company in to_enrich:
+            await enrich_single(company)
             processed += 1
-            if processed % 5 == 0:
+
+            if processed % 5 == 0 or processed == enrich_count:
                 try:
+                    pct = int(processed / enrich_count * 100)
+                    bar = "▓" * (pct // 10) + "░" * (10 - pct // 10)
                     await progress_message.edit_text(
                         f"🔄 <b>Обогащение данных</b>\n\n"
-                        f"Прогресс: {processed}/{len(companies)}\n"
-                        f"Текущая: {company.name[:30]}...\n\n"
+                        f"[{bar}] {pct}%\n"
+                        f"Прогресс: {processed}/{enrich_count}\n"
+                        f"Текущая: {company.name[:30]}\n\n"
                         f"⏳ Получение телефонов ЛПР..."
                     )
                 except Exception:
@@ -271,26 +293,27 @@ async def enrich_scraped_companies(callback: CallbackQuery, state: FSMContext) -
         # Генерируем Excel
         excel_bytes = generate_excel(companies)
 
-        # Отправляем файл
         from aiogram.types import BufferedInputFile
 
         filename = f"leads_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         file = BufferedInputFile(excel_bytes, filename=filename)
+
+        found_phones = sum(1 for c in companies if c.phone)
+        found_emails = sum(1 for c in companies if c.emails)
 
         await callback.message.answer_document(
             file,
             caption=(
                 f"✅ <b>Готово!</b>\n\n"
                 f"📊 Компаний: {len(companies)}\n"
-                f"📱 С телефонами ЛПР: {sum(1 for c in companies if c.phone)}\n"
-                f"📍 С адресами: {sum(1 for c in companies if hasattr(c, 'address') and c.address)}"
+                f"🔍 Обогащено: {enrich_count}\n"
+                f"📱 С телефонами: {found_phones}\n"
+                f"📧 С email: {found_emails}"
             ),
         )
 
         await progress_message.delete()
         await state.clear()
-
-        # Очищаем задачу
         del active_tasks[callback.from_user.id]
 
     except Exception as e:
@@ -374,27 +397,3 @@ async def cancel_scrape(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
 
 
-def get_enrichment_keyboard():
-    """Клавиатура выбора обогащения."""
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text="📱 Обогатить телефонами ЛПР",
-                callback_data="enrich_scraped"
-            ),
-        ],
-        [
-            InlineKeyboardButton(
-                text="📥 Скачать как есть",
-                callback_data="download_raw"
-            ),
-        ],
-        [
-            InlineKeyboardButton(
-                text="❌ Отмена",
-                callback_data="cancel_scrape"
-            ),
-        ],
-    ])
