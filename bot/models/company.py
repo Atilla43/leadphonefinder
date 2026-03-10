@@ -24,6 +24,10 @@ class Company:
     status: EnrichmentStatus = EnrichmentStatus.PENDING
     raw_response: Optional[str] = None
 
+    # Данные из скраппера для многоэтапного поиска
+    director_name: Optional[str] = None  # ФИО директора из ЕГРЮЛ/DaData
+    map_phone: Optional[str] = None  # Телефон из карт (для обратного пробива)
+
     # Расширенные данные из API
     emails: list[str] = field(default_factory=list)
     contact_names: list[str] = field(default_factory=list)  # ФИО контактов

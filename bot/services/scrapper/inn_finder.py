@@ -80,6 +80,34 @@ class InnFinder:
 
         return None
 
+    async def find_inn_and_director(
+        self,
+        company_name: str,
+        address: Optional[str] = None,
+    ) -> tuple[Optional[str], Optional[str]]:
+        """
+        Ищет ИНН и ФИО директора по названию компании.
+
+        Args:
+            company_name: Название компании
+            address: Адрес для уточнения (опционально)
+
+        Returns:
+            Tuple (ИНН или None, ФИО директора или None)
+        """
+        if not company_name:
+            return None, None
+
+        # DaData возвращает и ИНН, и ФИО директора
+        if self.dadata_token:
+            inn, director = await self._search_dadata_full(company_name, address)
+            if inn:
+                return inn, director
+
+        # Fallback: ЕГРЮЛ (только ИНН, без ФИО)
+        inn = await self._search_egrul(company_name)
+        return inn, None
+
     async def _search_dadata(
         self,
         company_name: str,
@@ -141,6 +169,74 @@ class InnFinder:
             logger.error(f"DaData search error: {e}")
 
         return None
+
+    async def _search_dadata_full(
+        self,
+        company_name: str,
+        address: Optional[str] = None,
+    ) -> tuple[Optional[str], Optional[str]]:
+        """
+        Поиск через DaData API с извлечением ФИО директора.
+
+        Returns:
+            Tuple (ИНН или None, ФИО директора или None)
+        """
+        if not self.dadata_token:
+            return None, None
+
+        try:
+            session = await self._get_session()
+
+            query = company_name
+            if address:
+                city_match = re.search(r'(москва|санкт-петербург|[\w-]+)', address.lower())
+                if city_match:
+                    query = f"{company_name} {city_match.group(1)}"
+
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": f"Token {self.dadata_token}",
+            }
+
+            payload = {
+                "query": query,
+                "count": 5,
+            }
+
+            async with session.post(
+                self.DADATA_SUGGEST_URL,
+                headers=headers,
+                json=payload,
+            ) as response:
+                if response.status != 200:
+                    return None, None
+
+                data = await response.json()
+                suggestions = data.get("suggestions", [])
+
+                if not suggestions:
+                    return None, None
+
+                first = suggestions[0]
+                company_data = first.get("data", {})
+                inn = company_data.get("inn")
+
+                # Извлекаем ФИО директора
+                director_name = None
+                management = company_data.get("management", {})
+                if management:
+                    director_name = management.get("name")
+                    if director_name:
+                        logger.debug(f"Found director via DaData: {company_name} -> {director_name}")
+
+                if inn and validate_inn(inn):
+                    return inn, director_name
+
+        except Exception as e:
+            logger.error(f"DaData full search error: {e}")
+
+        return None, None
 
     async def _search_egrul(self, company_name: str) -> Optional[str]:
         """
@@ -237,14 +333,18 @@ class InnFinder:
                 found += 1
                 continue
 
-            # Ищем ИНН
-            inn = await self.find_inn(company.name, company.address)
+            # Ищем ИНН и ФИО директора
+            inn, director = await self.find_inn_and_director(company.name, company.address)
 
             if inn:
                 company.inn = inn
                 found += 1
             else:
                 not_found += 1
+
+            # Сохраняем ФИО директора
+            if director:
+                company.director_name = director
 
             # Callback прогресса
             if progress_callback:

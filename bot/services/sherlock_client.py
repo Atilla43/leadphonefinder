@@ -51,6 +51,8 @@ class SherlockClient:
                 settings.telethon_session_name,
                 settings.telethon_api_id,
                 settings.telethon_api_hash,
+                lang_code="ru",
+                system_lang_code="ru-RU"
             )
 
             await self.client.start(phone=settings.telethon_phone)

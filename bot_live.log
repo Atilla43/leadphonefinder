@@ -1,0 +1,18 @@
+2026-03-10 20:22:46,404 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-10 20:22:46,823 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-10 20:22:46,824 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-10 20:26:04,493 - bot.services.sherlock_client - INFO - Sherlock client started successfully
+2026-03-10 20:26:04,493 - bot.services.outreach - INFO - Listener target IDs: []
+2026-03-10 20:26:04,493 - bot.services.outreach - INFO - Listener started, tracking 0 recipients
+2026-03-10 20:26:04,732 - bot.services.outreach - INFO - Sent to +79278128922 (ООО Рога и Копыта)
+2026-03-10 20:26:13,982 - bot.services.outreach - INFO - Sending loop finished. cancelled=False, sent=1
+2026-03-10 20:26:14,088 - bot.services.outreach - INFO - Campaign status: listening
+2026-03-10 20:26:20,261 - bot.services.outreach - INFO - Incoming from 590317122 (ООО Рога и Копыта): Напиши мне функцию по сортировке массива пузырьком
+2026-03-10 20:26:22,361 - bot.services.outreach - INFO - AI reply to 590317122: status=talking, text=Хах) Так что насчёт 15 минут для обсуждения вашего бизнеса и возможностей роста?
+2026-03-10 20:26:33,049 - bot.services.outreach - INFO - Sent reply to ООО Рога и Копыта, status=talking
+2026-03-10 20:27:32,295 - bot.services.outreach - INFO - Incoming from 590317122 (ООО Рога и Копыта): Мне не интересно
+2026-03-10 20:27:34,365 - bot.services.outreach - INFO - AI reply to 590317122: status=talking, text=А что именно не интересно? Просто недавно для похожего бизнеса нашли 3 неочевидн
+2026-03-10 20:27:48,735 - bot.services.outreach - INFO - Sent reply to ООО Рога и Копыта, status=talking
+2026-03-10 20:28:14,133 - bot.services.outreach - INFO - Incoming from 590317122 (ООО Рога и Копыта): У меня уже есть партнер который занимается маркетингом
+2026-03-10 20:28:15,688 - bot.services.outreach - INFO - AI reply to 590317122: status=talking, text=А они результаты по выручке считают? 80% подрядчиков этого не делают. Можем обсу
+2026-03-10 20:28:30,133 - bot.services.outreach - INFO - Sent reply to ООО Рога и Копыта, status=talking

@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     scrapper_delay_min: float = 1.0
     scrapper_delay_max: float = 3.0
 
+    # Кеширование результатов скраппинга
+    scrapper_cache_ttl_hours: int = 24
+    scrapper_cache_dir: str = "data/cache"
+
     # DaData (для поиска ИНН по названию)
     dadata_token: Optional[str] = None
 
@@ -47,6 +51,21 @@ class Settings(BaseSettings):
 
     # Доступ (whitelist user IDs, разделённые запятой)
     allowed_user_ids: Optional[str] = None
+
+    # AI Outreach
+    outreach_delay_min: float = 5.0
+    outreach_delay_max: float = 15.0
+    outreach_reply_delay_min: float = 3.0
+    outreach_reply_delay_max: float = 8.0
+    outreach_daily_limit: int = 30
+    outreach_ping_interval_hours: int = 4
+    outreach_max_pings: int = 3
+    outreach_work_hour_start: int = 9
+    outreach_work_hour_end: int = 21
+
+    # OpenRouter (для AI-диалогов)
+    openrouter_api_key: Optional[str] = None
+    openrouter_model: str = "openai/gpt-4o-mini"
 
     # История
     history_retention_days: int = 7

@@ -10,6 +10,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from bot.services.scrapper.cache import ScrapperCache
 from bot.services.scrapper.orchestrator import ScrapperOrchestrator
 from bot.services.scrapper.query_parser import QueryParser
 from bot.services.scrapper.models import ScrapperResult
@@ -70,6 +71,40 @@ async def cmd_scrape(message: Message, state: FSMContext) -> None:
 
     await state.set_state(ScrapperStates.waiting_query)
     await message.answer(SCRAPE_WELCOME, reply_markup=get_scrapper_keyboard())
+
+
+@router.callback_query(F.data.startswith("query_"))
+async def process_quick_query(callback: CallbackQuery, state: FSMContext) -> None:
+    """Обработка быстрого запроса из кнопки."""
+    query = callback.data.replace("query_", "")
+    await callback.answer()
+
+    # Создаём фейковое сообщение — просто переиспользуем логику
+    parser = QueryParser()
+    parsed = parser.parse(query)
+
+    if not parsed.is_valid:
+        await callback.message.edit_text(
+            f"❌ Не удалось разобрать запрос: {query}\n"
+            "Попробуйте ввести вручную."
+        )
+        return
+
+    await state.update_data(query=query, parsed=parsed)
+    await state.set_state(ScrapperStates.selecting_source)
+
+    response_lines = [
+        f"📍 <b>Запрос:</b> {query}",
+        f"📂 <b>Категория:</b> {parsed.category}",
+        f"🏙 <b>Город:</b> {parsed.location}",
+        "",
+        "Выберите источники данных:",
+    ]
+
+    await callback.message.edit_text(
+        "\n".join(response_lines),
+        reply_markup=get_source_keyboard(),
+    )
 
 
 @router.message(ScrapperStates.waiting_query)
@@ -171,6 +206,11 @@ async def process_source_selection(callback: CallbackQuery, state: FSMContext) -
 
     # Запускаем скраппинг
     try:
+        cache = ScrapperCache(
+            cache_dir=settings.scrapper_cache_dir,
+            ttl_hours=settings.scrapper_cache_ttl_hours,
+        )
+
         orchestrator = ScrapperOrchestrator(
             max_results=settings.scrapper_max_results if hasattr(settings, 'scrapper_max_results') else 100,
             use_twogis=use_twogis,
@@ -178,6 +218,7 @@ async def process_source_selection(callback: CallbackQuery, state: FSMContext) -
             headless=True,
             dadata_token=settings.dadata_token if hasattr(settings, 'dadata_token') else None,
             find_inn=True,
+            cache=cache,
         )
 
         result = await orchestrator.scrape(query, progress_callback=update_progress)
@@ -198,15 +239,27 @@ async def process_source_selection(callback: CallbackQuery, state: FSMContext) -
             return
 
         # Показываем результат
+        if result.from_cache and result.cached_at:
+            from datetime import datetime as dt
+            age = dt.now() - result.cached_at
+            hours = int(age.total_seconds() // 3600)
+            minutes = int((age.total_seconds() % 3600) // 60)
+            age_str = f"{hours}ч {minutes}мин" if hours else f"{minutes}мин"
+            header = f"✅ <b>Поиск завершён!</b> (из кеша, {age_str} назад)"
+            time_line = f"• ⏱ Кешировано: {age_str} назад"
+        else:
+            header = "✅ <b>Поиск завершён!</b>"
+            time_line = f"• Время: {result.duration_seconds:.1f} сек"
+
         await progress_message.edit_text(
-            f"✅ <b>Поиск завершён!</b>\n\n"
+            f"{header}\n\n"
             f"📊 <b>Результаты:</b>\n"
             f"• Найдено: {result.total_found}\n"
             f"• Уникальных: {len(result.companies)}\n"
             f"• Дубликатов удалено: {result.duplicates_removed}\n"
             f"• Из 2ГИС: {result.from_twogis}\n"
             f"• Из Яндекс: {result.from_yandex}\n"
-            f"• Время: {result.duration_seconds:.1f} сек\n\n"
+            f"{time_line}\n\n"
             f"Хотите обогатить данные телефонами ЛПР?\n"
             f"Выберите количество пробивов:",
             reply_markup=Keyboards.enrichment_limit(),
@@ -254,6 +307,8 @@ async def enrich_with_limit(callback: CallbackQuery, state: FSMContext) -> None:
             inn=sc.inn or "",
             name=sc.name,
             status=EnrichmentStatus.PENDING if sc.inn else EnrichmentStatus.INVALID_INN,
+            director_name=getattr(sc, 'director_name', None),
+            map_phone=sc.phone,  # Телефон из карт для обратного пробива
         )
         companies.append(company)
 
@@ -291,15 +346,20 @@ async def enrich_with_limit(callback: CallbackQuery, state: FSMContext) -> None:
                     pass
 
         # Генерируем Excel
-        excel_bytes = generate_excel(companies)
+        excel_bytes, excel_filename = generate_excel(companies, "leads")
 
         from aiogram.types import BufferedInputFile
 
-        filename = f"leads_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        file = BufferedInputFile(excel_bytes, filename=filename)
+        file = BufferedInputFile(excel_bytes, filename=excel_filename)
 
         found_phones = sum(1 for c in companies if c.phone)
         found_emails = sum(1 for c in companies if c.emails)
+
+        # Сохраняем результаты для outreach
+        from bot.handlers.callbacks import results_storage
+        results_storage[callback.from_user.id] = {
+            "companies": companies,
+        }
 
         await callback.message.answer_document(
             file,
@@ -310,6 +370,7 @@ async def enrich_with_limit(callback: CallbackQuery, state: FSMContext) -> None:
                 f"📱 С телефонами: {found_phones}\n"
                 f"📧 С email: {found_emails}"
             ),
+            reply_markup=Keyboards.result(),
         )
 
         await progress_message.delete()

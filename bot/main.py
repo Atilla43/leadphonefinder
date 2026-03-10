@@ -13,7 +13,7 @@ from aiogram.client.default import DefaultBotProperties
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bot.utils.config import settings
-from bot.handlers import start, file_upload, callbacks, scrapper
+from bot.handlers import start, file_upload, callbacks, scrapper, outreach
 
 # Настройка логирования
 logging.basicConfig(
@@ -49,6 +49,7 @@ async def main() -> None:
     dp.include_router(file_upload.router)
     dp.include_router(callbacks.router)
     dp.include_router(scrapper.router)
+    dp.include_router(outreach.router)
 
     # Информация о боте
     bot_info = await bot.get_me()

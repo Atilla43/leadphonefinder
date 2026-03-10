@@ -12,7 +12,10 @@ from aiogram.types import Message, BufferedInputFile
 
 from bot.handlers.start import check_access
 from bot.models.company import Company, EnrichmentResult
-from bot.services.file_parser import parse_file, get_file_stats, FileParseError
+from bot.services.file_parser import (
+    parse_file, get_file_stats, FileParseError,
+    detect_outreach_file, parse_outreach_file,
+)
 from bot.services.enrichment import enrich_companies
 from bot.services.result_generator import generate_excel, generate_csv
 from bot.utils.config import settings
@@ -99,7 +102,40 @@ async def handle_document(message: Message, bot: Bot) -> None:
         )
         return
 
-    # Парсим файл
+    # Проверяем: это файл с телефонами для outreach?
+    if detect_outreach_file(file_content, filename):
+        try:
+            recipients = parse_outreach_file(file_content, filename)
+        except FileParseError as e:
+            await message.answer(
+                Messages.file_error(str(e)),
+                reply_markup=Keyboards.back_to_menu(),
+                parse_mode="HTML",
+            )
+            return
+
+        # Сохраняем в results_storage для outreach
+        from bot.handlers.callbacks import results_storage
+        from bot.models.company import Company as CompanyModel
+
+        # Конвертируем recipients в Company-подобные объекты для совместимости
+        companies_for_storage = []
+        for r in recipients:
+            c = CompanyModel(inn="", name=r.company_name)
+            c.phone = r.phone
+            c.contact_names = [r.contact_name] if r.contact_name else []
+            companies_for_storage.append(c)
+
+        results_storage[user_id] = {"companies": companies_for_storage}
+
+        await message.answer(
+            Messages.outreach_file_received(filename, len(recipients)),
+            reply_markup=Keyboards.outreach_file_result(),
+            parse_mode="HTML",
+        )
+        return
+
+    # Парсим файл (стандартный путь — ИНН)
     try:
         companies = parse_file(file_content, filename)
     except FileParseError as e:

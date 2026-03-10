@@ -11,20 +11,6 @@ from bot.services.scrapper.query_parser import ParsedQuery
 
 logger = logging.getLogger(__name__)
 
-# Селекторы 2ГИС (могут меняться)
-SELECTORS = {
-    "search_input": 'input[placeholder*="Поиск"]',
-    "search_button": 'button[aria-label="Найти"]',
-    "result_item": '._1hf7139',  # Карточка в списке
-    "company_name": '._1al0wlf',  # Название
-    "company_address": '._er2xx9',  # Адрес
-    "company_phone": 'a[href^="tel:"]',  # Телефон
-    "company_rating": '._y10azs',  # Рейтинг
-    "company_reviews": '._jspzdp',  # Количество отзывов
-    "load_more": '._1p8iqzw',  # Кнопка "Показать ещё"
-    "no_results": '._12gyzmn',  # Нет результатов
-}
-
 # User-Agent для маскировки
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -32,6 +18,50 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
 ]
+
+# JavaScript для извлечения данных из DOM
+JS_EXTRACT_COMPANIES = """() => {
+    const results = [];
+    // 2GIS использует ссылки вида /firm/ID
+    const firmLinks = document.querySelectorAll('a[href*="/firm/"]');
+    const seen = new Set();
+
+    for (const link of firmLinks) {
+        const href = link.getAttribute('href');
+        if (seen.has(href)) continue;
+        seen.add(href);
+
+        const name = link.textContent.trim();
+        if (!name || name.length < 2) continue;
+
+        // Ищем родительскую карточку
+        let card = link.closest('[class*="result"], [class*="item"], [class*="card"]');
+        if (!card) card = link.parentElement ? link.parentElement.parentElement : null;
+        if (!card) continue;
+
+        // Адрес
+        let address = '';
+        const addrEl = card.querySelector('[class*="address"]');
+        if (addrEl) address = addrEl.textContent.trim();
+
+        // Рейтинг
+        let rating = '';
+        const allText = card.textContent;
+        const ratingMatch = allText.match(/(\\d[,.]\\d)/);
+        if (ratingMatch) rating = ratingMatch[1];
+
+        // Телефон
+        let phone = '';
+        const phoneEl = card.querySelector('a[href^="tel:"]');
+        if (phoneEl) {
+            const phoneHref = phoneEl.getAttribute('href');
+            phone = phoneHref.replace('tel:', '').trim();
+        }
+
+        results.push({name, href, address, rating, phone});
+    }
+    return results;
+}"""
 
 
 class TwoGisScrapper:
@@ -44,15 +74,6 @@ class TwoGisScrapper:
         delay_min: float = 1.0,
         delay_max: float = 3.0,
     ) -> None:
-        """
-        Инициализация скраппера.
-
-        Args:
-            headless: Запускать браузер в headless режиме
-            max_results: Максимум результатов
-            delay_min: Минимальная задержка между действиями
-            delay_max: Максимальная задержка между действиями
-        """
         self.headless = headless
         self.max_results = max_results
         self.delay_min = delay_min
@@ -70,8 +91,9 @@ class TwoGisScrapper:
             from playwright.async_api import async_playwright
 
             self._playwright = await async_playwright().start()
+            # 2ГИС блокирует headless — используем non-headless
             self._browser = await self._playwright.chromium.launch(
-                headless=self.headless,
+                headless=False,
                 args=[
                     "--disable-blink-features=AutomationControlled",
                     "--disable-dev-shm-usage",
@@ -79,7 +101,6 @@ class TwoGisScrapper:
                 ]
             )
 
-            # Создаём контекст с настройками
             self._context = await self._browser.new_context(
                 user_agent=random.choice(USER_AGENTS),
                 viewport={"width": 1920, "height": 1080},
@@ -111,15 +132,7 @@ class TwoGisScrapper:
         logger.info("Browser closed")
 
     async def scrape(self, query: ParsedQuery) -> list[ScrapedCompany]:
-        """
-        Скраппинг компаний из 2ГИС.
-
-        Args:
-            query: Распарсенный запрос
-
-        Returns:
-            Список спарсенных компаний
-        """
+        """Скраппинг компаний из 2ГИС."""
         if not query.is_valid:
             logger.warning(f"Invalid query: {query.original}")
             return []
@@ -130,70 +143,72 @@ class TwoGisScrapper:
             await self._init_browser()
             page = await self._context.new_page()
 
-            # Формируем URL поиска
+            # Формируем URL — через город/search
             search_query = f"{query.category} {query.location}"
             encoded_query = quote(search_query)
 
-            # 2ГИС URL с поиском
             url = f"https://2gis.ru/search/{encoded_query}"
             logger.info(f"Scraping 2GIS: {url}")
 
-            # Переходим на страницу
-            await page.goto(url, wait_until="networkidle", timeout=30000)
-            await asyncio.sleep(await self._get_delay())
+            await page.goto(url, timeout=30000)
+            await asyncio.sleep(8)  # Ждём загрузки SPA
 
-            # Ждём загрузки результатов
-            try:
-                await page.wait_for_selector(
-                    SELECTORS["result_item"],
-                    timeout=10000
-                )
-            except Exception:
-                logger.warning("No results found or timeout")
+            # Проверяем на антибот
+            final_url = page.url
+            page_text = await page.content()
+
+            if "Forbidden" in page_text or "captcha" in final_url.lower():
+                logger.warning("2GIS antibot detected! IP may be blocked.")
                 return []
 
-            # Скроллим и собираем результаты
-            collected = 0
-            max_scrolls = 20
+            # Собираем результаты со скроллом
+            seen_names = set()
+            max_scrolls = 15
             scroll_count = 0
+            prev_count = 0
 
-            while collected < self.max_results and scroll_count < max_scrolls:
-                # Получаем все карточки на странице
-                items = await page.query_selector_all(SELECTORS["result_item"])
+            while len(companies) < self.max_results and scroll_count < max_scrolls:
+                try:
+                    raw_data = await page.evaluate(JS_EXTRACT_COMPANIES)
+                except Exception as e:
+                    logger.warning(f"JS evaluation error: {e}")
+                    break
 
-                for item in items[collected:]:
-                    if collected >= self.max_results:
+                for item in raw_data:
+                    name = item.get("name", "").strip()
+                    if not name or name in seen_names:
+                        continue
+                    if len(companies) >= self.max_results:
                         break
 
-                    try:
-                        company = await self._parse_card(item)
-                        if company:
-                            companies.append(company)
-                            collected += 1
-                    except Exception as e:
-                        logger.debug(f"Error parsing card: {e}")
-                        continue
+                    seen_names.add(name)
 
-                # Скроллим вниз для подгрузки
+                    # Рейтинг
+                    rating = None
+                    rating_str = item.get("rating", "")
+                    if rating_str:
+                        try:
+                            rating = float(rating_str.replace(",", "."))
+                        except ValueError:
+                            pass
+
+                    company = ScrapedCompany(
+                        name=name,
+                        address=item.get("address", ""),
+                        phone=item.get("phone", "") or None,
+                        rating=rating,
+                        source=ScrapperSource.TWOGIS,
+                    )
+                    companies.append(company)
+
+                if len(companies) == prev_count and scroll_count > 2:
+                    break
+                prev_count = len(companies)
+
+                # Скроллим
                 await page.evaluate("window.scrollBy(0, 500)")
                 await asyncio.sleep(await self._get_delay())
-
-                # Проверяем есть ли кнопка "Показать ещё"
-                load_more = await page.query_selector(SELECTORS["load_more"])
-                if load_more:
-                    try:
-                        await load_more.click()
-                        await asyncio.sleep(await self._get_delay())
-                    except Exception:
-                        pass
-
                 scroll_count += 1
-
-                # Проверяем не появились ли новые результаты
-                new_items = await page.query_selector_all(SELECTORS["result_item"])
-                if len(new_items) <= len(items):
-                    # Больше результатов нет
-                    break
 
             logger.info(f"Scraped {len(companies)} companies from 2GIS")
 
@@ -204,81 +219,3 @@ class TwoGisScrapper:
             await self._close_browser()
 
         return companies
-
-    async def _parse_card(self, element) -> Optional[ScrapedCompany]:
-        """
-        Парсит карточку компании.
-
-        Args:
-            element: Playwright element
-
-        Returns:
-            ScrapedCompany или None
-        """
-        try:
-            # Название
-            name_el = await element.query_selector(SELECTORS["company_name"])
-            name = await name_el.inner_text() if name_el else None
-
-            if not name:
-                return None
-
-            # Адрес
-            address_el = await element.query_selector(SELECTORS["company_address"])
-            address = await address_el.inner_text() if address_el else ""
-
-            # Телефон
-            phone_el = await element.query_selector(SELECTORS["company_phone"])
-            phone = None
-            if phone_el:
-                href = await phone_el.get_attribute("href")
-                if href and href.startswith("tel:"):
-                    phone = href.replace("tel:", "").strip()
-
-            # Рейтинг
-            rating = None
-            rating_el = await element.query_selector(SELECTORS["company_rating"])
-            if rating_el:
-                try:
-                    rating_text = await rating_el.inner_text()
-                    rating = float(rating_text.replace(",", "."))
-                except (ValueError, AttributeError):
-                    pass
-
-            # Количество отзывов
-            reviews_count = None
-            reviews_el = await element.query_selector(SELECTORS["company_reviews"])
-            if reviews_el:
-                try:
-                    reviews_text = await reviews_el.inner_text()
-                    # Извлекаем число из текста вида "123 отзыва"
-                    import re
-                    match = re.search(r'(\d+)', reviews_text)
-                    if match:
-                        reviews_count = int(match.group(1))
-                except (ValueError, AttributeError):
-                    pass
-
-            return ScrapedCompany(
-                name=name.strip(),
-                address=address.strip(),
-                phone=phone,
-                rating=rating,
-                reviews_count=reviews_count,
-                source=ScrapperSource.TWOGIS,
-            )
-
-        except Exception as e:
-            logger.debug(f"Error parsing card element: {e}")
-            return None
-
-    async def scrape_with_api(self, query: ParsedQuery) -> list[ScrapedCompany]:
-        """
-        Альтернативный метод через API 2ГИС (если доступен).
-
-        Требует API ключ от 2ГИС.
-        """
-        # TODO: Реализовать если будет доступен API ключ
-        # https://api.2gis.com/doc/maps/ru/quickstart/
-        logger.warning("2GIS API method not implemented yet")
-        return await self.scrape(query)

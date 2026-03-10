@@ -174,6 +174,131 @@ class Messages:
         )
 
     @staticmethod
+    def outreach_file_received(filename: str, count: int) -> str:
+        """Файл с телефонами для outreach получен."""
+        return (
+            f"📂 <b>Файл получен:</b> {filename}\n\n"
+            f"📱 <b>Найдено контактов:</b> {count}\n\n"
+            "Нажмите <b>«📨 AI-Продажник»</b> чтобы запустить рассылку."
+        )
+
+    # ─── AI-Продажник ───
+
+    @staticmethod
+    def outreach_menu() -> str:
+        """Меню AI-Продажника."""
+        return (
+            "📨 <b>AI-Продажник</b>\n\n"
+            "Выберите источник контактов:\n\n"
+            "📄 <b>Загрузить файл</b> — загрузите Excel с телефонами, именами, компаниями\n"
+            "🔍 <b>Из результатов поиска</b> — используйте контакты из последнего поиска"
+        )
+
+    @staticmethod
+    def outreach_upload_hint() -> str:
+        """Подсказка для загрузки файла outreach."""
+        return (
+            "📄 <b>Загрузка контактов для AI-Продажника</b>\n\n"
+            "Отправьте Excel файл (.xlsx) с контактами.\n\n"
+            "📋 <b>Обязательные колонки:</b>\n"
+            "• <b>Телефон</b> — номер телефона контакта\n"
+            "• <b>Компания</b> — название компании\n\n"
+            "📋 <b>Опциональные колонки:</b>\n"
+            "• <b>Контакт</b> — имя контактного лица\n\n"
+            "💡 <i>Нажмите кнопку ниже, чтобы скачать шаблон</i>"
+        )
+
+    @staticmethod
+    def outreach_dialog_limit(count: int) -> str:
+        """Выбор количества диалогов."""
+        return (
+            f"📱 <b>Загружено контактов:</b> {count}\n\n"
+            "Сколько AI-диалогов вести?\n\n"
+            "💡 <i>AI напишет первое сообщение каждому контакту и будет "
+            "автоматически отвечать на входящие</i>"
+        )
+
+    @staticmethod
+    def outreach_prompt(count: int) -> str:
+        """Промпт для ввода оффера."""
+        return (
+            f"📨 <b>AI-Продажник</b>\n\n"
+            f"Найдено <b>{count}</b> контактов с телефонами.\n\n"
+            "Введите текст <b>оффера</b> — он будет отправлен после приветствия:\n\n"
+            "<i>Пример:</i>\n"
+            "<code>Мы помогаем таким бизнесам увеличить выручку на 20-30% "
+            "за счёт digital-маркетинга. Можем провести бесплатный аудит "
+            "за 15 минут — покажу 3 точки роста. Когда удобнее?</code>"
+        )
+
+    @staticmethod
+    def outreach_preview(offer: str, name: str, company: str, count: int) -> str:
+        """Превью первого сообщения."""
+        preview = f"Здравствуйте, {name}! Пишу вам по поводу {company}.\n\n\n{offer}"
+        return (
+            "📨 <b>Превью первого сообщения:</b>\n\n"
+            f"<code>{preview}</code>\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 Получателей: <b>{count}</b>\n"
+            f"⏱ Задержка: {int(settings.outreach_delay_min)}-{int(settings.outreach_delay_max)} сек\n"
+            f"📱 Лимит/день: {settings.outreach_daily_limit}\n\n"
+            "⚠️ <b>Внимание:</b> Сообщения будут отправлены через Telegram "
+            "от имени вашего аккаунта. AI будет автоматически отвечать на "
+            "входящие сообщения и пинговать при игноре (каждые 4ч, 9:00-21:00 МСК)."
+        )
+
+    @staticmethod
+    def outreach_progress(sent: int, total: int, campaign) -> str:
+        """Прогресс рассылки."""
+        progress = int((sent / total) * 20) if total else 0
+        bar = "█" * progress + "░" * (20 - progress)
+        percent = int((sent / total) * 100) if total else 0
+        return (
+            f"📨 <b>Рассылка...</b>\n\n"
+            f"{bar} {sent}/{total} ({percent}%)\n\n"
+            f"✅ Отправлено: {campaign.sent_count}\n"
+            f"❌ Нет в Telegram: {campaign.not_found_count}"
+        )
+
+    @staticmethod
+    def outreach_warm_lead(recipient) -> str:
+        """Уведомление о тёплом лиде."""
+        return (
+            f"🔥 <b>ТЁПЛЫЙ ЛИД!</b>\n\n"
+            f"🏢 {recipient.company_name}\n"
+            f"👤 {recipient.contact_name or 'N/A'}\n"
+            f"📱 {recipient.phone}\n\n"
+            "Лид согласился на встречу/звонок.\n"
+            "Подхватите диалог в TG Master!"
+        )
+
+    @staticmethod
+    def outreach_complete(campaign) -> str:
+        """Итоги кампании."""
+        return (
+            "📨 <b>Кампания завершена!</b>\n\n"
+            f"📊 <b>Статистика:</b>\n"
+            f"├ Отправлено: {campaign.sent_count}\n"
+            f"├ 🔥 Тёплых лидов: {campaign.warm_count}\n"
+            f"├ ❌ Отказов: {campaign.rejected_count}\n"
+            f"├ 📵 Нет в Telegram: {campaign.not_found_count}\n"
+            f"└ 😶 Без ответа: {sum(1 for r in campaign.recipients if r.status == 'no_response')}"
+        )
+
+    @staticmethod
+    def outreach_status(campaign) -> str:
+        """Текущий статус кампании."""
+        active = sum(1 for r in campaign.recipients if r.status in ("sent", "talking"))
+        return (
+            "📨 <b>Статус AI-Продажника</b>\n\n"
+            f"📊 Активных диалогов: {active}\n"
+            f"🔥 Тёплых лидов: {campaign.warm_count}\n"
+            f"❌ Отказов: {campaign.rejected_count}\n"
+            f"😶 Без ответа: {sum(1 for r in campaign.recipients if r.status == 'no_response')}\n"
+            f"📵 Нет в Telegram: {campaign.not_found_count}"
+        )
+
+    @staticmethod
     def access_denied() -> str:
         """Доступ запрещён."""
         return (

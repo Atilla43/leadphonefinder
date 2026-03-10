@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 import time
 from typing import Callable, Optional, Awaitable
 
@@ -29,9 +30,12 @@ logger = logging.getLogger(__name__)
 ProgressCallback = Callable[[int, int, Optional[Company]], Awaitable[None]]
 
 
-async def _query_sherlock(inn: str) -> Optional[SherlockResponse]:
+async def _query_sherlock(query: str) -> Optional[SherlockResponse]:
     """
     Запрос к Sherlock через API (если настроен) или Telegram.
+
+    Args:
+        query: Строка поиска (ИНН, ФИО, телефон и т.д.)
 
     Returns:
         SherlockResponse с данными или None
@@ -47,7 +51,7 @@ async def _query_sherlock(inn: str) -> Optional[SherlockResponse]:
     if is_api_configured():
         api_client = await get_sherlock_api_client()
         if api_client:
-            return await api_client.query_with_retry(inn)
+            return await api_client.query_with_retry(query)
 
     # Fallback на Telegram (только если настроен)
     if not is_telethon_configured():
@@ -58,16 +62,31 @@ async def _query_sherlock(inn: str) -> Optional[SherlockResponse]:
 
     # Telegram возвращает текст, создаём SherlockResponse
     client = await get_sherlock_client()
-    text_response = await client.query_with_retry(inn)
+    text_response = await client.query_with_retry(query)
     if text_response:
         phones = extract_phones(text_response)
         return SherlockResponse(
-            query=inn,
+            query=query,
             found=bool(phones),
             phones=phones,
             raw_data={"text": text_response},
         )
     return None
+
+
+def _merge_response(company: Company, response: SherlockResponse) -> None:
+    """Мержит данные из SherlockResponse в Company (без перезаписи существующих)."""
+    if response.phones and not company.phone:
+        company.phone = ", ".join(response.phones)
+    if response.emails:
+        company.emails = list(set(company.emails + response.emails))
+    if response.names:
+        company.contact_names = list(set(company.contact_names + response.names))
+    if response.addresses:
+        company.addresses = list(set(company.addresses + response.addresses))
+    if response.sources:
+        company.sources = list(set(company.sources + response.sources))
+    company.records_count += response.counts
 
 
 async def enrich_companies(
@@ -133,41 +152,64 @@ async def enrich_companies(
             processed += 1
             continue
 
-        # Запрос к Sherlock (API или Telegram)
+        # Многоэтапный поиск телефонов ЛПР
         try:
-            response = await _query_sherlock(company.inn)
+            found_phone = False
 
-            if response:
-                company.raw_response = str(response.raw_data)
-                company.records_count = response.counts
-
-                # Заполняем все найденные данные
-                if response.phones:
-                    company.phone = ", ".join(response.phones)
-                if response.emails:
-                    company.emails = response.emails
-                if response.names:
-                    company.contact_names = response.names
-                if response.addresses:
-                    company.addresses = response.addresses
-                if response.sources:
-                    company.sources = response.sources
-
-                # Статус — SUCCESS если нашли хоть что-то полезное
-                if response.found:
-                    company.status = EnrichmentStatus.SUCCESS
+            # Этап 1: Поиск по ИНН компании (основной)
+            if company.inn:
+                response = await _query_sherlock(company.inn)
+                if response:
+                    company.raw_response = str(response.raw_data)
+                    _merge_response(company, response)
                     if response.phones:
+                        found_phone = True
                         logger.info(
-                            f"Found phone for {company.inn}: {mask_phone(response.phones[0])}"
+                            f"[Stage 1/INN] Found phone for {company.inn}: {mask_phone(response.phones[0])}"
                         )
+
+            # Этап 2: Поиск по ФИО директора (если телефон не найден)
+            if not found_phone and company.director_name:
+                await asyncio.sleep(settings.request_delay_seconds)
+                response = await _query_sherlock(company.director_name)
+                if response and response.phones:
+                    _merge_response(company, response)
+                    found_phone = True
+                    logger.info(
+                        f"[Stage 2/FIO] Found phone for {company.name} via director "
+                        f"'{company.director_name}': {mask_phone(response.phones[0])}"
+                    )
+
+            # Этап 3: Обратный пробив телефона из карт (если есть)
+            if not found_phone and company.map_phone:
+                await asyncio.sleep(settings.request_delay_seconds)
+                # Нормализуем телефон из карт
+                digits = re.sub(r"\D", "", company.map_phone)
+                if len(digits) >= 10:
+                    if len(digits) == 10:
+                        phone_query = f"+7{digits}"
+                    elif len(digits) == 11 and digits.startswith("8"):
+                        phone_query = f"+7{digits[1:]}"
                     else:
-                        logger.info(f"Found data for {company.inn} (no phone)")
-                else:
-                    company.status = EnrichmentStatus.NOT_FOUND
-                    logger.debug(f"No data found for {company.inn}")
+                        phone_query = f"+{digits}"
+
+                    response = await _query_sherlock(phone_query)
+                    if response and response.phones:
+                        _merge_response(company, response)
+                        found_phone = True
+                        logger.info(
+                            f"[Stage 3/Phone] Found data for {company.name} via map phone "
+                            f"{company.map_phone}"
+                        )
+
+            # Определяем итоговый статус
+            if company.phone or company.emails or company.contact_names:
+                company.status = EnrichmentStatus.SUCCESS
+                if not found_phone and not company.phone:
+                    logger.info(f"Found data for {company.inn} (no phone)")
             else:
                 company.status = EnrichmentStatus.NOT_FOUND
-                logger.debug(f"No response for {company.inn}")
+                logger.debug(f"No data found for {company.inn}")
 
         except FloodWaitException as e:
             # FloodWait от Telegram — останавливаем обработку

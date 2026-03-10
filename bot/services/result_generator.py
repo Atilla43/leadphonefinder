@@ -75,6 +75,27 @@ def generate_template_excel() -> tuple[bytes, str]:
     return buffer.getvalue(), "template.xlsx"
 
 
+def generate_outreach_template() -> tuple[bytes, str]:
+    """
+    Генерирует шаблон Excel для AI-Продажника.
+
+    Returns:
+        Tuple (содержимое файла в байтах, имя файла)
+    """
+    data = [
+        {"Телефон": "+79001234567", "Компания": "ООО Рога и Копыта", "Контакт": "Иванов Иван"},
+        {"Телефон": "+79009876543", "Компания": "ИП Петров", "Контакт": "Петров Пётр"},
+        {"Телефон": "+79005556677", "Компания": "ООО Ромашка", "Контакт": ""},
+    ]
+    df = pd.DataFrame(data)
+
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False, engine="openpyxl")
+    buffer.seek(0)
+
+    return buffer.getvalue(), "outreach_template.xlsx"
+
+
 def generate_template_csv() -> tuple[bytes, str]:
     """
     Генерирует шаблон CSV файла.

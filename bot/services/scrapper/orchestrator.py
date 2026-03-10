@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from typing import Callable, Optional
 
+from bot.services.scrapper.cache import ScrapperCache
 from bot.services.scrapper.models import ScrapedCompany, ScrapperResult, ScrapperSource
 from bot.services.scrapper.query_parser import QueryParser, ParsedQuery
 from bot.services.scrapper.twogis import TwoGisScrapper
@@ -37,6 +38,7 @@ class ScrapperOrchestrator:
         headless: bool = True,
         dadata_token: Optional[str] = None,
         find_inn: bool = True,
+        cache: Optional[ScrapperCache] = None,
     ) -> None:
         """
         Инициализация оркестратора.
@@ -48,12 +50,14 @@ class ScrapperOrchestrator:
             headless: Headless режим браузера
             dadata_token: Токен DaData для поиска ИНН
             find_inn: Искать ИНН для компаний
+            cache: Кеш результатов скраппинга
         """
         self.max_results = max_results
         self.use_twogis = use_twogis
         self.use_yandex = use_yandex
         self.headless = headless
         self.find_inn = find_inn
+        self.cache = cache
 
         # Компоненты
         self.query_parser = QueryParser()
@@ -96,6 +100,15 @@ class ScrapperOrchestrator:
                 return result
 
             logger.info(f"Parsed query: {parsed.category} in {parsed.location}")
+
+            # 1.5. Проверяем кеш
+            if self.cache and parsed.category and parsed.location:
+                cached = self.cache.get(parsed.category, parsed.location)
+                if cached:
+                    if progress_callback:
+                        await progress_callback("Загрузка из кеша...", 100, 100)
+                    logger.info(f"Cache hit for '{parsed.category}' in '{parsed.location}'")
+                    return cached
 
             # 2. Собираем данные из источников
             all_companies: list[ScrapedCompany] = []
@@ -172,6 +185,10 @@ class ScrapperOrchestrator:
 
             if progress_callback:
                 await progress_callback("Готово!", 100, 100)
+
+            # 6. Сохраняем в кеш
+            if self.cache and result.companies and parsed.category and parsed.location:
+                self.cache.save(parsed.category, parsed.location, result)
 
             logger.info(
                 f"Scraping completed: {len(result.companies)} companies, "
