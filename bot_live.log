@@ -523,3 +523,5 @@
 2026-03-12 21:11:55,217 - bot.services.scrapper.orchestrator - INFO - INN: found 183, not found 17
 2026-03-12 21:11:55,595 - bot.services.scrapper.cache - INFO - Cached: автосервисы_москва.json (200 companies)
 2026-03-12 21:11:55,596 - bot.services.scrapper.orchestrator - INFO - Scraping completed: 200 companies, duration: 654.2s
+2026-03-12 21:17:04,805 - __main__ - INFO - Bot stopped
+2026-03-12 21:17:04,805 - __main__ - INFO - Bot stopped by user
