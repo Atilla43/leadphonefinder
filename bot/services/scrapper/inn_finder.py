@@ -80,33 +80,40 @@ class InnFinder:
 
         return None
 
+    async def find_inn_and_details(
+        self,
+        company_name: str,
+        address: Optional[str] = None,
+    ) -> dict:
+        """
+        Ищет ИНН, ФИО директора, форму юр лица и юр название.
+
+        Returns:
+            Dict с ключами: inn, director_name, legal_form, legal_name
+        """
+        result = {"inn": None, "director_name": None, "legal_form": None, "legal_name": None}
+
+        if not company_name:
+            return result
+
+        if self.dadata_token:
+            dadata_result = await self._search_dadata_full(company_name, address)
+            if dadata_result.get("inn"):
+                return dadata_result
+
+        # Fallback: ЕГРЮЛ (только ИНН)
+        inn = await self._search_egrul(company_name)
+        result["inn"] = inn
+        return result
+
     async def find_inn_and_director(
         self,
         company_name: str,
         address: Optional[str] = None,
     ) -> tuple[Optional[str], Optional[str]]:
-        """
-        Ищет ИНН и ФИО директора по названию компании.
-
-        Args:
-            company_name: Название компании
-            address: Адрес для уточнения (опционально)
-
-        Returns:
-            Tuple (ИНН или None, ФИО директора или None)
-        """
-        if not company_name:
-            return None, None
-
-        # DaData возвращает и ИНН, и ФИО директора
-        if self.dadata_token:
-            inn, director = await self._search_dadata_full(company_name, address)
-            if inn:
-                return inn, director
-
-        # Fallback: ЕГРЮЛ (только ИНН, без ФИО)
-        inn = await self._search_egrul(company_name)
-        return inn, None
+        """Обратная совместимость."""
+        details = await self.find_inn_and_details(company_name, address)
+        return details["inn"], details["director_name"]
 
     async def _search_dadata(
         self,
@@ -174,15 +181,17 @@ class InnFinder:
         self,
         company_name: str,
         address: Optional[str] = None,
-    ) -> tuple[Optional[str], Optional[str]]:
+    ) -> dict:
         """
-        Поиск через DaData API с извлечением ФИО директора.
+        Поиск через DaData API с извлечением всех данных.
 
         Returns:
-            Tuple (ИНН или None, ФИО директора или None)
+            Dict с ключами: inn, director_name, legal_form, legal_name
         """
+        empty = {"inn": None, "director_name": None, "legal_form": None, "legal_name": None}
+
         if not self.dadata_token:
-            return None, None
+            return empty
 
         try:
             session = await self._get_session()
@@ -210,33 +219,46 @@ class InnFinder:
                 json=payload,
             ) as response:
                 if response.status != 200:
-                    return None, None
+                    return empty
 
                 data = await response.json()
                 suggestions = data.get("suggestions", [])
 
                 if not suggestions:
-                    return None, None
+                    return empty
 
                 first = suggestions[0]
                 company_data = first.get("data", {})
                 inn = company_data.get("inn")
 
-                # Извлекаем ФИО директора
+                # ФИО директора
                 director_name = None
                 management = company_data.get("management", {})
                 if management:
                     director_name = management.get("name")
-                    if director_name:
-                        logger.debug(f"Found director via DaData: {company_name} -> {director_name}")
+
+                # Форма юр лица (ООО, ИП, ПАО и т.д.)
+                legal_form = None
+                opf = company_data.get("opf", {})
+                if opf:
+                    legal_form = opf.get("short")  # "ООО", "ИП", "ПАО"
+
+                # Полное юр название
+                legal_name = first.get("value")  # "ООО «РОМАШКА»"
 
                 if inn and validate_inn(inn):
-                    return inn, director_name
+                    logger.debug(f"DaData: {company_name} -> INN={inn}, form={legal_form}, director={director_name}")
+                    return {
+                        "inn": inn,
+                        "director_name": director_name,
+                        "legal_form": legal_form,
+                        "legal_name": legal_name,
+                    }
 
         except Exception as e:
             logger.error(f"DaData full search error: {e}")
 
-        return None, None
+        return empty
 
     async def _search_egrul(self, company_name: str) -> Optional[str]:
         """
@@ -333,22 +355,27 @@ class InnFinder:
                 found += 1
                 continue
 
-            # Ищем ИНН и ФИО директора
-            inn, director = await self.find_inn_and_director(company.name, company.address)
+            logger.info(f"INN enrichment [{i+1}/{len(companies)}]: {company.name[:40]}")
 
-            if inn:
-                company.inn = inn
+            # Ищем ИНН и все данные из DaData
+            details = await self.find_inn_and_details(company.name, company.address)
+
+            if details["inn"]:
+                company.inn = details["inn"]
                 found += 1
             else:
                 not_found += 1
 
-            # Сохраняем ФИО директора
-            if director:
-                company.director_name = director
+            if details["director_name"]:
+                company.director_name = details["director_name"]
+            if details["legal_form"]:
+                company.legal_form = details["legal_form"]
+            if details["legal_name"]:
+                company.legal_name = details["legal_name"]
 
             # Callback прогресса
             if progress_callback:
-                await progress_callback(i + 1, len(companies), company.name, inn)
+                await progress_callback(i + 1, len(companies), company.name, details["inn"])
 
             # Задержка между запросами
             await asyncio.sleep(self.request_delay)

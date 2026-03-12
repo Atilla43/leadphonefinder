@@ -29,6 +29,7 @@ class OutreachStates(StatesGroup):
     waiting_dialog_limit = State()
     waiting_offer = State()
     confirming = State()
+    waiting_managers = State()
     sending = State()
     listening = State()
 
@@ -61,6 +62,13 @@ def _get_recipients_from_results(user_id: int) -> list[OutreachRecipient]:
             phone=first_phone,
             company_name=company.name,
             contact_name=contact_name,
+            category=getattr(company, "category", None),
+            rating=getattr(company, "rating", None),
+            reviews_count=getattr(company, "reviews_count", None),
+            website=getattr(company, "website", None),
+            working_hours=getattr(company, "working_hours", None),
+            address=company.addresses[0] if getattr(company, "addresses", None) else None,
+            director_name=getattr(company, "director_name", None),
         ))
 
     return recipients
@@ -87,9 +95,10 @@ async def outreach_menu(callback: CallbackQuery, state: FSMContext) -> None:
         await callback.answer(error, show_alert=True)
         return
 
+    has_campaign = callback.from_user.id in active_outreach
     await callback.message.edit_text(
         Messages.outreach_menu(),
-        reply_markup=Keyboards.outreach_source(),
+        reply_markup=Keyboards.outreach_source(has_campaign=has_campaign),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -297,9 +306,65 @@ async def cancel_outreach(callback: CallbackQuery, state: FSMContext) -> None:
 
 
 @router.callback_query(F.data == "outreach_confirm", OutreachStates.confirming)
-async def confirm_outreach(callback: CallbackQuery, state: FSMContext, bot: Bot) -> None:
-    """Подтверждение и запуск кампании."""
-    user_id = callback.from_user.id
+async def confirm_outreach(callback: CallbackQuery, state: FSMContext) -> None:
+    """Подтверждение оффера — переход к настройке менеджеров."""
+    await state.set_state(OutreachStates.waiting_managers)
+
+    await callback.message.edit_text(
+        Messages.outreach_managers_prompt(),
+        reply_markup=Keyboards.outreach_skip_managers(),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "outreach_skip_managers", OutreachStates.waiting_managers)
+async def skip_managers(callback: CallbackQuery, state: FSMContext, bot: Bot) -> None:
+    """Пропустить добавление менеджеров — запуск кампании."""
+    await state.update_data(manager_ids=[])
+    await callback.answer()
+    await _launch_campaign(callback.from_user.id, state, bot, callback.message)
+
+
+@router.message(OutreachStates.waiting_managers, F.text)
+async def receive_managers(message: Message, state: FSMContext, bot: Bot) -> None:
+    """Получение Telegram ID менеджеров."""
+    text = message.text.strip()
+    manager_ids = []
+    errors = []
+
+    for part in text.replace(" ", ",").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            manager_id = int(part)
+            manager_ids.append(manager_id)
+        except ValueError:
+            errors.append(part)
+
+    if errors:
+        await message.answer(
+            f"Некорректные ID: {', '.join(errors)}\n\n"
+            "Отправьте числовые Telegram ID через запятую.",
+        )
+        return
+
+    if not manager_ids:
+        await message.answer("Отправьте хотя бы один Telegram ID или нажмите «Пропустить».")
+        return
+
+    await state.update_data(manager_ids=manager_ids)
+    await _launch_campaign(message.from_user.id, state, bot, message)
+
+
+async def _launch_campaign(
+    user_id: int,
+    state: FSMContext,
+    bot: Bot,
+    source_message: Message,
+) -> None:
+    """Запуск кампании (общая логика для skip/receive managers)."""
     data = await state.get_data()
 
     # Создаём получателей
@@ -312,11 +377,14 @@ async def confirm_outreach(callback: CallbackQuery, state: FSMContext, bot: Bot)
         for r in data["recipients"]
     ]
 
+    manager_ids = data.get("manager_ids", [])
+
     # Создаём кампанию
     campaign = OutreachCampaign(
         user_id=user_id,
         offer=data["offer"],
         recipients=recipients,
+        manager_ids=manager_ids,
     )
 
     # Создаём AI engine
@@ -331,10 +399,9 @@ async def confirm_outreach(callback: CallbackQuery, state: FSMContext, bot: Bot)
     active_outreach[user_id] = service
 
     await state.set_state(OutreachStates.sending)
-    await callback.answer("Кампания запущена!")
 
     # Сообщение с прогрессом
-    progress_msg = await callback.message.edit_text(
+    progress_msg = await source_message.answer(
         Messages.outreach_progress(0, len(recipients), campaign),
         reply_markup=Keyboards.outreach_sending(),
         parse_mode="HTML",
@@ -356,17 +423,29 @@ async def confirm_outreach(callback: CallbackQuery, state: FSMContext, bot: Bot)
         try:
             if event_type == "warm_lead":
                 recipient = kwargs["recipient"]
-                await bot.send_message(
-                    user_id,
-                    Messages.outreach_warm_lead(recipient),
-                    parse_mode="HTML",
-                )
+                camp = kwargs["campaign"]
+                msg_text = Messages.outreach_warm_lead(recipient)
+
+                # Владельцу кампании
+                await bot.send_message(user_id, msg_text, parse_mode="HTML")
+
+                # Всем менеджерам
+                for manager_id in camp.manager_ids:
+                    try:
+                        await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                    except Exception as e:
+                        logger.warning(f"Can't notify manager {manager_id}: {e}")
+
             elif event_type == "sending_complete":
                 camp = kwargs["campaign"]
+                managers_text = ""
+                if camp.manager_ids:
+                    managers_text = f"\n👥 Менеджеров на уведомлениях: {len(camp.manager_ids)}"
                 await progress_msg.edit_text(
                     f"✅ <b>Рассылка завершена!</b>\n\n"
                     f"Отправлено: {camp.sent_count}\n"
-                    f"Нет в Telegram: {camp.not_found_count}\n\n"
+                    f"Нет в Telegram: {camp.not_found_count}\n"
+                    f"{managers_text}\n"
                     "AI слушает ответы и будет пинговать при игноре.",
                     reply_markup=Keyboards.outreach_listening(),
                     parse_mode="HTML",
@@ -478,5 +557,47 @@ async def outreach_status(callback: CallbackQuery) -> None:
     await callback.message.edit_text(
         Messages.outreach_status(service.campaign),
         reply_markup=Keyboards.outreach_listening(),
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "outreach_dialogs")
+async def outreach_dialogs(callback: CallbackQuery) -> None:
+    """Список диалогов кампании."""
+    user_id = callback.from_user.id
+    service = active_outreach.get(user_id)
+
+    if not service or not service.campaign:
+        await callback.answer("Нет активной кампании", show_alert=True)
+        return
+
+    await callback.answer()
+
+    await callback.message.edit_text(
+        Messages.outreach_dialogs_list(service.campaign),
+        reply_markup=Keyboards.outreach_dialogs_back(),
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data.startswith("dial_filter:"))
+async def dialogs_filter(callback: CallbackQuery) -> None:
+    """Фильтрация диалогов по статусу."""
+    user_id = callback.from_user.id
+    service = active_outreach.get(user_id)
+
+    if not service or not service.campaign:
+        await callback.answer("Нет активной кампании", show_alert=True)
+        return
+
+    filter_status = callback.data.split(":")[1]
+    if filter_status == "all":
+        filter_status = None
+
+    await callback.answer()
+
+    await callback.message.edit_text(
+        Messages.outreach_dialogs_list(service.campaign, filter_status=filter_status),
+        reply_markup=Keyboards.outreach_dialogs_back(),
         parse_mode="HTML",
     )

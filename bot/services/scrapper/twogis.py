@@ -50,6 +50,19 @@ JS_EXTRACT_COMPANIES = """() => {
         const ratingMatch = allText.match(/(\\d[,.]\\d)/);
         if (ratingMatch) rating = ratingMatch[1];
 
+        // Категория
+        let category = '';
+        const catEl = card.querySelector('[class*="rubric"], [class*="category"]');
+        if (catEl) category = catEl.textContent.trim();
+
+        // Кол-во отзывов
+        let reviewsCount = '';
+        const reviewsEl = card.querySelector('[class*="review"], [class*="comment"]');
+        if (reviewsEl) {
+            const text = reviewsEl.textContent.replace(/[^0-9]/g, '');
+            if (text) reviewsCount = text;
+        }
+
         // Телефон
         let phone = '';
         const phoneEl = card.querySelector('a[href^="tel:"]');
@@ -58,7 +71,7 @@ JS_EXTRACT_COMPANIES = """() => {
             phone = phoneHref.replace('tel:', '').trim();
         }
 
-        results.push({name, href, address, rating, phone});
+        results.push({name, href, address, rating, phone, category, reviewsCount});
     }
     return results;
 }"""
@@ -192,11 +205,22 @@ class TwoGisScrapper:
                         except ValueError:
                             pass
 
+                    # Кол-во отзывов
+                    reviews_count = None
+                    reviews_str = item.get("reviewsCount", "")
+                    if reviews_str:
+                        try:
+                            reviews_count = int(reviews_str)
+                        except ValueError:
+                            pass
+
                     company = ScrapedCompany(
                         name=name,
                         address=item.get("address", ""),
                         phone=item.get("phone", "") or None,
                         rating=rating,
+                        reviews_count=reviews_count,
+                        category=item.get("category", "") or None,
                         source=ScrapperSource.TWOGIS,
                     )
                     companies.append(company)

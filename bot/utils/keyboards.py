@@ -131,7 +131,32 @@ class Keyboards:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="📊 Статус", callback_data="outreach_status")],
+                [InlineKeyboardButton(text="📋 Диалоги", callback_data="outreach_dialogs")],
                 [InlineKeyboardButton(text="⏹ Остановить кампанию", callback_data="outreach_stop")],
+            ]
+        )
+
+    @staticmethod
+    def outreach_skip_managers() -> InlineKeyboardMarkup:
+        """Кнопка пропуска добавления менеджеров."""
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="⏩ Пропустить — только мне", callback_data="outreach_skip_managers")],
+                [InlineKeyboardButton(text="❌ Отмена", callback_data="outreach_cancel")],
+            ]
+        )
+
+    @staticmethod
+    def outreach_dialogs_back() -> InlineKeyboardMarkup:
+        """Кнопки на экране диалогов."""
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🔥 Тёплые", callback_data="dial_filter:warm"),
+                    InlineKeyboardButton(text="💬 Активные", callback_data="dial_filter:talking"),
+                    InlineKeyboardButton(text="Все", callback_data="dial_filter:all"),
+                ],
+                [InlineKeyboardButton(text="◀️ Назад", callback_data="outreach_status")],
             ]
         )
 
@@ -146,15 +171,19 @@ class Keyboards:
         )
 
     @staticmethod
-    def outreach_source() -> InlineKeyboardMarkup:
+    def outreach_source(has_campaign: bool = False) -> InlineKeyboardMarkup:
         """Выбор источника контактов для AI-продажника."""
-        return InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="📄 Загрузить файл с контактами", callback_data="outreach_upload")],
-                [InlineKeyboardButton(text="🔍 Из результатов поиска", callback_data="start_outreach")],
-                [InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_menu")],
-            ]
-        )
+        buttons = [
+            [InlineKeyboardButton(text="📄 Загрузить файл с контактами", callback_data="outreach_upload")],
+            [InlineKeyboardButton(text="🔍 Из результатов поиска", callback_data="start_outreach")],
+        ]
+        if has_campaign:
+            buttons.append([
+                InlineKeyboardButton(text="📋 Диалоги", callback_data="outreach_dialogs"),
+                InlineKeyboardButton(text="📊 Статус", callback_data="outreach_status"),
+            ])
+        buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_menu")])
+        return InlineKeyboardMarkup(inline_keyboard=buttons)
 
     @staticmethod
     def outreach_dialog_limit() -> InlineKeyboardMarkup:

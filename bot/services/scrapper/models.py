@@ -44,6 +44,10 @@ class ScrapedCompany:
     # Время работы
     working_hours: Optional[str] = None
 
+    # Юр данные (из DaData)
+    legal_form: Optional[str] = None   # "ООО", "ИП", "ПАО"
+    legal_name: Optional[str] = None   # Полное юр название
+
     # Метаданные
     scraped_at: datetime = field(default_factory=datetime.now)
 
@@ -77,6 +81,8 @@ class ScrapedCompany:
             "rating": self.rating,
             "reviews_count": self.reviews_count,
             "working_hours": self.working_hours,
+            "legal_form": self.legal_form,
+            "legal_name": self.legal_name,
             "scraped_at": self.scraped_at.isoformat(),
         }
 
@@ -98,6 +104,8 @@ class ScrapedCompany:
             rating=data.get("rating"),
             reviews_count=data.get("reviews_count"),
             working_hours=data.get("working_hours"),
+            legal_form=data.get("legal_form"),
+            legal_name=data.get("legal_name"),
             scraped_at=datetime.fromisoformat(data["scraped_at"]) if data.get("scraped_at") else datetime.now(),
         )
 

@@ -60,8 +60,9 @@ class Settings(BaseSettings):
     outreach_daily_limit: int = 30
     outreach_ping_interval_hours: int = 4
     outreach_max_pings: int = 3
-    outreach_work_hour_start: int = 9
-    outreach_work_hour_end: int = 21
+    outreach_sticker_pack: str = "real_cats"
+    outreach_work_hour_start: int = 10
+    outreach_work_hour_end: int = 17
 
     # OpenRouter (для AI-диалогов)
     openrouter_api_key: Optional[str] = None

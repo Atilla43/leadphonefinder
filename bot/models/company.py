@@ -28,6 +28,17 @@ class Company:
     director_name: Optional[str] = None  # ФИО директора из ЕГРЮЛ/DaData
     map_phone: Optional[str] = None  # Телефон из карт (для обратного пробива)
 
+    # Данные из скраппера
+    website: Optional[str] = None
+    category: Optional[str] = None
+    rating: Optional[float] = None
+    reviews_count: Optional[int] = None
+    working_hours: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    legal_form: Optional[str] = None   # "ООО", "ИП", "ПАО"
+    legal_name: Optional[str] = None   # Полное юр название
+
     # Расширенные данные из API
     emails: list[str] = field(default_factory=list)
     contact_names: list[str] = field(default_factory=list)  # ФИО контактов
@@ -41,9 +52,20 @@ class Company:
             "ИНН": self.inn,
             "Название": self.name,
             "Телефон": self.phone or "",
+            "Телефон (карты)": self.map_phone or "",
             "Email": ", ".join(self.emails) if self.emails else "",
-            "Контакты (ФИО)": ", ".join(self.contact_names[:3]) if self.contact_names else "",  # Первые 3
-            "Адреса": ", ".join(self.addresses[:2]) if self.addresses else "",  # Первые 2
+            "Сайт": self.website or "",
+            "Контакты (ФИО)": ", ".join(self.contact_names[:3]) if self.contact_names else "",
+            "Директор": self.director_name or "",
+            "Адреса": ", ".join(self.addresses[:2]) if self.addresses else "",
+            "Категория": self.category or "",
+            "Рейтинг": self.rating or "",
+            "Отзывов": self.reviews_count or "",
+            "Время работы": self.working_hours or "",
+            "Широта": self.latitude or "",
+            "Долгота": self.longitude or "",
+            "Форма юр лица": self.legal_form or "",
+            "Юр название": self.legal_name or "",
             "Источники": ", ".join(set(self.sources)) if self.sources else "",
             "Записей найдено": self.records_count,
             "Статус": self.status.value,

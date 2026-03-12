@@ -299,6 +299,52 @@ class Messages:
         )
 
     @staticmethod
+    def outreach_managers_prompt() -> str:
+        """Запрос Telegram ID менеджеров."""
+        return (
+            "👥 <b>Уведомления о тёплых лидах</b>\n\n"
+            "Кому отправлять уведомления когда лид согласится на встречу/звонок?\n\n"
+            "Отправьте <b>Telegram ID</b> менеджеров через запятую.\n"
+            "Менеджер может узнать свой ID — <code>/start</code> в этом боте.\n\n"
+            "Или нажмите «Пропустить» — уведомления будут приходить только вам."
+        )
+
+    @staticmethod
+    def outreach_dialogs_list(campaign, filter_status=None) -> str:
+        """Список диалогов кампании."""
+        STATUS_ICONS = {
+            "warm": "🔥", "talking": "💬", "sent": "📨",
+            "rejected": "❌", "no_response": "😶",
+            "not_found": "📵", "error": "⚠️", "pending": "⏳",
+        }
+
+        recipients = campaign.recipients
+        if filter_status:
+            recipients = [r for r in recipients if r.status == filter_status]
+
+        total = len(campaign.recipients)
+        shown = len(recipients)
+        header = f"📋 <b>Диалоги</b> ({shown}/{total})\n"
+
+        lines = [header]
+        for r in recipients:
+            icon = STATUS_ICONS.get(r.status, "❓")
+            name = r.contact_name or r.company_name
+            msgs = len(r.conversation_history)
+            line = f"{icon} <b>{name}</b> — {r.company_name}"
+            if msgs > 0:
+                line += f" ({msgs} сообщ.)"
+            lines.append(line)
+
+        if not recipients:
+            lines.append("\nНет диалогов с таким статусом.")
+
+        result = "\n".join(lines)
+        if len(result) > 4000:
+            result = result[:4000] + "\n..."
+        return result
+
+    @staticmethod
     def access_denied() -> str:
         """Доступ запрещён."""
         return (

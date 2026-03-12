@@ -307,8 +307,18 @@ async def enrich_with_limit(callback: CallbackQuery, state: FSMContext) -> None:
             inn=sc.inn or "",
             name=sc.name,
             status=EnrichmentStatus.PENDING if sc.inn else EnrichmentStatus.INVALID_INN,
-            director_name=getattr(sc, 'director_name', None),
-            map_phone=sc.phone,  # Телефон из карт для обратного пробива
+            director_name=sc.director_name,
+            map_phone=sc.phone,
+            website=sc.website,
+            category=sc.category,
+            rating=sc.rating,
+            reviews_count=sc.reviews_count,
+            working_hours=sc.working_hours,
+            latitude=sc.latitude,
+            longitude=sc.longitude,
+            legal_form=sc.legal_form,
+            legal_name=sc.legal_name,
+            addresses=[sc.address] if sc.address else [],
         )
         companies.append(company)
 
@@ -408,9 +418,16 @@ async def download_raw_results(callback: CallbackQuery, state: FSMContext) -> No
                 "Адрес": company.address,
                 "ИНН": company.inn or "",
                 "Телефон (карты)": company.phone or "",
+                "Сайт": company.website or "",
+                "Категория": company.category or "",
                 "Рейтинг": company.rating or "",
                 "Отзывов": company.reviews_count or "",
-                "Категория": company.category or "",
+                "Время работы": company.working_hours or "",
+                "Директор": company.director_name or "",
+                "Форма юр лица": company.legal_form or "",
+                "Юр название": company.legal_name or "",
+                "Широта": company.latitude or "",
+                "Долгота": company.longitude or "",
                 "Источник": company.source.value,
             })
 
