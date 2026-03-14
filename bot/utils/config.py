@@ -60,7 +60,8 @@ class Settings(BaseSettings):
     outreach_daily_limit: int = 30
     outreach_ping_interval_hours: int = 4
     outreach_max_pings: int = 3
-    outreach_sticker_pack: str = "real_cats"
+    outreach_sticker_pack: str = "catsunicmass"
+    outreach_sticker_index: int = 33  # 34-й стикер (0-based)
     outreach_work_hour_start: int = 10
     outreach_work_hour_end: int = 17
 

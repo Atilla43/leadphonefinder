@@ -116,6 +116,14 @@ def _find_column(columns: pd.Index, variants: list[str]) -> str | None:
     return None
 
 
+def _safe_str(row, col: str | None) -> str | None:
+    """Безопасно извлекает строку из ячейки DataFrame."""
+    if not col or pd.isna(row[col]):
+        return None
+    val = str(row[col]).strip()
+    return val if val else None
+
+
 def _normalize_phone(phone: str) -> str:
     """Нормализует телефон в формат +7XXXXXXXXXX."""
     digits = re.sub(r"[^\d]", "", phone)
@@ -209,6 +217,15 @@ def parse_outreach_file(file_bytes: bytes, filename: str) -> list[OutreachRecipi
         df.columns, ["контакт", "имя", "contact", "фио", "лицо"]
     )
 
+    # Дополнительные колонки для контекста AI продажника
+    category_col = _find_column(df.columns, ["категория", "category"])
+    rating_col = _find_column(df.columns, ["рейтинг", "rating"])
+    reviews_col = _find_column(df.columns, ["отзывов", "отзывы", "reviews"])
+    website_col = _find_column(df.columns, ["сайт", "website", "url"])
+    hours_col = _find_column(df.columns, ["время работы", "часы", "working_hours"])
+    address_col = _find_column(df.columns, ["адрес", "address"])
+    director_col = _find_column(df.columns, ["директор", "director", "руководитель"])
+
     recipients = []
     for _, row in df.iterrows():
         raw_phone = str(row[phone_col]).strip() if pd.notna(row[phone_col]) else ""
@@ -224,10 +241,38 @@ def parse_outreach_file(file_bytes: bytes, filename: str) -> list[OutreachRecipi
         if contact_col and pd.notna(row[contact_col]):
             contact_name = str(row[contact_col]).strip() or None
 
+        # Извлекаем контекст компании
+        category = _safe_str(row, category_col)
+        website = _safe_str(row, website_col)
+        working_hours = _safe_str(row, hours_col)
+        address = _safe_str(row, address_col)
+        director_name = _safe_str(row, director_col)
+
+        rating = None
+        if rating_col and pd.notna(row[rating_col]):
+            try:
+                rating = float(row[rating_col])
+            except (ValueError, TypeError):
+                pass
+
+        reviews_count = None
+        if reviews_col and pd.notna(row[reviews_col]):
+            try:
+                reviews_count = int(float(row[reviews_col]))
+            except (ValueError, TypeError):
+                pass
+
         recipients.append(OutreachRecipient(
             phone=phone,
             company_name=company_name or "Компания",
             contact_name=contact_name,
+            category=category,
+            rating=rating,
+            reviews_count=reviews_count,
+            website=website,
+            working_hours=working_hours,
+            address=address,
+            director_name=director_name,
         ))
 
     if not recipients:

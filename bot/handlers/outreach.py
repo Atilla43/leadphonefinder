@@ -7,6 +7,7 @@ from io import BytesIO
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
 
 from bot.handlers.callbacks import results_storage
@@ -176,9 +177,20 @@ async def receive_outreach_file(message: Message, bot: Bot, state: FSMContext) -
         )
         return
 
-    # Сохраняем в FSM
+    # Сохраняем в FSM (все поля для AI контекста)
     await state.update_data(recipients=[
-        {"phone": r.phone, "company_name": r.company_name, "contact_name": r.contact_name}
+        {
+            "phone": r.phone,
+            "company_name": r.company_name,
+            "contact_name": r.contact_name,
+            "category": r.category,
+            "rating": r.rating,
+            "reviews_count": r.reviews_count,
+            "website": r.website,
+            "working_hours": r.working_hours,
+            "address": r.address,
+            "director_name": r.director_name,
+        }
         for r in recipients
     ])
     await state.set_state(OutreachStates.waiting_dialog_limit)
@@ -234,9 +246,20 @@ async def start_outreach(callback: CallbackQuery, state: FSMContext) -> None:
         )
         return
 
-    # Сохраняем в FSM
+    # Сохраняем в FSM (все поля для AI контекста)
     await state.update_data(recipients=[
-        {"phone": r.phone, "company_name": r.company_name, "contact_name": r.contact_name}
+        {
+            "phone": r.phone,
+            "company_name": r.company_name,
+            "contact_name": r.contact_name,
+            "category": r.category,
+            "rating": r.rating,
+            "reviews_count": r.reviews_count,
+            "website": r.website,
+            "working_hours": r.working_hours,
+            "address": r.address,
+            "director_name": r.director_name,
+        }
         for r in recipients
     ])
     await state.set_state(OutreachStates.waiting_dialog_limit)
@@ -367,12 +390,19 @@ async def _launch_campaign(
     """Запуск кампании (общая логика для skip/receive managers)."""
     data = await state.get_data()
 
-    # Создаём получателей
+    # Создаём получателей (с контекстом для AI)
     recipients = [
         OutreachRecipient(
             phone=r["phone"],
             company_name=r["company_name"],
             contact_name=r.get("contact_name"),
+            category=r.get("category"),
+            rating=r.get("rating"),
+            reviews_count=r.get("reviews_count"),
+            website=r.get("website"),
+            working_hours=r.get("working_hours"),
+            address=r.get("address"),
+            director_name=r.get("director_name"),
         )
         for r in data["recipients"]
     ]
@@ -421,7 +451,7 @@ async def _launch_campaign(
     # Callback для уведомлений
     async def on_notify(event_type: str, **kwargs):
         try:
-            if event_type == "warm_lead":
+            if event_type in ("warm_lead", "warm_lead_reply"):
                 recipient = kwargs["recipient"]
                 camp = kwargs["campaign"]
                 msg_text = Messages.outreach_warm_lead(recipient)
@@ -596,8 +626,11 @@ async def dialogs_filter(callback: CallbackQuery) -> None:
 
     await callback.answer()
 
-    await callback.message.edit_text(
-        Messages.outreach_dialogs_list(service.campaign, filter_status=filter_status),
-        reply_markup=Keyboards.outreach_dialogs_back(),
-        parse_mode="HTML",
-    )
+    try:
+        await callback.message.edit_text(
+            Messages.outreach_dialogs_list(service.campaign, filter_status=filter_status),
+            reply_markup=Keyboards.outreach_dialogs_back(),
+            parse_mode="HTML",
+        )
+    except TelegramBadRequest:
+        pass

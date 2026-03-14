@@ -35,6 +35,7 @@ class InnFinder:
         self.dadata_token = dadata_token
         self.request_delay = request_delay
         self._session: Optional[aiohttp.ClientSession] = None
+        self._quota_exhausted = False
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Получает или создаёт HTTP сессию."""
@@ -84,9 +85,13 @@ class InnFinder:
         self,
         company_name: str,
         address: Optional[str] = None,
+        skip_egrul: bool = False,
     ) -> dict:
         """
         Ищет ИНН, ФИО директора, форму юр лица и юр название.
+
+        Args:
+            skip_egrul: Пропустить ЕГРЮЛ fallback (для массового обогащения)
 
         Returns:
             Dict с ключами: inn, director_name, legal_form, legal_name
@@ -96,14 +101,15 @@ class InnFinder:
         if not company_name:
             return result
 
-        if self.dadata_token:
+        if self.dadata_token and not self._quota_exhausted:
             dadata_result = await self._search_dadata_full(company_name, address)
             if dadata_result.get("inn"):
                 return dadata_result
 
-        # Fallback: ЕГРЮЛ (только ИНН)
-        inn = await self._search_egrul(company_name)
-        result["inn"] = inn
+        # Fallback: ЕГРЮЛ (только ИНН) — пропускаем при массовом обогащении
+        if not skip_egrul:
+            inn = await self._search_egrul(company_name)
+            result["inn"] = inn
         return result
 
     async def find_inn_and_director(
@@ -218,7 +224,12 @@ class InnFinder:
                 headers=headers,
                 json=payload,
             ) as response:
+                if response.status == 403:
+                    logger.warning("DaData quota exhausted (403)! Stopping DaData requests.")
+                    self._quota_exhausted = True
+                    return empty
                 if response.status != 200:
+                    logger.warning(f"DaData full API error: {response.status}")
                     return empty
 
                 data = await response.json()
@@ -337,7 +348,7 @@ class InnFinder:
         progress_callback=None,
     ) -> tuple[int, int]:
         """
-        Добавляет ИНН к списку компаний.
+        Добавляет ИНН к списку компаний (батчевая обработка).
 
         Args:
             companies: Список компаний
@@ -348,37 +359,67 @@ class InnFinder:
         """
         found = 0
         not_found = 0
+        batch_size = 5
 
-        for i, company in enumerate(companies):
-            # Пропускаем если ИНН уже есть
+        # Отфильтровываем компании, которым нужен поиск ИНН
+        to_process = []
+        for company in companies:
             if company.inn and validate_inn(company.inn):
                 found += 1
-                continue
-
-            logger.info(f"INN enrichment [{i+1}/{len(companies)}]: {company.name[:40]}")
-
-            # Ищем ИНН и все данные из DaData
-            details = await self.find_inn_and_details(company.name, company.address)
-
-            if details["inn"]:
-                company.inn = details["inn"]
-                found += 1
             else:
-                not_found += 1
+                to_process.append(company)
 
-            if details["director_name"]:
-                company.director_name = details["director_name"]
-            if details["legal_form"]:
-                company.legal_form = details["legal_form"]
-            if details["legal_name"]:
-                company.legal_name = details["legal_name"]
+        if not to_process:
+            logger.info(f"INN enrichment: all {found} already have INN")
+            return found, not_found
 
-            # Callback прогресса
+        logger.info(f"INN enrichment: {len(to_process)} companies to process (batch_size={batch_size})")
+
+        for batch_start in range(0, len(to_process), batch_size):
+            if self._quota_exhausted:
+                remaining = len(to_process) - batch_start
+                not_found += remaining
+                logger.warning(f"DaData quota exhausted, skipping {remaining} remaining companies")
+                break
+
+            batch = to_process[batch_start:batch_start + batch_size]
+
+            # Запускаем батч параллельно
+            tasks = [
+                self.find_inn_and_details(c.name, c.address, skip_egrul=True)
+                for c in batch
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Обрабатываем результаты
+            for company, details in zip(batch, results):
+                if isinstance(details, Exception):
+                    logger.warning(f"INN error for {company.name[:30]}: {details}")
+                    not_found += 1
+                    continue
+
+                if details["inn"]:
+                    company.inn = details["inn"]
+                    found += 1
+                else:
+                    not_found += 1
+
+                if details["director_name"]:
+                    company.director_name = details["director_name"]
+                if details["legal_form"]:
+                    company.legal_form = details["legal_form"]
+                if details["legal_name"]:
+                    company.legal_name = details["legal_name"]
+
+            processed = min(batch_start + batch_size, len(to_process))
+            logger.info(f"INN batch [{processed}/{len(to_process)}]: found={found}, not_found={not_found}")
+
             if progress_callback:
-                await progress_callback(i + 1, len(companies), company.name, details["inn"])
+                last = batch[-1]
+                await progress_callback(processed, len(to_process), last.name, None)
 
-            # Задержка между запросами
-            await asyncio.sleep(self.request_delay)
+            # Маленькая пауза между батчами
+            await asyncio.sleep(0.2)
 
-        logger.info(f"INN enrichment: found {found}, not found {not_found}")
+        logger.info(f"INN enrichment done: found {found}, not found {not_found}")
         return found, not_found

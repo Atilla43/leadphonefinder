@@ -15,6 +15,7 @@ from telethon.errors import FloodWaitError
 
 from bot.models.outreach import OutreachCampaign, OutreachRecipient
 from bot.services.ai_sales import AISalesEngine
+from bot.services.outreach_storage import OutreachStorage
 from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
 from bot.utils.config import settings
 
@@ -35,11 +36,41 @@ def normalize_phone(phone: str) -> str:
 
 
 def extract_first_name(full_name: str) -> str:
-    """Извлекает имя (не фамилию) из ФИО. 'Шевченко Дмитрий' → 'Дмитрий'."""
+    """Извлекает имя из ФИО. Поддерживает форматы:
+    - 'Фамилия Имя Отчество' → Имя
+    - 'Имя Отчество' → Имя
+    - 'Имя' → Имя
+    """
     parts = full_name.strip().split()
-    if len(parts) >= 2:
-        return parts[1]  # Фамилия Имя → берём имя
-    return parts[0] if parts else ""
+    if not parts:
+        return ""
+
+    def is_patronymic(word: str) -> bool:
+        w = word.lower()
+        return w.endswith(("ович", "евич", "ич", "овна", "евна", "ична"))
+
+    if len(parts) == 1:
+        name = parts[0]
+    elif len(parts) == 2:
+        if is_patronymic(parts[1]):
+            name = parts[0]  # Микаел Седракович → Микаел
+        else:
+            name = parts[1]  # Шевченко Дмитрий → Дмитрий
+    else:
+        name = parts[1]  # Иванов Пётр Сергеевич → Пётр
+
+    return name.capitalize()
+
+
+def detect_gender(full_name: str) -> str:
+    """Определяет пол по отчеству: male/female/unknown."""
+    for part in full_name.strip().split():
+        w = part.lower()
+        if w.endswith(("овна", "евна", "ична")):
+            return "female"
+        if w.endswith(("ович", "евич")):
+            return "male"
+    return "unknown"
 
 
 def render_first_message(offer: str, recipient: OutreachRecipient) -> str:
@@ -47,7 +78,7 @@ def render_first_message(offer: str, recipient: OutreachRecipient) -> str:
     name = extract_first_name(recipient.contact_name) if recipient.contact_name else ""
     company = recipient.company_name
     greeting = f"{name}, здравствуйте" if name else "Здравствуйте"
-    return f"{greeting}, я очень коротко по поводу {company}.\n\n{offer}"
+    return f"{greeting}, хочу коротко обсудить сотрудничество с «{company}».\n\n{offer}"
 
 
 class OutreachService:
@@ -55,6 +86,7 @@ class OutreachService:
 
     def __init__(self, ai_engine: AISalesEngine):
         self.ai_engine = ai_engine
+        self._storage = OutreachStorage()
         self._pause_event = asyncio.Event()
         self._pause_event.set()  # Not paused initially
         self._cancelled = False
@@ -74,6 +106,14 @@ class OutreachService:
                 await self._notify_callback(event_type, **kwargs)
             except Exception as e:
                 logger.error(f"Notify callback error: {e}")
+
+    def _save(self) -> None:
+        """Сохраняет текущее состояние кампании на диск."""
+        if self._campaign:
+            try:
+                self._storage.save(self._campaign)
+            except Exception as e:
+                logger.error(f"Failed to save campaign: {e}")
 
     # ─── Фаза 1: Рассылка первых сообщений ───
 
@@ -153,6 +193,7 @@ class OutreachService:
                 sent_today += 1
 
                 logger.info(f"Sent to {phone} ({recipient.company_name})")
+                self._save()
 
                 # Прогресс
                 if progress_callback:
@@ -178,6 +219,7 @@ class OutreachService:
         logger.info(f"Sending loop finished. cancelled={self._cancelled}, sent={campaign.sent_count}")
         if not self._cancelled:
             campaign.status = "listening"
+            self._save()
             await self._notify("sending_complete", campaign=campaign)
             logger.info("Campaign status: listening")
 
@@ -227,9 +269,69 @@ class OutreachService:
                 logger.debug(f"[LISTENER] sender {sender_id} not in recipients, ignoring")
                 return
 
-            if recipient.status in ("warm", "rejected", "no_response"):
-                logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
-                return  # Диалог завершён
+            if recipient.status in ("rejected", "no_response", "warm_confirmed"):
+                # Для warm_confirmed: только читаем и уведомляем
+                if recipient.status == "warm_confirmed":
+                    try:
+                        await event.mark_read()
+                    except Exception:
+                        pass
+                    recipient.conversation_history.append({
+                        "role": "user",
+                        "content": event.text,
+                    })
+                    recipient.last_message_at = datetime.now(timezone.utc)
+                    self._save()
+                    await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+                    logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {event.text[:80]}")
+                else:
+                    logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
+                return
+
+            # Warm-лид: AI отправляет финальное подтверждение, потом замолкает
+            if recipient.status == "warm":
+                try:
+                    await event.mark_read()
+                except Exception:
+                    pass
+                recipient.conversation_history.append({
+                    "role": "user",
+                    "content": event.text,
+                })
+                recipient.last_message_at = datetime.now(timezone.utc)
+
+                # AI генерирует финальный ответ-подтверждение
+                ai_response = None
+                try:
+                    ai_response = await self.ai_engine.generate_response(
+                        recipient.conversation_history,
+                        self._campaign.system_prompt or None,
+                        company_context=self._build_company_context(recipient),
+                    )
+                except Exception as e:
+                    logger.error(f"[LISTENER] AI error for warm confirm: {e}")
+
+                if ai_response:
+                    reply_text = ai_response["reply"]
+                    char_delay = len(reply_text) * random.uniform(0.05, 0.08)
+                    base_delay = random.uniform(2.0, 4.0)
+                    delay = min(base_delay + char_delay, 45.0)
+                    async with client.action(sender_id, 'typing'):
+                        await asyncio.sleep(delay)
+                    try:
+                        await client.send_message(sender_id, reply_text)
+                        recipient.conversation_history.append({
+                            "role": "assistant",
+                            "content": reply_text,
+                        })
+                    except Exception as e:
+                        logger.error(f"Error sending warm confirm: {e}")
+
+                recipient.status = "warm_confirmed"
+                self._save()
+                await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+                logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed, AI sent final reply")
+                return
 
             logger.info(f"[LISTENER] Processing message from {sender_id} ({recipient.company_name}): {event.text[:80]}")
 
@@ -303,6 +405,7 @@ class OutreachService:
                     self._campaign.rejected_count += 1
 
                 logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
+                self._save()
 
             except FloodWaitError as e:
                 logger.warning(f"FloodWait on reply: {e.seconds}s")
@@ -317,7 +420,7 @@ class OutreachService:
     # ─── Фаза 2b: Follow-up при игноре ───
 
     async def _send_cat_sticker(self, client, user_id: int) -> None:
-        """Отправляет случайный стикер с котиком."""
+        """Отправляет конкретный стикер из пака."""
         try:
             sticker_set = await client(GetStickerSetRequest(
                 stickerset=InputStickerSetShortName(
@@ -326,9 +429,14 @@ class OutreachService:
                 hash=0
             ))
             if sticker_set.documents:
-                sticker = random.choice(sticker_set.documents)
+                idx = settings.outreach_sticker_index
+                if idx < len(sticker_set.documents):
+                    sticker = sticker_set.documents[idx]
+                else:
+                    sticker = sticker_set.documents[0]
+                    logger.warning(f"Sticker index {idx} out of range ({len(sticker_set.documents)}), using first")
                 await client.send_file(user_id, sticker)
-                logger.info(f"Sent cat sticker to {user_id}")
+                logger.info(f"Sent sticker #{idx + 1} to {user_id}")
         except Exception as e:
             logger.error(f"Failed to send sticker: {e}")
 
@@ -356,6 +464,9 @@ class OutreachService:
                 if recipient.status not in ("sent", "talking"):
                     continue
 
+                if not recipient.telegram_user_id:
+                    continue
+
                 if not recipient.last_message_at:
                     continue
 
@@ -368,10 +479,14 @@ class OutreachService:
                     if recipient.ping_count == 0:
                         # День 2: персонализированное сообщение
                         name = extract_first_name(recipient.contact_name) if recipient.contact_name else ""
+                        gender = detect_gender(recipient.contact_name) if recipient.contact_name else "unknown"
                         if name:
-                            text = f"{name}, подниму сообщение)) возможно, потерялось 🌷"
+                            if gender == "female":
+                                text = f"{name}, подниму сообщение)) возможно, потерялось 🌷"
+                            else:
+                                text = f"{name}, подниму сообщение)) возможно, потерялось"
                         else:
-                            text = "Подниму сообщение)) возможно, потерялось 🌷"
+                            text = "Подниму сообщение)) возможно, потерялось"
 
                         await client.send_message(recipient.telegram_user_id, text)
                         recipient.conversation_history.append({
@@ -381,6 +496,7 @@ class OutreachService:
                         recipient.last_message_at = now
                         recipient.ping_count = 1
                         logger.info(f"Follow-up day 2 to {recipient.company_name}")
+                        self._save()
 
                     elif recipient.ping_count == 1:
                         # День 3: стикер с котиком
@@ -388,9 +504,11 @@ class OutreachService:
                         recipient.last_message_at = now
                         recipient.ping_count = 2
                         logger.info(f"Follow-up day 3 (sticker) to {recipient.company_name}")
+                        self._save()
 
                     elif recipient.ping_count >= 2:
                         recipient.status = "no_response"
+                        self._save()
                         continue
 
                     await asyncio.sleep(random.uniform(10, 30))
@@ -460,12 +578,14 @@ class OutreachService:
         self._pause_event.clear()
         if self._campaign:
             self._campaign.status = "paused"
+            self._save()
 
     def resume(self) -> None:
         """Возобновляет кампанию."""
         self._pause_event.set()
         if self._campaign:
             self._campaign.status = "listening" if self._campaign.sent_count > 0 else "sending"
+            self._save()
 
     async def cancel(self) -> None:
         """Отменяет кампанию."""
@@ -488,6 +608,7 @@ class OutreachService:
 
         if self._campaign:
             self._campaign.status = "cancelled"
+            self._storage.delete(self._campaign.user_id)
 
     async def _cleanup_contacts(self) -> None:
         """Удаляет добавленные контакты."""

@@ -6,7 +6,7 @@ import random
 import re
 from typing import Optional
 from urllib.parse import quote
-
+from bot.utils.config import settings
 from bot.services.scrapper.models import ScrapedCompany, ScrapperSource
 from bot.services.scrapper.query_parser import ParsedQuery
 
@@ -180,7 +180,6 @@ class YandexMapsScrapper:
 
             # Собираем результаты со скроллом
             seen_names = set()
-            max_scrolls = 50
             scroll_count = 0
             no_new_results_count = 0
 
@@ -212,7 +211,7 @@ class YandexMapsScrapper:
             except Exception as e:
                 logger.warning(f"DOM debug error: {e}")
 
-            while len(companies) < self.max_results and scroll_count < max_scrolls:
+            while len(companies) < self.max_results:
                 prev_count = len(companies)
 
                 # Извлекаем данные из DOM

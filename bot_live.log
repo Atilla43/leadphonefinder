@@ -525,3 +525,968 @@
 2026-03-12 21:11:55,596 - bot.services.scrapper.orchestrator - INFO - Scraping completed: 200 companies, duration: 654.2s
 2026-03-12 21:17:04,805 - __main__ - INFO - Bot stopped
 2026-03-12 21:17:04,805 - __main__ - INFO - Bot stopped by user
+2026-03-12 21:25:24,044 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-12 21:25:24,589 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-12 21:25:24,589 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-12 21:25:56,080 - bot.services.scrapper.orchestrator - INFO - Parsed query: рестораны in Москва
+2026-03-12 21:25:56,961 - bot.services.scrapper.yandex_maps - INFO - Browser initialized for Yandex Maps
+2026-03-12 21:25:57,165 - bot.services.scrapper.yandex_maps - INFO - Trying URL: https://yandex.ru/maps/?text=%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD%D1%8B%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0
+2026-03-12 21:26:01,875 - bot.services.scrapper.yandex_maps - INFO - Loading Yandex Maps: https://yandex.ru/maps/?text=%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD%D1%8B%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0
+2026-03-12 21:26:07,126 - bot.services.scrapper.yandex_maps - ERROR - Yandex CAPTCHA detected!
+2026-03-12 21:26:07,521 - bot.services.scrapper.yandex_maps - INFO - Browser closed
+2026-03-12 21:26:07,521 - bot.services.scrapper.orchestrator - INFO - Yandex: found 0 companies
+2026-03-12 21:26:29,339 - __main__ - INFO - Bot stopped
+2026-03-12 21:26:29,339 - __main__ - INFO - Bot stopped by user
+2026-03-12 21:26:34,566 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-12 21:26:36,007 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-12 21:26:36,008 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-12 21:26:55,641 - bot.services.scrapper.orchestrator - INFO - Parsed query: рестораны in Москва
+2026-03-12 21:26:56,421 - bot.services.scrapper.yandex_maps - INFO - Browser initialized for Yandex Maps
+2026-03-12 21:26:56,589 - bot.services.scrapper.yandex_maps - INFO - Scraping Yandex Maps: https://yandex.com/maps/?text=%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD%D1%8B%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0
+2026-03-12 21:27:12,720 - bot.services.scrapper.yandex_maps - INFO - Final URL: https://yandex.com/maps/213/moscow/search/%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD%D1%8B%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0/?ll=37.616578%2C55.753817&sll=37.616578%2C55.753806&z=13
+2026-03-12 21:27:12,737 - bot.services.scrapper.yandex_maps - INFO - DOM debug: orgLinks=20, scrollable containers: 2
+2026-03-12 21:27:12,737 - bot.services.scrapper.yandex_maps - INFO -   Scrollable: <YMAPS> class='ymaps3x0--map' scrollH=2160 clientH=1080 children=2
+2026-03-12 21:27:12,738 - bot.services.scrapper.yandex_maps - INFO -   Scrollable: <DIV> class='scroll__container' scrollH=5585 clientH=1016 children=3
+2026-03-12 21:27:12,747 - bot.services.scrapper.yandex_maps - INFO - Found 5 companies after scroll 0
+2026-03-12 21:27:17,268 - bot.services.scrapper.yandex_maps - INFO - Found 6 companies after scroll 1
+2026-03-12 21:27:21,810 - bot.services.scrapper.yandex_maps - INFO - Found 11 companies after scroll 2
+2026-03-12 21:27:30,908 - bot.services.scrapper.yandex_maps - INFO - Found 19 companies after scroll 4
+2026-03-12 21:27:35,444 - bot.services.scrapper.yandex_maps - INFO - Found 20 companies after scroll 5
+2026-03-12 21:27:39,993 - bot.services.scrapper.yandex_maps - INFO - Found 27 companies after scroll 6
+2026-03-12 21:27:44,538 - bot.services.scrapper.yandex_maps - INFO - Found 29 companies after scroll 7
+2026-03-12 21:27:49,092 - bot.services.scrapper.yandex_maps - INFO - Found 35 companies after scroll 8
+2026-03-12 21:27:53,634 - bot.services.scrapper.yandex_maps - INFO - Found 37 companies after scroll 9
+2026-03-12 21:27:58,181 - bot.services.scrapper.yandex_maps - INFO - Found 42 companies after scroll 10
+2026-03-12 21:28:02,728 - bot.services.scrapper.yandex_maps - INFO - Found 43 companies after scroll 11
+2026-03-12 21:28:07,267 - bot.services.scrapper.yandex_maps - INFO - Found 44 companies after scroll 12
+2026-03-12 21:28:11,808 - bot.services.scrapper.yandex_maps - INFO - Found 51 companies after scroll 13
+2026-03-12 21:28:16,350 - bot.services.scrapper.yandex_maps - INFO - Found 52 companies after scroll 14
+2026-03-12 21:28:20,907 - bot.services.scrapper.yandex_maps - INFO - Found 60 companies after scroll 15
+2026-03-12 21:28:29,985 - bot.services.scrapper.yandex_maps - INFO - Found 65 companies after scroll 17
+2026-03-12 21:28:34,515 - bot.services.scrapper.yandex_maps - INFO - Found 67 companies after scroll 18
+2026-03-12 21:28:39,051 - bot.services.scrapper.yandex_maps - INFO - Found 73 companies after scroll 19
+2026-03-12 21:28:48,170 - bot.services.scrapper.yandex_maps - INFO - Found 76 companies after scroll 21
+2026-03-12 21:28:52,721 - bot.services.scrapper.yandex_maps - INFO - Found 77 companies after scroll 22
+2026-03-12 21:28:57,257 - bot.services.scrapper.yandex_maps - INFO - Found 83 companies after scroll 23
+2026-03-12 21:29:01,823 - bot.services.scrapper.yandex_maps - INFO - Found 85 companies after scroll 24
+2026-03-12 21:29:06,382 - bot.services.scrapper.yandex_maps - INFO - Found 91 companies after scroll 25
+2026-03-12 21:29:15,503 - bot.services.scrapper.yandex_maps - INFO - Found 96 companies after scroll 27
+2026-03-12 21:29:20,071 - bot.services.scrapper.yandex_maps - INFO - Found 97 companies after scroll 28
+2026-03-12 21:29:24,634 - bot.services.scrapper.yandex_maps - INFO - Found 103 companies after scroll 29
+2026-03-12 21:29:29,196 - bot.services.scrapper.yandex_maps - INFO - Found 104 companies after scroll 30
+2026-03-12 21:29:33,756 - bot.services.scrapper.yandex_maps - INFO - Found 109 companies after scroll 31
+2026-03-12 21:29:38,325 - bot.services.scrapper.yandex_maps - INFO - Found 111 companies after scroll 32
+2026-03-12 21:29:42,902 - bot.services.scrapper.yandex_maps - INFO - Found 116 companies after scroll 33
+2026-03-12 21:29:47,465 - bot.services.scrapper.yandex_maps - INFO - Found 120 companies after scroll 34
+2026-03-12 21:29:52,035 - bot.services.scrapper.yandex_maps - INFO - Found 124 companies after scroll 35
+2026-03-12 21:29:56,584 - bot.services.scrapper.yandex_maps - INFO - Found 128 companies after scroll 36
+2026-03-12 21:30:01,153 - bot.services.scrapper.yandex_maps - INFO - Found 132 companies after scroll 37
+2026-03-12 21:30:05,718 - bot.services.scrapper.yandex_maps - INFO - Found 135 companies after scroll 38
+2026-03-12 21:30:10,288 - bot.services.scrapper.yandex_maps - INFO - Found 138 companies after scroll 39
+2026-03-12 21:30:14,854 - bot.services.scrapper.yandex_maps - INFO - Found 141 companies after scroll 40
+2026-03-12 21:30:19,416 - bot.services.scrapper.yandex_maps - INFO - Found 144 companies after scroll 41
+2026-03-12 21:30:23,995 - bot.services.scrapper.yandex_maps - INFO - Found 151 companies after scroll 42
+2026-03-12 21:30:28,559 - bot.services.scrapper.yandex_maps - INFO - Found 152 companies after scroll 43
+2026-03-12 21:30:33,123 - bot.services.scrapper.yandex_maps - INFO - Found 158 companies after scroll 44
+2026-03-12 21:30:37,693 - bot.services.scrapper.yandex_maps - INFO - Found 160 companies after scroll 45
+2026-03-12 21:30:42,272 - bot.services.scrapper.yandex_maps - INFO - Found 166 companies after scroll 46
+2026-03-12 21:30:46,922 - bot.services.scrapper.yandex_maps - INFO - Found 167 companies after scroll 47
+2026-03-12 21:30:51,486 - bot.services.scrapper.yandex_maps - INFO - Found 168 companies after scroll 48
+2026-03-12 21:30:56,056 - bot.services.scrapper.yandex_maps - INFO - Found 174 companies after scroll 49
+2026-03-12 21:31:00,600 - bot.services.scrapper.yandex_maps - INFO - Scraped 174 companies from Yandex Maps
+2026-03-12 21:31:01,001 - bot.services.scrapper.yandex_maps - INFO - Browser closed
+2026-03-12 21:31:01,001 - bot.services.scrapper.orchestrator - INFO - Yandex: found 174 companies
+2026-03-12 21:31:01,766 - bot.services.scrapper.deduplicator - INFO - Deduplicated: 174 -> 173 (removed 1 duplicates)
+2026-03-12 21:31:01,766 - bot.services.scrapper.orchestrator - INFO - After deduplication: 173 unique
+2026-03-12 21:31:01,935 - bot.services.scrapper.inn_finder - INFO - INN enrichment [1/173]: Сахалин
+2026-03-12 21:31:02,954 - bot.services.scrapper.inn_finder - INFO - INN enrichment [2/173]: Smoke BBQ
+2026-03-12 21:31:04,930 - bot.services.scrapper.inn_finder - INFO - INN enrichment [3/173]: Кафе Пушкинъ
+2026-03-12 21:31:06,464 - bot.services.scrapper.inn_finder - INFO - INN enrichment [4/173]: Клёво
+2026-03-12 21:31:07,125 - bot.services.scrapper.inn_finder - INFO - INN enrichment [5/173]: Рыба моя
+2026-03-12 21:31:07,773 - bot.services.scrapper.inn_finder - INFO - INN enrichment [6/173]: Тануки
+2026-03-12 21:31:08,416 - bot.services.scrapper.inn_finder - INFO - INN enrichment [7/173]: Шон О'Нилл
+2026-03-12 21:31:09,837 - bot.services.scrapper.inn_finder - INFO - INN enrichment [8/173]: Чайхона № 1
+2026-03-12 21:31:10,488 - bot.services.scrapper.inn_finder - INFO - INN enrichment [9/173]: True Cost
+2026-03-12 21:31:11,148 - bot.services.scrapper.inn_finder - INFO - INN enrichment [10/173]: Хаос - Гастро Особняк
+2026-03-12 21:31:12,548 - bot.services.scrapper.inn_finder - INFO - INN enrichment [11/173]: Гудман
+2026-03-12 21:31:13,222 - bot.services.scrapper.inn_finder - INFO - INN enrichment [12/173]: Tehnikum
+2026-03-12 21:31:13,945 - bot.services.scrapper.inn_finder - INFO - INN enrichment [13/173]: Горыныч
+2026-03-12 21:31:14,597 - bot.services.scrapper.inn_finder - INFO - INN enrichment [14/173]: White Rabbit
+2026-03-12 21:31:15,293 - bot.services.scrapper.inn_finder - INFO - INN enrichment [15/173]: Зарядье
+2026-03-12 21:31:16,047 - bot.services.scrapper.inn_finder - INFO - INN enrichment [16/173]: Марчеллис
+2026-03-12 21:31:17,474 - bot.services.scrapper.inn_finder - INFO - INN enrichment [17/173]: Савва
+2026-03-12 21:31:18,157 - bot.services.scrapper.inn_finder - INFO - INN enrichment [18/173]: Белуга
+2026-03-12 21:31:18,894 - bot.services.scrapper.inn_finder - INFO - INN enrichment [19/173]: Стейк Хаус Бутчер
+2026-03-12 21:31:20,307 - bot.services.scrapper.inn_finder - INFO - INN enrichment [20/173]: Северяне
+2026-03-12 21:31:20,955 - bot.services.scrapper.inn_finder - INFO - INN enrichment [21/173]: Maya
+2026-03-12 21:31:21,659 - bot.services.scrapper.inn_finder - INFO - INN enrichment [22/173]: Krasota
+2026-03-12 21:31:22,373 - bot.services.scrapper.inn_finder - INFO - INN enrichment [23/173]: Легенда
+2026-03-12 21:31:23,834 - bot.services.scrapper.inn_finder - INFO - INN enrichment [24/173]: J'Pan
+2026-03-12 21:31:25,205 - bot.services.scrapper.inn_finder - INFO - INN enrichment [25/173]: Рыбный базар
+2026-03-12 21:31:25,888 - bot.services.scrapper.inn_finder - INFO - INN enrichment [26/173]: La Bottega Siciliana
+2026-03-12 21:31:27,312 - bot.services.scrapper.inn_finder - INFO - INN enrichment [27/173]: Atlantica Bistro
+2026-03-12 21:31:28,756 - bot.services.scrapper.inn_finder - INFO - INN enrichment [28/173]: Калинка на Неглинке
+2026-03-12 21:31:30,216 - bot.services.scrapper.inn_finder - INFO - INN enrichment [29/173]: 1870 Abrau Durso
+2026-03-12 21:31:32,195 - bot.services.scrapper.inn_finder - INFO - INN enrichment [30/173]: Waiters
+2026-03-12 21:31:34,010 - bot.services.scrapper.inn_finder - INFO - INN enrichment [31/173]: We Cidreria
+2026-03-12 21:31:35,637 - bot.services.scrapper.inn_finder - INFO - INN enrichment [32/173]: Тхали и карри
+2026-03-12 21:31:36,271 - bot.services.scrapper.inn_finder - INFO - INN enrichment [33/173]: Goodman Prime
+2026-03-12 21:31:37,647 - bot.services.scrapper.inn_finder - INFO - INN enrichment [34/173]: Chang
+2026-03-12 21:31:38,301 - bot.services.scrapper.inn_finder - INFO - INN enrichment [35/173]: Айна
+2026-03-12 21:31:39,753 - bot.services.scrapper.inn_finder - INFO - INN enrichment [36/173]: Костёр Сити
+2026-03-12 21:31:40,768 - bot.services.scrapper.inn_finder - INFO - INN enrichment [37/173]: Taksim
+2026-03-12 21:31:41,490 - bot.services.scrapper.inn_finder - INFO - INN enrichment [38/173]: Таверна Под Ведьмачьим Мечом
+2026-03-12 21:31:42,962 - bot.services.scrapper.inn_finder - INFO - INN enrichment [39/173]: Bosco
+2026-03-12 21:31:44,405 - bot.services.scrapper.inn_finder - INFO - INN enrichment [40/173]: Сыроварня
+2026-03-12 21:31:45,089 - bot.services.scrapper.inn_finder - INFO - INN enrichment [41/173]: Patriki
+2026-03-12 21:31:45,738 - bot.services.scrapper.inn_finder - INFO - INN enrichment [42/173]: Novikov
+2026-03-12 21:31:46,877 - bot.services.scrapper.inn_finder - INFO - INN enrichment [43/173]: Л. Е. С.
+2026-03-12 21:31:47,557 - bot.services.scrapper.inn_finder - INFO - INN enrichment [44/173]: Loro
+2026-03-12 21:31:48,914 - bot.services.scrapper.inn_finder - INFO - INN enrichment [45/173]: Пафос
+2026-03-12 21:31:49,562 - bot.services.scrapper.inn_finder - INFO - INN enrichment [46/173]: Арома
+2026-03-12 21:31:51,047 - bot.services.scrapper.inn_finder - INFO - INN enrichment [47/173]: Чудо-Юдо
+2026-03-12 21:31:52,493 - bot.services.scrapper.inn_finder - INFO - INN enrichment [48/173]: Старик Хинкалыч
+2026-03-12 21:31:53,893 - bot.services.scrapper.inn_finder - INFO - INN enrichment [49/173]: Grand Cru
+2026-03-12 21:31:55,390 - bot.services.scrapper.inn_finder - INFO - INN enrichment [50/173]: Романико
+2026-03-12 21:31:56,035 - bot.services.scrapper.inn_finder - INFO - INN enrichment [51/173]: Dacha
+2026-03-12 21:31:56,702 - bot.services.scrapper.inn_finder - INFO - INN enrichment [52/173]: Sangre Fresca
+2026-03-12 21:31:58,141 - bot.services.scrapper.inn_finder - INFO - INN enrichment [53/173]: Lui
+2026-03-12 21:31:59,592 - bot.services.scrapper.inn_finder - INFO - INN enrichment [54/173]: Pasta Queen
+2026-03-12 21:32:01,326 - bot.services.scrapper.inn_finder - INFO - INN enrichment [55/173]: Svoy
+2026-03-12 21:32:02,048 - bot.services.scrapper.inn_finder - INFO - INN enrichment [56/173]: El Pimpi
+2026-03-12 21:32:03,615 - bot.services.scrapper.inn_finder - INFO - INN enrichment [57/173]: Chō
+2026-03-12 21:32:05,042 - bot.services.scrapper.inn_finder - INFO - INN enrichment [58/173]: Arrurru
+2026-03-12 21:32:06,423 - bot.services.scrapper.inn_finder - INFO - INN enrichment [59/173]: Анна
+2026-03-12 21:32:07,097 - bot.services.scrapper.inn_finder - INFO - INN enrichment [60/173]: Brasserie Lambic
+2026-03-12 21:32:08,544 - bot.services.scrapper.inn_finder - INFO - INN enrichment [61/173]: Pro. Хинкали by Novikov
+2026-03-12 21:32:10,006 - bot.services.scrapper.inn_finder - INFO - INN enrichment [62/173]: Padron
+2026-03-12 21:32:11,502 - bot.services.scrapper.inn_finder - INFO - INN enrichment [63/173]: Saray
+2026-03-12 21:32:12,151 - bot.services.scrapper.inn_finder - INFO - INN enrichment [64/173]: Tandoor
+2026-03-12 21:32:13,590 - bot.services.scrapper.inn_finder - INFO - INN enrichment [65/173]: Alaska
+2026-03-12 21:32:15,407 - bot.services.scrapper.inn_finder - INFO - INN enrichment [66/173]: Вилла Паста
+2026-03-12 21:32:16,871 - bot.services.scrapper.inn_finder - INFO - INN enrichment [67/173]: Моллюска
+2026-03-12 21:32:18,284 - bot.services.scrapper.inn_finder - INFO - INN enrichment [68/173]: Eshak
+2026-03-12 21:32:19,709 - bot.services.scrapper.inn_finder - INFO - INN enrichment [69/173]: Il Matto
+2026-03-12 21:32:21,185 - bot.services.scrapper.inn_finder - INFO - INN enrichment [70/173]: Brasserie Кузнецкий Мост
+2026-03-12 21:32:22,709 - bot.services.scrapper.inn_finder - INFO - INN enrichment [71/173]: Wu Shu
+2026-03-12 21:32:24,269 - bot.services.scrapper.inn_finder - INFO - INN enrichment [72/173]: Лолита
+2026-03-12 21:32:25,791 - bot.services.scrapper.inn_finder - INFO - INN enrichment [73/173]: Лапшичка от Сергея Орлова
+2026-03-12 21:32:27,207 - bot.services.scrapper.inn_finder - INFO - INN enrichment [74/173]: Curry
+2026-03-12 21:32:28,663 - bot.services.scrapper.inn_finder - INFO - INN enrichment [75/173]: Sage
+2026-03-12 21:32:30,110 - bot.services.scrapper.inn_finder - INFO - INN enrichment [76/173]: Чихо
+2026-03-12 21:32:31,490 - bot.services.scrapper.inn_finder - INFO - INN enrichment [77/173]: Килим
+2026-03-12 21:32:32,883 - bot.services.scrapper.inn_finder - INFO - INN enrichment [78/173]: Честная рыба
+2026-03-12 21:32:34,369 - bot.services.scrapper.inn_finder - INFO - INN enrichment [79/173]: Метрополь
+2026-03-12 21:32:35,782 - bot.services.scrapper.inn_finder - INFO - INN enrichment [80/173]: Сэлэнгэ
+2026-03-12 21:32:37,230 - bot.services.scrapper.inn_finder - INFO - INN enrichment [81/173]: Osteria Mario
+2026-03-12 21:32:38,662 - bot.services.scrapper.inn_finder - INFO - INN enrichment [82/173]: Ra'men
+2026-03-12 21:32:40,591 - bot.services.scrapper.inn_finder - INFO - INN enrichment [83/173]: Boscorubar
+2026-03-12 21:32:41,970 - bot.services.scrapper.inn_finder - INFO - INN enrichment [84/173]: Erwin Павильон
+2026-03-12 21:32:43,710 - bot.services.scrapper.inn_finder - INFO - INN enrichment [85/173]: Askaneli грузинское бистро
+2026-03-12 21:32:45,159 - bot.services.scrapper.inn_finder - INFO - INN enrichment [86/173]: Osteria by Mandy's
+2026-03-12 21:32:46,558 - bot.services.scrapper.inn_finder - INFO - INN enrichment [87/173]: Ra'men Land
+2026-03-12 21:32:47,267 - bot.services.scrapper.inn_finder - INFO - INN enrichment [88/173]: iL Патио
+2026-03-12 21:32:48,744 - bot.services.scrapper.inn_finder - INFO - INN enrichment [89/173]: Порта Росса
+2026-03-12 21:32:50,192 - bot.services.scrapper.inn_finder - INFO - INN enrichment [90/173]: Pro. Хинкали
+2026-03-12 21:32:51,695 - bot.services.scrapper.inn_finder - INFO - INN enrichment [91/173]: The Бык
+2026-03-12 21:32:53,149 - bot.services.scrapper.inn_finder - INFO - INN enrichment [92/173]: Тре Санти
+2026-03-12 21:32:53,800 - bot.services.scrapper.inn_finder - INFO - INN enrichment [93/173]: МазалТов
+2026-03-12 21:32:55,214 - bot.services.scrapper.inn_finder - INFO - INN enrichment [94/173]: Квартира 44
+2026-03-12 21:32:56,721 - bot.services.scrapper.inn_finder - INFO - INN enrichment [95/173]: Boston Seafood & Bar
+2026-03-12 21:32:58,192 - bot.services.scrapper.inn_finder - INFO - INN enrichment [96/173]: Unica
+2026-03-12 21:32:59,715 - bot.services.scrapper.inn_finder - INFO - INN enrichment [97/173]: Панорама
+2026-03-12 21:33:00,370 - bot.services.scrapper.inn_finder - INFO - INN enrichment [98/173]: Вареничная № 1
+2026-03-12 21:33:01,807 - bot.services.scrapper.inn_finder - INFO - INN enrichment [99/173]: Kislovsky
+2026-03-12 21:33:02,480 - bot.services.scrapper.inn_finder - INFO - INN enrichment [100/173]: 0.75 please Moscow
+2026-03-12 21:33:04,047 - bot.services.scrapper.inn_finder - INFO - INN enrichment [101/173]: Генацвале
+2026-03-12 21:33:05,771 - bot.services.scrapper.inn_finder - INFO - INN enrichment [102/173]: Remy Kitchen Bakery
+2026-03-12 21:33:07,171 - bot.services.scrapper.inn_finder - INFO - INN enrichment [103/173]: Fullmoon
+2026-03-12 21:33:08,608 - bot.services.scrapper.inn_finder - INFO - INN enrichment [104/173]: Luma
+2026-03-12 21:33:10,014 - bot.services.scrapper.inn_finder - INFO - INN enrichment [105/173]: Nene
+2026-03-12 21:33:11,728 - bot.services.scrapper.inn_finder - INFO - INN enrichment [106/173]: Штейгер
+2026-03-12 21:33:13,128 - bot.services.scrapper.inn_finder - INFO - INN enrichment [107/173]: Il pizzaiolo
+2026-03-12 21:33:14,744 - bot.services.scrapper.inn_finder - INFO - INN enrichment [108/173]: Krombacher BeerKitchen
+2026-03-12 21:33:16,160 - bot.services.scrapper.inn_finder - INFO - INN enrichment [109/173]: Myst
+2026-03-12 21:33:17,614 - bot.services.scrapper.inn_finder - INFO - INN enrichment [110/173]: Miss you
+2026-03-12 21:33:19,144 - bot.services.scrapper.inn_finder - INFO - INN enrichment [111/173]: Megobari
+2026-03-12 21:33:20,560 - bot.services.scrapper.inn_finder - INFO - INN enrichment [112/173]: Ikura izakaya nikkei by Wrf
+2026-03-12 21:33:21,954 - bot.services.scrapper.inn_finder - INFO - INN enrichment [113/173]: Зойка
+2026-03-12 21:33:23,399 - bot.services.scrapper.inn_finder - INFO - INN enrichment [114/173]: Rizz
+2026-03-12 21:33:24,896 - bot.services.scrapper.inn_finder - INFO - INN enrichment [115/173]: Phantom
+2026-03-12 21:33:26,425 - bot.services.scrapper.inn_finder - INFO - INN enrichment [116/173]: Лето Италия
+2026-03-12 21:33:27,820 - bot.services.scrapper.inn_finder - INFO - INN enrichment [117/173]: The бык
+2026-03-12 21:33:29,415 - bot.services.scrapper.inn_finder - INFO - INN enrichment [118/173]: Pomme Verte
+2026-03-12 21:33:30,864 - bot.services.scrapper.inn_finder - INFO - INN enrichment [119/173]: Paulaner
+2026-03-12 21:33:32,313 - bot.services.scrapper.inn_finder - INFO - INN enrichment [120/173]: Ikra
+2026-03-12 21:33:32,965 - bot.services.scrapper.inn_finder - INFO - INN enrichment [121/173]: DeLaura
+2026-03-12 21:33:34,448 - bot.services.scrapper.inn_finder - INFO - INN enrichment [122/173]: Старик и море
+2026-03-12 21:33:35,912 - bot.services.scrapper.inn_finder - INFO - INN enrichment [123/173]: Wine place Moscow
+2026-03-12 21:33:37,345 - bot.services.scrapper.inn_finder - INFO - INN enrichment [124/173]: Ramen Room
+2026-03-12 21:33:38,815 - bot.services.scrapper.inn_finder - INFO - INN enrichment [125/173]: Итальянец
+2026-03-12 21:33:40,317 - bot.services.scrapper.inn_finder - INFO - INN enrichment [126/173]: Everest Mansion
+2026-03-12 21:33:41,745 - bot.services.scrapper.inn_finder - INFO - INN enrichment [127/173]: Хинкальная by Ten
+2026-03-12 21:33:43,248 - bot.services.scrapper.inn_finder - INFO - INN enrichment [128/173]: Babacha
+2026-03-12 21:33:43,899 - bot.services.scrapper.inn_finder - INFO - INN enrichment [129/173]: Casa Agave
+2026-03-12 21:33:45,448 - bot.services.scrapper.inn_finder - INFO - INN enrichment [130/173]: Signature Art
+2026-03-12 21:33:46,917 - bot.services.scrapper.inn_finder - INFO - INN enrichment [131/173]: Fontana. Римский стритфуд
+2026-03-12 21:33:48,372 - bot.services.scrapper.inn_finder - INFO - INN enrichment [132/173]: Старлайт Дайнер
+2026-03-12 21:33:49,772 - bot.services.scrapper.inn_finder - INFO - INN enrichment [133/173]: Capo
+2026-03-12 21:33:51,160 - bot.services.scrapper.inn_finder - INFO - INN enrichment [134/173]: Адам
+2026-03-12 21:33:51,808 - bot.services.scrapper.inn_finder - INFO - INN enrichment [135/173]: Поле
+2026-03-12 21:33:52,463 - bot.services.scrapper.inn_finder - INFO - INN enrichment [136/173]: 0.75 Please Moscow
+2026-03-12 21:33:53,897 - bot.services.scrapper.inn_finder - INFO - INN enrichment [137/173]: Navat
+2026-03-12 21:33:55,345 - bot.services.scrapper.inn_finder - INFO - INN enrichment [138/173]: Ava Bistro
+2026-03-12 21:33:56,961 - bot.services.scrapper.inn_finder - INFO - INN enrichment [139/173]: The Pivo
+2026-03-12 21:33:58,517 - bot.services.scrapper.inn_finder - INFO - INN enrichment [140/173]: El idilio
+2026-03-12 21:33:59,160 - bot.services.scrapper.inn_finder - INFO - INN enrichment [141/173]: Брюссель
+2026-03-12 21:34:00,990 - bot.services.scrapper.inn_finder - INFO - INN enrichment [142/173]: Look Up Cafe&Shop
+2026-03-12 21:34:02,503 - bot.services.scrapper.inn_finder - INFO - INN enrichment [143/173]: Leveldva
+2026-03-12 21:34:03,972 - bot.services.scrapper.inn_finder - INFO - INN enrichment [144/173]: Tatooine
+2026-03-12 21:34:05,400 - bot.services.scrapper.inn_finder - INFO - INN enrichment [145/173]: Uilliam’s
+2026-03-12 21:34:06,848 - bot.services.scrapper.inn_finder - INFO - INN enrichment [146/173]: Tsunami Sushi & Cocktails
+2026-03-12 21:34:08,378 - bot.services.scrapper.inn_finder - INFO - INN enrichment [147/173]: Реликт
+2026-03-12 21:34:10,021 - bot.services.scrapper.inn_finder - INFO - INN enrichment [148/173]: Varvarka 3
+2026-03-12 21:34:11,648 - bot.services.scrapper.inn_finder - INFO - INN enrichment [149/173]: Rico
+2026-03-12 21:34:13,048 - bot.services.scrapper.inn_finder - INFO - INN enrichment [150/173]: Лодочка
+2026-03-12 21:34:14,487 - bot.services.scrapper.inn_finder - INFO - INN enrichment [151/173]: Тото
+2026-03-12 21:34:15,992 - bot.services.scrapper.inn_finder - INFO - INN enrichment [152/173]: Avero mio
+2026-03-12 21:34:17,507 - bot.services.scrapper.inn_finder - INFO - INN enrichment [153/173]: Гастробар Графа
+2026-03-12 21:34:18,927 - bot.services.scrapper.inn_finder - INFO - INN enrichment [154/173]: Eva
+2026-03-12 21:34:19,607 - bot.services.scrapper.inn_finder - INFO - INN enrichment [155/173]: Спутник Бар-Ресторан
+2026-03-12 21:34:21,054 - bot.services.scrapper.inn_finder - INFO - INN enrichment [156/173]: Kiyomi
+2026-03-12 21:34:22,654 - bot.services.scrapper.inn_finder - INFO - INN enrichment [157/173]: Мастерская Вкуса
+2026-03-12 21:34:23,392 - bot.services.scrapper.inn_finder - INFO - INN enrichment [158/173]: Хуго
+2026-03-12 21:34:24,947 - bot.services.scrapper.inn_finder - INFO - INN enrichment [159/173]: Притча
+2026-03-12 21:34:26,395 - bot.services.scrapper.inn_finder - INFO - INN enrichment [160/173]: Грузинский ресторанчик
+2026-03-12 21:34:27,840 - bot.services.scrapper.inn_finder - INFO - INN enrichment [161/173]: Oshi Izakaya
+2026-03-12 21:34:29,285 - bot.services.scrapper.inn_finder - INFO - INN enrichment [162/173]: Self Edge
+2026-03-12 21:34:30,685 - bot.services.scrapper.inn_finder - INFO - INN enrichment [163/173]: I Like Wine
+2026-03-12 21:34:32,213 - bot.services.scrapper.inn_finder - INFO - INN enrichment [164/173]: Квартира с видом
+2026-03-12 21:34:33,691 - bot.services.scrapper.inn_finder - INFO - INN enrichment [165/173]: Машенька и Негрони
+2026-03-12 21:34:35,284 - bot.services.scrapper.inn_finder - INFO - INN enrichment [166/173]: Такахули
+2026-03-12 21:34:36,734 - bot.services.scrapper.inn_finder - INFO - INN enrichment [167/173]: Мзиани
+2026-03-12 21:34:38,149 - bot.services.scrapper.inn_finder - INFO - INN enrichment [168/173]: Фром
+2026-03-12 21:34:39,648 - bot.services.scrapper.inn_finder - INFO - INN enrichment [169/173]: Веранда 32.05
+2026-03-12 21:34:41,094 - bot.services.scrapper.inn_finder - INFO - INN enrichment [170/173]: Black Thai
+2026-03-12 21:34:42,528 - bot.services.scrapper.inn_finder - INFO - INN enrichment [171/173]: Meat_Coin
+2026-03-12 21:34:43,918 - bot.services.scrapper.inn_finder - INFO - INN enrichment [172/173]: РичБро
+2026-03-12 21:34:44,553 - bot.services.scrapper.inn_finder - INFO - INN enrichment [173/173]: Кривоколенный 9с3
+2026-03-12 21:34:46,003 - bot.services.scrapper.inn_finder - INFO - INN enrichment: found 134, not found 39
+2026-03-12 21:34:46,003 - bot.services.scrapper.orchestrator - INFO - INN: found 134, not found 39
+2026-03-12 21:34:46,911 - bot.services.scrapper.cache - INFO - Cached: рестораны_москва.json (173 companies)
+2026-03-12 21:34:46,912 - bot.services.scrapper.orchestrator - INFO - Scraping completed: 173 companies, duration: 470.5s
+2026-03-12 21:35:54,169 - __main__ - INFO - Bot stopped
+2026-03-12 21:35:54,171 - __main__ - INFO - Bot stopped by user
+2026-03-12 21:35:58,180 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-12 21:35:58,570 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-12 21:35:58,570 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-12 21:37:18,485 - bot.services.scrapper.orchestrator - INFO - Parsed query: фитнес in Москва
+2026-03-12 21:37:19,380 - bot.services.scrapper.yandex_maps - INFO - Browser initialized for Yandex Maps
+2026-03-12 21:37:19,556 - bot.services.scrapper.yandex_maps - INFO - Scraping Yandex Maps: https://yandex.com/maps/?text=%D1%84%D0%B8%D1%82%D0%BD%D0%B5%D1%81%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0
+2026-03-12 21:37:35,259 - bot.services.scrapper.yandex_maps - INFO - Final URL: https://yandex.com/maps/213/moscow/search/%D1%84%D0%B8%D1%82%D0%BD%D0%B5%D1%81%20%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0/?ll=37.646763%2C55.725146&sll=37.646763%2C55.724449&z=10
+2026-03-12 21:37:35,274 - bot.services.scrapper.yandex_maps - INFO - DOM debug: orgLinks=20, scrollable containers: 2
+2026-03-12 21:37:35,274 - bot.services.scrapper.yandex_maps - INFO -   Scrollable: <YMAPS> class='ymaps3x0--map' scrollH=2160 clientH=1080 children=2
+2026-03-12 21:37:35,274 - bot.services.scrapper.yandex_maps - INFO -   Scrollable: <DIV> class='scroll__container' scrollH=5405 clientH=1016 children=3
+2026-03-12 21:37:35,283 - bot.services.scrapper.yandex_maps - INFO - Found 5 companies after scroll 0
+2026-03-12 21:37:38,320 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:37:43,851 - bot.services.scrapper.yandex_maps - INFO - Found 6 companies after scroll 1
+2026-03-12 21:37:46,880 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:37:52,411 - bot.services.scrapper.yandex_maps - INFO - Found 11 companies after scroll 2
+2026-03-12 21:37:55,429 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:00,949 - bot.services.scrapper.yandex_maps - INFO - Found 13 companies after scroll 3
+2026-03-12 21:38:03,964 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:09,499 - bot.services.scrapper.yandex_maps - INFO - Found 19 companies after scroll 4
+2026-03-12 21:38:12,520 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:21,065 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:26,593 - bot.services.scrapper.yandex_maps - INFO - Found 23 companies after scroll 6
+2026-03-12 21:38:29,608 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:38,149 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:43,689 - bot.services.scrapper.yandex_maps - INFO - Found 29 companies after scroll 8
+2026-03-12 21:38:46,730 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:38:52,257 - bot.services.scrapper.yandex_maps - INFO - Found 30 companies after scroll 9
+2026-03-12 21:38:55,281 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:00,801 - bot.services.scrapper.yandex_maps - INFO - Found 36 companies after scroll 10
+2026-03-12 21:39:03,832 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:09,367 - bot.services.scrapper.yandex_maps - INFO - Found 37 companies after scroll 11
+2026-03-12 21:39:12,396 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:17,942 - bot.services.scrapper.yandex_maps - INFO - Found 40 companies after scroll 12
+2026-03-12 21:39:20,973 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:26,502 - bot.services.scrapper.yandex_maps - INFO - Found 42 companies after scroll 13
+2026-03-12 21:39:29,511 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:35,059 - bot.services.scrapper.yandex_maps - INFO - Found 45 companies after scroll 14
+2026-03-12 21:39:38,093 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:43,630 - bot.services.scrapper.yandex_maps - INFO - Found 47 companies after scroll 15
+2026-03-12 21:39:46,661 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:39:52,193 - bot.services.scrapper.yandex_maps - INFO - Found 48 companies after scroll 16
+2026-03-12 21:39:55,212 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:00,760 - bot.services.scrapper.yandex_maps - INFO - Found 52 companies after scroll 17
+2026-03-12 21:40:03,795 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:09,346 - bot.services.scrapper.yandex_maps - INFO - Found 53 companies after scroll 18
+2026-03-12 21:40:12,366 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:17,909 - bot.services.scrapper.yandex_maps - INFO - Found 58 companies after scroll 19
+2026-03-12 21:40:20,941 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:26,483 - bot.services.scrapper.yandex_maps - INFO - Found 60 companies after scroll 20
+2026-03-12 21:40:29,508 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:35,056 - bot.services.scrapper.yandex_maps - INFO - Found 64 companies after scroll 21
+2026-03-12 21:40:38,084 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:43,609 - bot.services.scrapper.yandex_maps - INFO - Found 65 companies after scroll 22
+2026-03-12 21:40:46,637 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:40:52,179 - bot.services.scrapper.yandex_maps - INFO - Found 69 companies after scroll 23
+2026-03-12 21:40:55,215 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:00,752 - bot.services.scrapper.yandex_maps - INFO - Found 70 companies after scroll 24
+2026-03-12 21:41:03,776 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:09,318 - bot.services.scrapper.yandex_maps - INFO - Found 74 companies after scroll 25
+2026-03-12 21:41:12,352 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:20,916 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:26,462 - bot.services.scrapper.yandex_maps - INFO - Found 78 companies after scroll 27
+2026-03-12 21:41:29,501 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:35,074 - bot.services.scrapper.yandex_maps - INFO - Found 79 companies after scroll 28
+2026-03-12 21:41:38,107 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:43,637 - bot.services.scrapper.yandex_maps - INFO - Found 82 companies after scroll 29
+2026-03-12 21:41:46,670 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:41:52,346 - bot.services.scrapper.yandex_maps - INFO - Found 83 companies after scroll 30
+2026-03-12 21:41:55,369 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:00,921 - bot.services.scrapper.yandex_maps - INFO - Found 87 companies after scroll 31
+2026-03-12 21:42:03,962 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:09,512 - bot.services.scrapper.yandex_maps - INFO - Found 90 companies after scroll 32
+2026-03-12 21:42:12,546 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:18,094 - bot.services.scrapper.yandex_maps - INFO - Found 91 companies after scroll 33
+2026-03-12 21:42:21,118 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:26,663 - bot.services.scrapper.yandex_maps - INFO - Found 95 companies after scroll 34
+2026-03-12 21:42:29,693 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:35,250 - bot.services.scrapper.yandex_maps - INFO - Found 97 companies after scroll 35
+2026-03-12 21:42:38,294 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:43,845 - bot.services.scrapper.yandex_maps - INFO - Found 103 companies after scroll 36
+2026-03-12 21:42:46,879 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:42:52,456 - bot.services.scrapper.yandex_maps - INFO - Found 106 companies after scroll 37
+2026-03-12 21:42:55,478 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:01,036 - bot.services.scrapper.yandex_maps - INFO - Found 108 companies after scroll 38
+2026-03-12 21:43:04,074 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:09,625 - bot.services.scrapper.yandex_maps - INFO - Found 109 companies after scroll 39
+2026-03-12 21:43:12,656 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:18,216 - bot.services.scrapper.yandex_maps - INFO - Found 111 companies after scroll 40
+2026-03-12 21:43:21,244 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:26,801 - bot.services.scrapper.yandex_maps - INFO - Found 112 companies after scroll 41
+2026-03-12 21:43:29,838 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:35,402 - bot.services.scrapper.yandex_maps - INFO - Found 119 companies after scroll 42
+2026-03-12 21:43:38,435 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:44,106 - bot.services.scrapper.yandex_maps - INFO - Found 120 companies after scroll 43
+2026-03-12 21:43:47,131 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:43:52,716 - bot.services.scrapper.yandex_maps - INFO - Found 122 companies after scroll 44
+2026-03-12 21:43:55,758 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:01,317 - bot.services.scrapper.yandex_maps - INFO - Found 125 companies after scroll 45
+2026-03-12 21:44:04,354 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:09,905 - bot.services.scrapper.yandex_maps - INFO - Found 128 companies after scroll 46
+2026-03-12 21:44:12,937 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:18,506 - bot.services.scrapper.yandex_maps - INFO - Found 133 companies after scroll 47
+2026-03-12 21:44:21,548 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:27,103 - bot.services.scrapper.yandex_maps - INFO - Found 134 companies after scroll 48
+2026-03-12 21:44:30,137 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:35,728 - bot.services.scrapper.yandex_maps - INFO - Found 138 companies after scroll 49
+2026-03-12 21:44:38,755 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:47,366 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:44:52,935 - bot.services.scrapper.yandex_maps - INFO - Found 140 companies after scroll 51
+2026-03-12 21:44:55,956 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:01,518 - bot.services.scrapper.yandex_maps - INFO - Found 141 companies after scroll 52
+2026-03-12 21:45:04,544 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:10,126 - bot.services.scrapper.yandex_maps - INFO - Found 145 companies after scroll 53
+2026-03-12 21:45:13,165 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:18,853 - bot.services.scrapper.yandex_maps - INFO - Found 146 companies after scroll 54
+2026-03-12 21:45:21,889 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:27,471 - bot.services.scrapper.yandex_maps - INFO - Found 151 companies after scroll 55
+2026-03-12 21:45:30,503 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:36,069 - bot.services.scrapper.yandex_maps - INFO - Found 152 companies after scroll 56
+2026-03-12 21:45:39,104 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:44,690 - bot.services.scrapper.yandex_maps - INFO - Found 158 companies after scroll 57
+2026-03-12 21:45:47,722 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:45:53,286 - bot.services.scrapper.yandex_maps - INFO - Found 159 companies after scroll 58
+2026-03-12 21:45:56,318 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:01,893 - bot.services.scrapper.yandex_maps - INFO - Found 165 companies after scroll 59
+2026-03-12 21:46:04,930 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:13,512 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:19,081 - bot.services.scrapper.yandex_maps - INFO - Found 168 companies after scroll 61
+2026-03-12 21:46:22,119 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:30,741 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:39,451 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:45,028 - bot.services.scrapper.yandex_maps - INFO - Found 170 companies after scroll 64
+2026-03-12 21:46:48,049 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:46:53,625 - bot.services.scrapper.yandex_maps - INFO - Found 173 companies after scroll 65
+2026-03-12 21:46:56,661 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:02,262 - bot.services.scrapper.yandex_maps - INFO - Found 177 companies after scroll 66
+2026-03-12 21:47:05,300 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:10,868 - bot.services.scrapper.yandex_maps - INFO - Found 179 companies after scroll 67
+2026-03-12 21:47:13,907 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:19,492 - bot.services.scrapper.yandex_maps - INFO - Found 186 companies after scroll 68
+2026-03-12 21:47:22,526 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:28,090 - bot.services.scrapper.yandex_maps - INFO - Found 188 companies after scroll 69
+2026-03-12 21:47:31,121 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:36,714 - bot.services.scrapper.yandex_maps - INFO - Found 193 companies after scroll 70
+2026-03-12 21:47:39,758 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:45,445 - bot.services.scrapper.yandex_maps - INFO - Found 194 companies after scroll 71
+2026-03-12 21:47:48,479 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:47:54,056 - bot.services.scrapper.yandex_maps - INFO - Found 199 companies after scroll 72
+2026-03-12 21:47:57,093 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:05,709 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:11,300 - bot.services.scrapper.yandex_maps - INFO - Found 204 companies after scroll 74
+2026-03-12 21:48:14,323 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:19,893 - bot.services.scrapper.yandex_maps - INFO - Found 205 companies after scroll 75
+2026-03-12 21:48:22,920 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:28,488 - bot.services.scrapper.yandex_maps - INFO - Found 209 companies after scroll 76
+2026-03-12 21:48:31,521 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:37,089 - bot.services.scrapper.yandex_maps - INFO - Found 211 companies after scroll 77
+2026-03-12 21:48:40,122 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:45,825 - bot.services.scrapper.yandex_maps - INFO - Found 215 companies after scroll 78
+2026-03-12 21:48:48,860 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:48:57,617 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:03,218 - bot.services.scrapper.yandex_maps - INFO - Found 218 companies after scroll 80
+2026-03-12 21:49:06,261 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:11,862 - bot.services.scrapper.yandex_maps - INFO - Found 222 companies after scroll 81
+2026-03-12 21:49:14,888 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:20,470 - bot.services.scrapper.yandex_maps - INFO - Found 228 companies after scroll 82
+2026-03-12 21:49:23,516 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:29,103 - bot.services.scrapper.yandex_maps - INFO - Found 232 companies after scroll 83
+2026-03-12 21:49:32,144 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:37,846 - bot.services.scrapper.yandex_maps - INFO - Found 234 companies after scroll 84
+2026-03-12 21:49:40,889 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:46,491 - bot.services.scrapper.yandex_maps - INFO - Found 238 companies after scroll 85
+2026-03-12 21:49:49,535 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:49:55,120 - bot.services.scrapper.yandex_maps - INFO - Found 240 companies after scroll 86
+2026-03-12 21:49:58,156 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:03,755 - bot.services.scrapper.yandex_maps - INFO - Found 242 companies after scroll 87
+2026-03-12 21:50:06,791 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:12,394 - bot.services.scrapper.yandex_maps - INFO - Found 244 companies after scroll 88
+2026-03-12 21:50:15,431 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:21,010 - bot.services.scrapper.yandex_maps - INFO - Found 247 companies after scroll 89
+2026-03-12 21:50:24,059 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:29,658 - bot.services.scrapper.yandex_maps - INFO - Found 252 companies after scroll 90
+2026-03-12 21:50:32,703 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:38,427 - bot.services.scrapper.yandex_maps - INFO - Found 258 companies after scroll 91
+2026-03-12 21:50:41,454 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:47,041 - bot.services.scrapper.yandex_maps - INFO - Found 261 companies after scroll 92
+2026-03-12 21:50:50,085 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:50:55,707 - bot.services.scrapper.yandex_maps - INFO - Found 266 companies after scroll 93
+2026-03-12 21:50:58,751 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:07,387 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:13,007 - bot.services.scrapper.yandex_maps - INFO - Found 268 companies after scroll 95
+2026-03-12 21:51:16,049 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:21,648 - bot.services.scrapper.yandex_maps - INFO - Found 271 companies after scroll 96
+2026-03-12 21:51:24,696 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:30,424 - bot.services.scrapper.yandex_maps - INFO - Found 276 companies after scroll 97
+2026-03-12 21:51:33,470 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:39,089 - bot.services.scrapper.yandex_maps - INFO - Found 280 companies after scroll 98
+2026-03-12 21:51:42,133 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:47,742 - bot.services.scrapper.yandex_maps - INFO - Found 282 companies after scroll 99
+2026-03-12 21:51:50,779 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:51:56,398 - bot.services.scrapper.yandex_maps - INFO - Found 285 companies after scroll 100
+2026-03-12 21:51:59,435 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:05,058 - bot.services.scrapper.yandex_maps - INFO - Found 288 companies after scroll 101
+2026-03-12 21:52:08,087 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:13,828 - bot.services.scrapper.yandex_maps - INFO - Found 291 companies after scroll 102
+2026-03-12 21:52:16,868 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:22,483 - bot.services.scrapper.yandex_maps - INFO - Found 296 companies after scroll 103
+2026-03-12 21:52:25,529 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:31,140 - bot.services.scrapper.yandex_maps - INFO - Found 299 companies after scroll 104
+2026-03-12 21:52:34,188 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:39,797 - bot.services.scrapper.yandex_maps - INFO - Found 300 companies after scroll 105
+2026-03-12 21:52:42,843 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:48,436 - bot.services.scrapper.yandex_maps - INFO - Found 301 companies after scroll 106
+2026-03-12 21:52:51,482 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:52:57,092 - bot.services.scrapper.yandex_maps - INFO - Found 303 companies after scroll 107
+2026-03-12 21:53:00,135 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:05,879 - bot.services.scrapper.yandex_maps - INFO - Found 310 companies after scroll 108
+2026-03-12 21:53:08,913 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:14,514 - bot.services.scrapper.yandex_maps - INFO - Found 312 companies after scroll 109
+2026-03-12 21:53:16,102 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2026-03-12 21:53:16,102 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8505514297)
+2026-03-12 21:53:17,540 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:17,540 - aiogram.dispatcher - WARNING - Sleep for 1.292067 seconds and try again... (tryings = 1, bot id = 8505514297)
+2026-03-12 21:53:17,551 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:19,286 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:19,287 - aiogram.dispatcher - WARNING - Sleep for 1.916491 seconds and try again... (tryings = 2, bot id = 8505514297)
+2026-03-12 21:53:22,502 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:22,502 - aiogram.dispatcher - WARNING - Sleep for 2.386699 seconds and try again... (tryings = 3, bot id = 8505514297)
+2026-03-12 21:53:23,192 - bot.services.scrapper.yandex_maps - INFO - Found 313 companies after scroll 110
+2026-03-12 21:53:25,216 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:25,216 - aiogram.dispatcher - WARNING - Sleep for 2.934379 seconds and try again... (tryings = 4, bot id = 8505514297)
+2026-03-12 21:53:26,244 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:34,920 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:39,021 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:39,022 - aiogram.dispatcher - WARNING - Sleep for 3.700394 seconds and try again... (tryings = 5, bot id = 8505514297)
+2026-03-12 21:53:43,131 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:43,131 - aiogram.dispatcher - WARNING - Sleep for 4.858979 seconds and try again... (tryings = 6, bot id = 8505514297)
+2026-03-12 21:53:43,739 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:48,375 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:48,375 - aiogram.dispatcher - WARNING - Sleep for 4.782456 seconds and try again... (tryings = 7, bot id = 8505514297)
+2026-03-12 21:53:52,538 - bot.services.scrapper.yandex_maps - INFO - Clicked pagination: 'территория фитнесаspirit fitnessxfitnefworld classffit-n-goещё 16body formingts fitnesscrocus fitnessxfit pointddx fitnessjumping pridefitjumpingtmpl fitnessreshapeсссрnugaдонспортrestretchhawaii fitboxingwegyml.a.b space'
+2026-03-12 21:53:53,617 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:53,617 - aiogram.dispatcher - WARNING - Sleep for 4.996131 seconds and try again... (tryings = 8, bot id = 8505514297)
+2026-03-12 21:53:58,156 - bot.services.scrapper.yandex_maps - INFO - No new results after 4 scrolls, stopping
+2026-03-12 21:53:58,157 - bot.services.scrapper.yandex_maps - INFO - Scraped 313 companies from Yandex Maps
+2026-03-12 21:53:58,745 - bot.services.scrapper.yandex_maps - INFO - Browser closed
+2026-03-12 21:53:58,745 - bot.services.scrapper.orchestrator - INFO - Yandex: found 313 companies
+2026-03-12 21:53:59,065 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [None]
+2026-03-12 21:53:59,066 - aiogram.dispatcher - WARNING - Sleep for 4.844699 seconds and try again... (tryings = 9, bot id = 8505514297)
+2026-03-12 21:54:00,471 - bot.services.scrapper.deduplicator - INFO - Deduplicated: 313 -> 307 (removed 6 duplicates)
+2026-03-12 21:54:00,471 - bot.services.scrapper.orchestrator - INFO - After deduplication: 307 unique
+2026-03-12 21:54:00,940 - bot.services.scrapper.inn_finder - INFO - INN enrichment [1/307]: Lomov Gym
+2026-03-12 21:54:03,389 - bot.services.scrapper.inn_finder - INFO - INN enrichment [2/307]: Цены
+2026-03-12 21:54:04,050 - bot.services.scrapper.inn_finder - INFO - INN enrichment [3/307]: Фитнес Практика
+2026-03-12 21:54:05,820 - bot.services.scrapper.inn_finder - INFO - INN enrichment [4/307]: Spirit Fitness
+2026-03-12 21:54:07,203 - bot.services.scrapper.inn_finder - INFO - INN enrichment [5/307]: Xfit
+2026-03-12 21:54:08,636 - bot.services.scrapper.inn_finder - INFO - INN enrichment [6/307]: Encore Fitness
+2026-03-12 21:54:10,174 - bot.services.scrapper.inn_finder - INFO - INN enrichment [7/307]: The Flex
+2026-03-12 21:54:11,805 - bot.services.scrapper.inn_finder - INFO - INN enrichment [8/307]: СССР
+2026-03-12 21:54:12,443 - bot.services.scrapper.inn_finder - INFO - INN enrichment [9/307]: Mosfitness
+2026-03-12 21:54:13,820 - bot.services.scrapper.inn_finder - INFO - INN enrichment [10/307]: La Salute Таганка
+2026-03-12 21:54:15,297 - bot.services.scrapper.inn_finder - INFO - INN enrichment [11/307]: TerraSport
+2026-03-12 21:54:15,966 - bot.services.scrapper.inn_finder - INFO - INN enrichment [12/307]: Reset fitness
+2026-03-12 21:54:17,347 - bot.services.scrapper.inn_finder - INFO - INN enrichment [13/307]: Онегинъ
+2026-03-12 21:54:17,977 - bot.services.scrapper.inn_finder - INFO - INN enrichment [14/307]: ЦМТ Фитнес
+2026-03-12 21:54:18,616 - bot.services.scrapper.inn_finder - INFO - INN enrichment [15/307]: Velobeat
+2026-03-12 21:54:20,046 - bot.services.scrapper.inn_finder - INFO - INN enrichment [16/307]: World Class
+2026-03-12 21:54:21,438 - bot.services.scrapper.inn_finder - INFO - INN enrichment [17/307]: Smstretching
+2026-03-12 21:54:22,810 - bot.services.scrapper.inn_finder - INFO - INN enrichment [18/307]: Д1 Фитнес
+2026-03-12 21:54:23,463 - bot.services.scrapper.inn_finder - INFO - INN enrichment [19/307]: Reshape
+2026-03-12 21:54:24,493 - bot.services.scrapper.inn_finder - INFO - INN enrichment [20/307]: Alex Fitness
+2026-03-12 21:54:25,930 - bot.services.scrapper.inn_finder - INFO - INN enrichment [21/307]: DDX Fitness
+2026-03-12 21:54:27,304 - bot.services.scrapper.inn_finder - INFO - INN enrichment [22/307]: Tmpl Fitness
+2026-03-12 21:54:28,767 - bot.services.scrapper.inn_finder - INFO - INN enrichment [23/307]: Фитнес Лэнд
+2026-03-12 21:54:29,406 - bot.services.scrapper.inn_finder - INFO - INN enrichment [24/307]: Натриум Фитнес
+2026-03-12 21:54:30,049 - bot.services.scrapper.inn_finder - INFO - INN enrichment [25/307]: UFC Gym
+2026-03-12 21:54:31,435 - bot.services.scrapper.inn_finder - INFO - INN enrichment [26/307]: Republika
+2026-03-12 21:54:32,803 - bot.services.scrapper.inn_finder - INFO - INN enrichment [27/307]: Rock the Cycle
+2026-03-12 21:54:34,281 - bot.services.scrapper.inn_finder - INFO - INN enrichment [28/307]: Fitzal
+2026-03-12 21:54:34,924 - bot.services.scrapper.inn_finder - INFO - INN enrichment [29/307]: Pride Fitness
+2026-03-12 21:54:35,551 - bot.services.scrapper.inn_finder - INFO - INN enrichment [30/307]: SportStation
+2026-03-12 21:54:36,950 - bot.services.scrapper.inn_finder - INFO - INN enrichment [31/307]: La Salute Люблино
+2026-03-12 21:54:38,395 - bot.services.scrapper.inn_finder - INFO - INN enrichment [32/307]: Пати фитнес
+2026-03-12 21:54:40,073 - bot.services.scrapper.inn_finder - INFO - INN enrichment [33/307]: Пирамида
+2026-03-12 21:54:40,798 - bot.services.scrapper.inn_finder - INFO - INN enrichment [34/307]: Фитнес 5
+2026-03-12 21:54:41,505 - bot.services.scrapper.inn_finder - INFO - INN enrichment [35/307]: T-Fit
+2026-03-12 21:54:42,144 - bot.services.scrapper.inn_finder - INFO - INN enrichment [36/307]: YoBody Fitness
+2026-03-12 21:54:43,582 - bot.services.scrapper.inn_finder - INFO - INN enrichment [37/307]: Фитнес-клуб
+2026-03-12 21:54:45,017 - bot.services.scrapper.inn_finder - INFO - INN enrichment [38/307]: Новая Лига
+2026-03-12 21:54:45,657 - bot.services.scrapper.inn_finder - INFO - INN enrichment [39/307]: Кенгуру
+2026-03-12 21:54:46,301 - bot.services.scrapper.inn_finder - INFO - INN enrichment [40/307]: Богатырь
+2026-03-12 21:54:46,968 - bot.services.scrapper.inn_finder - INFO - INN enrichment [41/307]: Фитнес Труд
+2026-03-12 21:54:48,354 - bot.services.scrapper.inn_finder - INFO - INN enrichment [42/307]: Reboot Lesnaya
+2026-03-12 21:54:49,761 - bot.services.scrapper.inn_finder - INFO - INN enrichment [43/307]: Go boxing
+2026-03-12 21:54:51,573 - bot.services.scrapper.inn_finder - INFO - INN enrichment [44/307]: Varyag
+2026-03-12 21:54:52,290 - bot.services.scrapper.inn_finder - INFO - INN enrichment [45/307]: Fitjumping
+2026-03-12 21:54:53,660 - bot.services.scrapper.inn_finder - INFO - INN enrichment [46/307]: Pluzhnik Fitness
+2026-03-12 21:54:55,083 - bot.services.scrapper.inn_finder - INFO - INN enrichment [47/307]: Z Fitness
+2026-03-12 21:54:56,465 - bot.services.scrapper.inn_finder - INFO - INN enrichment [48/307]: Aquastar
+2026-03-12 21:54:57,854 - bot.services.scrapper.inn_finder - INFO - INN enrichment [49/307]: ФитнесМания МДМ
+2026-03-12 21:54:58,490 - bot.services.scrapper.inn_finder - INFO - INN enrichment [50/307]: Sky Fitness
+2026-03-12 21:54:59,894 - bot.services.scrapper.inn_finder - INFO - INN enrichment [51/307]: Reboot East
+2026-03-12 21:55:01,457 - bot.services.scrapper.inn_finder - INFO - INN enrichment [52/307]: Самокат
+2026-03-12 21:55:02,110 - bot.services.scrapper.inn_finder - INFO - INN enrichment [53/307]: Эволв Джим
+2026-03-12 21:55:02,747 - bot.services.scrapper.inn_finder - INFO - INN enrichment [54/307]: Фитнес Парк Восток
+2026-03-12 21:55:04,319 - bot.services.scrapper.inn_finder - INFO - INN enrichment [55/307]: Sunny Gym
+2026-03-12 21:55:05,687 - bot.services.scrapper.inn_finder - INFO - INN enrichment [56/307]: New Fitness
+2026-03-12 21:55:07,164 - bot.services.scrapper.inn_finder - INFO - INN enrichment [57/307]: Свобода Фитнеса
+2026-03-12 21:55:08,612 - bot.services.scrapper.inn_finder - INFO - INN enrichment [58/307]: Winner
+2026-03-12 21:55:10,137 - bot.services.scrapper.inn_finder - INFO - INN enrichment [59/307]: Artfly bungee
+2026-03-12 21:55:11,551 - bot.services.scrapper.inn_finder - INFO - INN enrichment [60/307]: WeGym
+2026-03-12 21:55:12,972 - bot.services.scrapper.inn_finder - INFO - INN enrichment [61/307]: Максимум
+2026-03-12 21:55:13,616 - bot.services.scrapper.inn_finder - INFO - INN enrichment [62/307]: Lesfitness
+2026-03-12 21:55:15,065 - bot.services.scrapper.inn_finder - INFO - INN enrichment [63/307]: Crocus Fitness
+2026-03-12 21:55:16,649 - bot.services.scrapper.inn_finder - INFO - INN enrichment [64/307]: 100% Fitness Center
+2026-03-12 21:55:18,393 - bot.services.scrapper.inn_finder - INFO - INN enrichment [65/307]: Golden Mile
+2026-03-12 21:55:19,863 - bot.services.scrapper.inn_finder - INFO - INN enrichment [66/307]: Камелот Gym
+2026-03-12 21:55:21,310 - bot.services.scrapper.inn_finder - INFO - INN enrichment [67/307]: Секция
+2026-03-12 21:55:22,723 - bot.services.scrapper.inn_finder - INFO - INN enrichment [68/307]: Точка фитнеса
+2026-03-12 21:55:24,172 - bot.services.scrapper.inn_finder - INFO - INN enrichment [69/307]: Hope Fitness
+2026-03-12 21:55:25,627 - bot.services.scrapper.inn_finder - INFO - INN enrichment [70/307]: King's Gym
+2026-03-12 21:55:27,054 - bot.services.scrapper.inn_finder - INFO - INN enrichment [71/307]: Персона-Фитнес
+2026-03-12 21:55:27,754 - bot.services.scrapper.inn_finder - INFO - INN enrichment [72/307]: NEF
+2026-03-12 21:55:29,125 - bot.services.scrapper.inn_finder - INFO - INN enrichment [73/307]: Гарм
+2026-03-12 21:55:29,765 - bot.services.scrapper.inn_finder - INFO - INN enrichment [74/307]: MyFitlab
+2026-03-12 21:55:31,168 - bot.services.scrapper.inn_finder - INFO - INN enrichment [75/307]: Версо Фитнес
+2026-03-12 21:55:32,801 - bot.services.scrapper.inn_finder - INFO - INN enrichment [76/307]: Фитнес ГраФИТ
+2026-03-12 21:55:34,644 - bot.services.scrapper.inn_finder - INFO - INN enrichment [77/307]: X-Line Fitness
+2026-03-12 21:55:36,109 - bot.services.scrapper.inn_finder - INFO - INN enrichment [78/307]: Авангард
+2026-03-12 21:55:37,589 - bot.services.scrapper.inn_finder - INFO - INN enrichment [79/307]: X-Line Energy
+2026-03-12 21:55:39,051 - bot.services.scrapper.inn_finder - INFO - INN enrichment [80/307]: Валовая Фитнес
+2026-03-12 21:55:39,687 - bot.services.scrapper.inn_finder - INFO - INN enrichment [81/307]: TS Fitness
+2026-03-12 21:55:41,174 - bot.services.scrapper.inn_finder - INFO - INN enrichment [82/307]: Sculpt
+2026-03-12 21:55:42,573 - bot.services.scrapper.inn_finder - INFO - INN enrichment [83/307]: Анатомия
+2026-03-12 21:55:43,211 - bot.services.scrapper.inn_finder - INFO - INN enrichment [84/307]: Маяк
+2026-03-12 21:55:43,878 - bot.services.scrapper.inn_finder - INFO - INN enrichment [85/307]: I am фитнес студия
+2026-03-12 21:55:45,757 - bot.services.scrapper.inn_finder - INFO - INN enrichment [86/307]: Бобо
+2026-03-12 21:55:47,173 - bot.services.scrapper.inn_finder - INFO - INN enrichment [87/307]: Мегаполис
+2026-03-12 21:55:47,813 - bot.services.scrapper.inn_finder - INFO - INN enrichment [88/307]: Спортивная секция
+2026-03-12 21:55:49,272 - bot.services.scrapper.inn_finder - INFO - INN enrichment [89/307]: MosGym
+2026-03-12 21:55:50,690 - bot.services.scrapper.inn_finder - INFO - INN enrichment [90/307]: Fit-n-go
+2026-03-12 21:55:52,137 - bot.services.scrapper.inn_finder - INFO - INN enrichment [91/307]: Флоу Роу
+2026-03-12 21:55:52,823 - bot.services.scrapper.inn_finder - INFO - INN enrichment [92/307]: Стэй Фит
+2026-03-12 21:55:54,268 - bot.services.scrapper.inn_finder - INFO - INN enrichment [93/307]: 5 Элемент
+2026-03-12 21:55:54,933 - bot.services.scrapper.inn_finder - INFO - INN enrichment [94/307]: 2% Fitness
+2026-03-12 21:55:56,391 - bot.services.scrapper.inn_finder - INFO - INN enrichment [95/307]: Гранд Фитнес
+2026-03-12 21:55:57,884 - bot.services.scrapper.inn_finder - INFO - INN enrichment [96/307]: Al фитнес
+2026-03-12 21:55:59,286 - bot.services.scrapper.inn_finder - INFO - INN enrichment [97/307]: Путь силы
+2026-03-12 21:56:00,937 - bot.services.scrapper.inn_finder - INFO - INN enrichment [98/307]: Ривер Фитнес Boutique
+2026-03-12 21:56:02,323 - bot.services.scrapper.inn_finder - INFO - INN enrichment [99/307]: Fit-n-Go
+2026-03-12 21:56:03,754 - bot.services.scrapper.inn_finder - INFO - INN enrichment [100/307]: Universe
+2026-03-12 21:56:05,187 - bot.services.scrapper.inn_finder - INFO - INN enrichment [101/307]: Atomo fitness
+2026-03-12 21:56:06,762 - bot.services.scrapper.inn_finder - INFO - INN enrichment [102/307]: Спарта
+2026-03-12 21:56:08,242 - bot.services.scrapper.inn_finder - INFO - INN enrichment [103/307]: Newfit
+2026-03-12 21:56:09,780 - bot.services.scrapper.inn_finder - INFO - INN enrichment [104/307]: Kometa Fit
+2026-03-12 21:56:11,165 - bot.services.scrapper.inn_finder - INFO - INN enrichment [105/307]: Студия умного фитнеса Виктории Куваевой
+2026-03-12 21:56:12,573 - bot.services.scrapper.inn_finder - INFO - INN enrichment [106/307]: Мир Фитнеса
+2026-03-12 21:56:14,032 - bot.services.scrapper.inn_finder - INFO - INN enrichment [107/307]: Ист Вест Фитнес
+2026-03-12 21:56:15,449 - bot.services.scrapper.inn_finder - INFO - INN enrichment [108/307]: Смарт Фитнес
+2026-03-12 21:56:16,877 - bot.services.scrapper.inn_finder - INFO - INN enrichment [109/307]: Рокаут Джим
+2026-03-12 21:56:18,296 - bot.services.scrapper.inn_finder - INFO - INN enrichment [110/307]: Dll Club
+2026-03-12 21:56:19,840 - bot.services.scrapper.inn_finder - INFO - INN enrichment [111/307]: 2255 Фитнес
+2026-03-12 21:56:21,306 - bot.services.scrapper.inn_finder - INFO - INN enrichment [112/307]: Bodyhacker
+2026-03-12 21:56:22,692 - bot.services.scrapper.inn_finder - INFO - INN enrichment [113/307]: Club 18 fight & fitness
+2026-03-12 21:56:24,264 - bot.services.scrapper.inn_finder - INFO - INN enrichment [114/307]: Reboot Sw
+2026-03-12 21:56:25,821 - bot.services.scrapper.inn_finder - INFO - INN enrichment [115/307]: Тренер Плюс
+2026-03-12 21:56:27,284 - bot.services.scrapper.inn_finder - INFO - INN enrichment [116/307]: Vitasport
+2026-03-12 21:56:29,134 - bot.services.scrapper.inn_finder - INFO - INN enrichment [117/307]: Манхэттен Фитнес
+2026-03-12 21:56:30,584 - bot.services.scrapper.inn_finder - INFO - INN enrichment [118/307]: Мисс Фитнес
+2026-03-12 21:56:31,238 - bot.services.scrapper.inn_finder - INFO - INN enrichment [119/307]: Фитнес М98
+2026-03-12 21:56:32,901 - bot.services.scrapper.inn_finder - INFO - INN enrichment [120/307]: Фитбоксинг Rocky Rounds
+2026-03-12 21:56:35,037 - bot.services.scrapper.inn_finder - INFO - INN enrichment [121/307]: Лотос
+2026-03-12 21:56:35,690 - bot.services.scrapper.inn_finder - INFO - INN enrichment [122/307]: Джаст Джим
+2026-03-12 21:56:37,217 - bot.services.scrapper.inn_finder - INFO - INN enrichment [123/307]: Reboot City
+2026-03-12 21:56:38,604 - bot.services.scrapper.inn_finder - INFO - INN enrichment [124/307]: База фитнес
+2026-03-12 21:56:40,100 - bot.services.scrapper.inn_finder - INFO - INN enrichment [125/307]: Fitzal Азовский
+2026-03-12 21:56:41,609 - bot.services.scrapper.inn_finder - INFO - INN enrichment [126/307]: Один
+2026-03-12 21:56:43,024 - bot.services.scrapper.inn_finder - INFO - INN enrichment [127/307]: Загорье Джим
+2026-03-12 21:56:44,515 - bot.services.scrapper.inn_finder - INFO - INN enrichment [128/307]: Фитнес-клуб Old Gym
+2026-03-12 21:56:45,995 - bot.services.scrapper.inn_finder - INFO - INN enrichment [129/307]: Манго Фитнес
+2026-03-12 21:56:47,489 - bot.services.scrapper.inn_finder - INFO - INN enrichment [130/307]: Ksc
+2026-03-12 21:56:48,882 - bot.services.scrapper.inn_finder - INFO - INN enrichment [131/307]: Magneto фитнес
+2026-03-12 21:56:50,378 - bot.services.scrapper.inn_finder - INFO - INN enrichment [132/307]: Паллада
+2026-03-12 21:56:51,806 - bot.services.scrapper.inn_finder - INFO - INN enrichment [133/307]: Рашфит
+2026-03-12 21:56:53,420 - bot.services.scrapper.inn_finder - INFO - INN enrichment [134/307]: Фитнес-точка
+2026-03-12 21:56:56,155 - bot.services.scrapper.inn_finder - INFO - INN enrichment [135/307]: Фитнес
+2026-03-12 21:56:57,663 - bot.services.scrapper.inn_finder - INFO - INN enrichment [136/307]: Миллениум
+2026-03-12 21:56:58,318 - bot.services.scrapper.inn_finder - INFO - INN enrichment [137/307]: F45 training
+2026-03-12 21:56:59,700 - bot.services.scrapper.inn_finder - INFO - INN enrichment [138/307]: Topstretching
+2026-03-12 21:57:01,073 - bot.services.scrapper.inn_finder - INFO - INN enrichment [139/307]: Garmony
+2026-03-12 21:57:02,522 - bot.services.scrapper.inn_finder - INFO - INN enrichment [140/307]: Париж лайф
+2026-03-12 21:57:04,347 - bot.services.scrapper.inn_finder - INFO - INN enrichment [141/307]: Капсула
+2026-03-12 21:57:05,807 - bot.services.scrapper.inn_finder - INFO - INN enrichment [142/307]: Фиттс
+2026-03-12 21:57:06,443 - bot.services.scrapper.inn_finder - INFO - INN enrichment [143/307]: Здоровая нация
+2026-03-12 21:57:07,128 - bot.services.scrapper.inn_finder - INFO - INN enrichment [144/307]: Rodina
+2026-03-12 21:57:07,782 - bot.services.scrapper.inn_finder - INFO - INN enrichment [145/307]: Фитнес Мореон
+2026-03-12 21:57:09,203 - bot.services.scrapper.inn_finder - INFO - INN enrichment [146/307]: Оазис Фитнеса и Пилатеса
+2026-03-12 21:57:10,740 - bot.services.scrapper.inn_finder - INFO - INN enrichment [147/307]: Виват
+2026-03-12 21:57:11,436 - bot.services.scrapper.inn_finder - INFO - INN enrichment [148/307]: Beauty Gym
+2026-03-12 21:57:12,814 - bot.services.scrapper.inn_finder - INFO - INN enrichment [149/307]: Семейный фитнес
+2026-03-12 21:57:14,462 - bot.services.scrapper.inn_finder - INFO - INN enrichment [150/307]: Waypilates
+2026-03-12 21:57:15,852 - bot.services.scrapper.inn_finder - INFO - INN enrichment [151/307]: Мосбокс Джим
+2026-03-12 21:57:17,289 - bot.services.scrapper.inn_finder - INFO - INN enrichment [152/307]: Лофт Джим
+2026-03-12 21:57:18,664 - bot.services.scrapper.inn_finder - INFO - INN enrichment [153/307]: M&g
+2026-03-12 21:57:20,053 - bot.services.scrapper.inn_finder - INFO - INN enrichment [154/307]: Свобода Фитнес
+2026-03-12 21:57:21,618 - bot.services.scrapper.inn_finder - INFO - INN enrichment [155/307]: УмноеТелоФитнес
+2026-03-12 21:57:22,981 - bot.services.scrapper.inn_finder - INFO - INN enrichment [156/307]: Философия фитнеса
+2026-03-12 21:57:24,743 - bot.services.scrapper.inn_finder - INFO - INN enrichment [157/307]: Мисс фитнес
+2026-03-12 21:57:26,478 - bot.services.scrapper.inn_finder - INFO - INN enrichment [158/307]: Донспорт
+2026-03-12 21:57:27,884 - bot.services.scrapper.inn_finder - INFO - INN enrichment [159/307]: Счастье
+2026-03-12 21:57:28,600 - bot.services.scrapper.inn_finder - INFO - INN enrichment [160/307]: Vispculpt фитнес
+2026-03-12 21:57:29,997 - bot.services.scrapper.inn_finder - INFO - INN enrichment [161/307]: Теорема Спорта
+2026-03-12 21:57:31,438 - bot.services.scrapper.inn_finder - INFO - INN enrichment [162/307]: X-way фитнес
+2026-03-12 21:57:32,873 - bot.services.scrapper.inn_finder - INFO - INN enrichment [163/307]: Fitnation
+2026-03-12 21:57:34,263 - bot.services.scrapper.inn_finder - INFO - INN enrichment [164/307]: Армия
+2026-03-12 21:57:34,924 - bot.services.scrapper.inn_finder - INFO - INN enrichment [165/307]: 50/50 Body&Mind
+2026-03-12 21:57:36,420 - bot.services.scrapper.inn_finder - INFO - INN enrichment [166/307]: Fitness Fly Studio
+2026-03-12 21:57:38,144 - bot.services.scrapper.inn_finder - INFO - INN enrichment [167/307]: Фитнес Мир
+2026-03-12 21:57:39,707 - bot.services.scrapper.inn_finder - INFO - INN enrichment [168/307]: Мода Фитнес
+2026-03-12 21:57:41,189 - bot.services.scrapper.inn_finder - INFO - INN enrichment [169/307]: Fitlit
+2026-03-12 21:57:42,547 - bot.services.scrapper.inn_finder - INFO - INN enrichment [170/307]: Combat Gym
+2026-03-12 21:57:44,035 - bot.services.scrapper.inn_finder - INFO - INN enrichment [171/307]: Nuga Stretching
+2026-03-12 21:57:45,790 - bot.services.scrapper.inn_finder - INFO - INN enrichment [172/307]: FitCurves
+2026-03-12 21:57:47,301 - bot.services.scrapper.inn_finder - INFO - INN enrichment [173/307]: ProArt-Fit
+2026-03-12 21:57:48,690 - bot.services.scrapper.inn_finder - INFO - INN enrichment [174/307]: Реформа
+2026-03-12 21:57:49,322 - bot.services.scrapper.inn_finder - INFO - INN enrichment [175/307]: Zasport Fitness&fun
+2026-03-12 21:57:50,717 - bot.services.scrapper.inn_finder - INFO - INN enrichment [176/307]: L. A. B Space
+2026-03-12 21:57:52,262 - bot.services.scrapper.inn_finder - INFO - INN enrichment [177/307]: Танцевальная фитнес-студия Energy
+2026-03-12 21:57:53,712 - bot.services.scrapper.inn_finder - INFO - INN enrichment [178/307]: Легион
+2026-03-12 21:57:54,360 - bot.services.scrapper.inn_finder - INFO - INN enrichment [179/307]: Energy центр спорта, танцев и фитнеса
+2026-03-12 21:57:55,811 - bot.services.scrapper.inn_finder - INFO - INN enrichment [180/307]: Олимпик
+2026-03-12 21:57:57,278 - bot.services.scrapper.inn_finder - INFO - INN enrichment [181/307]: 50 Gym
+2026-03-12 21:57:58,725 - bot.services.scrapper.inn_finder - INFO - INN enrichment [182/307]: Фитнес-центр Карибия
+2026-03-12 21:58:00,237 - bot.services.scrapper.inn_finder - INFO - INN enrichment [183/307]: First&Only
+2026-03-12 21:58:01,643 - bot.services.scrapper.inn_finder - INFO - INN enrichment [184/307]: Эстетика
+2026-03-12 21:58:02,292 - bot.services.scrapper.inn_finder - INFO - INN enrichment [185/307]: NordWest CrossFit October
+2026-03-12 21:58:03,660 - bot.services.scrapper.inn_finder - INFO - INN enrichment [186/307]: Brothers Boxing Club
+2026-03-12 21:58:05,087 - bot.services.scrapper.inn_finder - INFO - INN enrichment [187/307]: Орбита
+2026-03-12 21:58:05,748 - bot.services.scrapper.inn_finder - INFO - INN enrichment [188/307]: Форма
+2026-03-12 21:58:06,429 - bot.services.scrapper.inn_finder - INFO - INN enrichment [189/307]: Фитнес-центр Lotte
+2026-03-12 21:58:08,476 - bot.services.scrapper.inn_finder - INFO - INN enrichment [190/307]: Shatrov'Style
+2026-03-12 21:58:09,909 - bot.services.scrapper.inn_finder - INFO - INN enrichment [191/307]: I Love Fitness
+2026-03-12 21:58:11,359 - bot.services.scrapper.inn_finder - INFO - INN enrichment [192/307]: Fitflex
+2026-03-12 21:58:12,718 - bot.services.scrapper.inn_finder - INFO - INN enrichment [193/307]: Atmosfera Pilates Reformer
+2026-03-12 21:58:14,135 - bot.services.scrapper.inn_finder - INFO - INN enrichment [194/307]: Xfit Point
+2026-03-12 21:58:15,500 - bot.services.scrapper.inn_finder - INFO - INN enrichment [195/307]: Hoba
+2026-03-12 21:58:16,955 - bot.services.scrapper.inn_finder - INFO - INN enrichment [196/307]: Win'gs Studio
+2026-03-12 21:58:18,673 - bot.services.scrapper.inn_finder - INFO - INN enrichment [197/307]: Nebrevno
+2026-03-12 21:58:20,198 - bot.services.scrapper.inn_finder - INFO - INN enrichment [198/307]: Атмосфера
+2026-03-12 21:58:20,926 - bot.services.scrapper.inn_finder - INFO - INN enrichment [199/307]: Volk CrossFit
+2026-03-12 21:58:22,383 - bot.services.scrapper.inn_finder - INFO - INN enrichment [200/307]: Do Stretch
+2026-03-12 21:58:23,745 - bot.services.scrapper.inn_finder - INFO - INN enrichment [201/307]: Воркит
+2026-03-12 21:58:25,207 - bot.services.scrapper.inn_finder - INFO - INN enrichment [202/307]: Олдбрук Спорт
+2026-03-12 21:58:26,661 - bot.services.scrapper.inn_finder - INFO - INN enrichment [203/307]: Фитнес Рум
+2026-03-12 21:58:28,105 - bot.services.scrapper.inn_finder - INFO - INN enrichment [204/307]: Studio2
+2026-03-12 21:58:29,498 - bot.services.scrapper.inn_finder - INFO - INN enrichment [205/307]: Доктор Пилатес
+2026-03-12 21:58:30,968 - bot.services.scrapper.inn_finder - INFO - INN enrichment [206/307]: Университет
+2026-03-12 21:58:31,700 - bot.services.scrapper.inn_finder - INFO - INN enrichment [207/307]: Nataly Fitness
+2026-03-12 21:58:33,174 - bot.services.scrapper.inn_finder - INFO - INN enrichment [208/307]: Перфоманс Фит
+2026-03-12 21:58:34,610 - bot.services.scrapper.inn_finder - INFO - INN enrichment [209/307]: Алексей-Фит
+2026-03-12 21:58:36,005 - bot.services.scrapper.inn_finder - INFO - INN enrichment [210/307]: Растяжка сегодня
+2026-03-12 21:58:37,408 - bot.services.scrapper.inn_finder - INFO - INN enrichment [211/307]: JustFit Exclusive Club
+2026-03-12 21:58:38,812 - bot.services.scrapper.inn_finder - INFO - INN enrichment [212/307]: Nda Fitness
+2026-03-12 21:58:40,235 - bot.services.scrapper.inn_finder - INFO - INN enrichment [213/307]: Example
+2026-03-12 21:58:41,611 - bot.services.scrapper.inn_finder - INFO - INN enrichment [214/307]: Vibrostretching.ru
+2026-03-12 21:58:43,938 - bot.services.scrapper.inn_finder - INFO - INN enrichment [215/307]: Nuga
+2026-03-12 21:58:45,387 - bot.services.scrapper.inn_finder - INFO - INN enrichment [216/307]: А ну-ка, девушки!
+2026-03-12 21:58:46,773 - bot.services.scrapper.inn_finder - INFO - INN enrichment [217/307]: Дрим Фит
+2026-03-12 21:58:48,261 - bot.services.scrapper.inn_finder - INFO - INN enrichment [218/307]: Пламенный балет
+2026-03-12 21:58:49,703 - bot.services.scrapper.inn_finder - INFO - INN enrichment [219/307]: Фиеста
+2026-03-12 21:58:51,993 - bot.services.scrapper.inn_finder - INFO - INN enrichment [220/307]: The Corner Boxing Gym
+2026-03-12 21:58:53,488 - bot.services.scrapper.inn_finder - INFO - INN enrichment [221/307]: Мир пилатеса
+2026-03-12 21:58:55,018 - bot.services.scrapper.inn_finder - INFO - INN enrichment [222/307]: J2s
+2026-03-12 21:58:56,391 - bot.services.scrapper.inn_finder - INFO - INN enrichment [223/307]: GM Gym
+2026-03-12 21:58:57,824 - bot.services.scrapper.inn_finder - INFO - INN enrichment [224/307]: На шпагате
+2026-03-12 21:58:59,264 - bot.services.scrapper.inn_finder - INFO - INN enrichment [225/307]: Хилтон
+2026-03-12 21:59:00,632 - bot.services.scrapper.inn_finder - INFO - INN enrichment [226/307]: Скфитнес-Пытошная
+2026-03-12 21:59:02,044 - bot.services.scrapper.inn_finder - INFO - INN enrichment [227/307]: ProstoShpagat
+2026-03-12 21:59:03,492 - bot.services.scrapper.inn_finder - INFO - INN enrichment [228/307]: Варяг
+2026-03-12 21:59:04,927 - bot.services.scrapper.inn_finder - INFO - INN enrichment [229/307]: Yobalance
+2026-03-12 21:59:06,348 - bot.services.scrapper.inn_finder - INFO - INN enrichment [230/307]: L.A.B Space
+2026-03-12 21:59:07,880 - bot.services.scrapper.inn_finder - INFO - INN enrichment [231/307]: Ударная мастерская
+2026-03-12 21:59:09,436 - bot.services.scrapper.inn_finder - INFO - INN enrichment [232/307]: АктуальФит
+2026-03-12 21:59:10,798 - bot.services.scrapper.inn_finder - INFO - INN enrichment [233/307]: Stretch House
+2026-03-12 21:59:12,223 - bot.services.scrapper.inn_finder - INFO - INN enrichment [234/307]: Pulsefitness
+2026-03-12 21:59:13,596 - bot.services.scrapper.inn_finder - INFO - INN enrichment [235/307]: Баланс студия
+2026-03-12 21:59:15,075 - bot.services.scrapper.inn_finder - INFO - INN enrichment [236/307]: I Love Stretching
+2026-03-12 21:59:16,525 - bot.services.scrapper.inn_finder - INFO - INN enrichment [237/307]: Studio one
+2026-03-12 21:59:17,957 - bot.services.scrapper.inn_finder - INFO - INN enrichment [238/307]: Буревестник
+2026-03-12 21:59:19,398 - bot.services.scrapper.inn_finder - INFO - INN enrichment [239/307]: Энерджамп
+2026-03-12 21:59:20,820 - bot.services.scrapper.inn_finder - INFO - INN enrichment [240/307]: Дубровка Фитнес
+2026-03-12 21:59:22,395 - bot.services.scrapper.inn_finder - INFO - INN enrichment [241/307]: QueensEMS
+2026-03-12 21:59:23,792 - bot.services.scrapper.inn_finder - INFO - INN enrichment [242/307]: EMS Portal
+2026-03-12 21:59:25,248 - bot.services.scrapper.inn_finder - INFO - INN enrichment [243/307]: Tsaritsyno gym
+2026-03-12 21:59:26,784 - bot.services.scrapper.inn_finder - INFO - INN enrichment [244/307]: UniversalFit
+2026-03-12 21:59:28,218 - bot.services.scrapper.inn_finder - INFO - INN enrichment [245/307]: FightRepublic
+2026-03-12 21:59:29,592 - bot.services.scrapper.inn_finder - INFO - INN enrichment [246/307]: Ohana
+2026-03-12 21:59:30,969 - bot.services.scrapper.inn_finder - INFO - INN enrichment [247/307]: FitPower
+2026-03-12 21:59:32,345 - bot.services.scrapper.inn_finder - INFO - INN enrichment [248/307]: Кор Фитнес
+2026-03-12 21:59:34,227 - bot.services.scrapper.inn_finder - INFO - INN enrichment [249/307]: Eco fitness
+2026-03-12 21:59:35,740 - bot.services.scrapper.inn_finder - INFO - INN enrichment [250/307]: Лидер
+2026-03-12 21:59:36,403 - bot.services.scrapper.inn_finder - INFO - INN enrichment [251/307]: Растяжка и пилатес
+2026-03-12 21:59:37,832 - bot.services.scrapper.inn_finder - INFO - INN enrichment [252/307]: Кирлиàн спорт
+2026-03-12 21:59:39,212 - bot.services.scrapper.inn_finder - INFO - INN enrichment [253/307]: СпортЛэнд
+2026-03-12 21:59:40,620 - bot.services.scrapper.inn_finder - INFO - INN enrichment [254/307]: Джампинг фитнес
+2026-03-12 21:59:42,029 - bot.services.scrapper.inn_finder - INFO - INN enrichment [255/307]: Strong Body
+2026-03-12 21:59:43,450 - bot.services.scrapper.inn_finder - INFO - INN enrichment [256/307]: SlimFitClub
+2026-03-12 21:59:45,181 - bot.services.scrapper.inn_finder - INFO - INN enrichment [257/307]: ФитЛаб
+2026-03-12 21:59:46,650 - bot.services.scrapper.inn_finder - INFO - INN enrichment [258/307]: Olympion
+2026-03-12 21:59:48,151 - bot.services.scrapper.inn_finder - INFO - INN enrichment [259/307]: Profipump
+2026-03-12 21:59:49,509 - bot.services.scrapper.inn_finder - INFO - INN enrichment [260/307]: Wellness-центр
+2026-03-12 21:59:50,995 - bot.services.scrapper.inn_finder - INFO - INN enrichment [261/307]: 3с-зал
+2026-03-12 21:59:52,411 - bot.services.scrapper.inn_finder - INFO - INN enrichment [262/307]: Fighting Sport Arts
+2026-03-12 21:59:53,846 - bot.services.scrapper.inn_finder - INFO - INN enrichment [263/307]: Fit-n-go EMS тренировки
+2026-03-12 21:59:55,288 - bot.services.scrapper.inn_finder - INFO - INN enrichment [264/307]: Asyastretching
+2026-03-12 21:59:56,698 - bot.services.scrapper.inn_finder - INFO - INN enrichment [265/307]: XS Body Fit
+2026-03-12 21:59:58,270 - bot.services.scrapper.inn_finder - INFO - INN enrichment [266/307]: ДНК ЭМС
+2026-03-12 21:59:59,651 - bot.services.scrapper.inn_finder - INFO - INN enrichment [267/307]: Namode Fit
+2026-03-12 22:00:01,003 - bot.services.scrapper.inn_finder - INFO - INN enrichment [268/307]: Ларионов Про
+2026-03-12 22:00:02,391 - bot.services.scrapper.inn_finder - INFO - INN enrichment [269/307]: Силовой клуб Вешняки
+2026-03-12 22:00:03,826 - bot.services.scrapper.inn_finder - INFO - INN enrichment [270/307]: Нуга
+2026-03-12 22:00:04,489 - bot.services.scrapper.inn_finder - INFO - INN enrichment [271/307]: АкроРитм
+2026-03-12 22:00:05,853 - bot.services.scrapper.inn_finder - INFO - INN enrichment [272/307]: Star Boxing
+2026-03-12 22:00:07,326 - bot.services.scrapper.inn_finder - INFO - INN enrichment [273/307]: Bloomgym
+2026-03-12 22:00:08,718 - bot.services.scrapper.inn_finder - INFO - INN enrichment [274/307]: Лимей
+2026-03-12 22:00:10,248 - bot.services.scrapper.inn_finder - INFO - INN enrichment [275/307]: IceBox Fitness
+2026-03-12 22:00:11,793 - bot.services.scrapper.inn_finder - INFO - INN enrichment [276/307]: PilatesPro
+2026-03-12 22:00:13,352 - bot.services.scrapper.inn_finder - INFO - INN enrichment [277/307]: Do stretch
+2026-03-12 22:00:14,737 - bot.services.scrapper.inn_finder - INFO - INN enrichment [278/307]: Велнес
+2026-03-12 22:00:16,187 - bot.services.scrapper.inn_finder - INFO - INN enrichment [279/307]: Фигура
+2026-03-12 22:00:17,604 - bot.services.scrapper.inn_finder - INFO - INN enrichment [280/307]: Full Power Fit
+2026-03-12 22:00:19,100 - bot.services.scrapper.inn_finder - INFO - INN enrichment [281/307]: Center Fitness
+2026-03-12 22:00:20,488 - bot.services.scrapper.inn_finder - INFO - INN enrichment [282/307]: Фитнес-студия Суперпозиция
+2026-03-12 22:00:21,950 - bot.services.scrapper.inn_finder - INFO - INN enrichment [283/307]: Скульптор-Fit
+2026-03-12 22:00:23,352 - bot.services.scrapper.inn_finder - INFO - INN enrichment [284/307]: Хвоя СПА Серебряный бор
+2026-03-12 22:00:24,876 - bot.services.scrapper.inn_finder - INFO - INN enrichment [285/307]: Шаг К Себе
+2026-03-12 22:00:26,291 - bot.services.scrapper.inn_finder - INFO - INN enrichment [286/307]: Atletic
+2026-03-12 22:00:27,706 - bot.services.scrapper.inn_finder - INFO - INN enrichment [287/307]: Kangoo Jumps
+2026-03-12 22:00:29,074 - bot.services.scrapper.inn_finder - INFO - INN enrichment [288/307]: Upfitness
+2026-03-12 22:00:30,494 - bot.services.scrapper.inn_finder - INFO - INN enrichment [289/307]: Спортивный клуб Gympa
+2026-03-12 22:00:32,147 - bot.services.scrapper.inn_finder - INFO - INN enrichment [290/307]: EMS Фитнес Fit4ever
+2026-03-12 22:00:33,596 - bot.services.scrapper.inn_finder - INFO - INN enrichment [291/307]: Reformation
+2026-03-12 22:00:35,019 - bot.services.scrapper.inn_finder - INFO - INN enrichment [292/307]: Vysota
+2026-03-12 22:00:35,655 - bot.services.scrapper.inn_finder - INFO - INN enrichment [293/307]: Триатлон-центр
+2026-03-12 22:00:36,284 - bot.services.scrapper.inn_finder - INFO - INN enrichment [294/307]: Персональный Тренинг Воркит
+2026-03-12 22:00:37,812 - bot.services.scrapper.inn_finder - INFO - INN enrichment [295/307]: Uform
+2026-03-12 22:00:39,337 - bot.services.scrapper.inn_finder - INFO - INN enrichment [296/307]: Эко Фитнес
+2026-03-12 22:00:40,773 - bot.services.scrapper.inn_finder - INFO - INN enrichment [297/307]: Gympro
+2026-03-12 22:00:42,213 - bot.services.scrapper.inn_finder - INFO - INN enrichment [298/307]: ЭМС Фитнес Про
+2026-03-12 22:00:43,617 - bot.services.scrapper.inn_finder - INFO - INN enrichment [299/307]: Horizontal Fitness
+2026-03-12 22:00:45,102 - bot.services.scrapper.inn_finder - INFO - INN enrichment [300/307]: Pro100fitness
+2026-03-12 22:00:46,463 - bot.services.scrapper.inn_finder - INFO - INN enrichment [301/307]: Taekwon
+2026-03-12 22:00:47,866 - bot.services.scrapper.inn_finder - INFO - INN enrichment [302/307]: FitId 1, 618
+2026-03-12 22:00:49,645 - bot.services.scrapper.inn_finder - INFO - INN enrichment [303/307]: Скай фитнес
+2026-03-12 22:00:50,327 - bot.services.scrapper.inn_finder - INFO - INN enrichment [304/307]: Емс Студия
+2026-03-12 22:00:51,707 - bot.services.scrapper.inn_finder - INFO - INN enrichment [305/307]: Емеля
+2026-03-12 22:00:53,164 - bot.services.scrapper.inn_finder - INFO - INN enrichment [306/307]: Am Stretching
+2026-03-12 22:00:54,556 - bot.services.scrapper.inn_finder - INFO - INN enrichment [307/307]: Теорема спорта
+2026-03-12 22:00:55,960 - bot.services.scrapper.inn_finder - INFO - INN enrichment: found 238, not found 69
+2026-03-12 22:00:55,960 - bot.services.scrapper.orchestrator - INFO - INN: found 238, not found 69
+2026-03-12 22:00:56,468 - bot.services.scrapper.cache - INFO - Cached: фитнес_москва.json (307 companies)
+2026-03-12 22:00:56,468 - bot.services.scrapper.orchestrator - INFO - Scraping completed: 307 companies, duration: 1417.7s
+2026-03-13 10:04:00,388 - bot.services.sherlock_client - INFO - Sherlock client started successfully
+2026-03-13 10:04:00,389 - bot.services.outreach - INFO - Listener target IDs: []
+2026-03-13 10:04:00,389 - bot.services.outreach - INFO - Listener started, tracking 0 recipients
+2026-03-13 10:04:00,697 - bot.services.outreach - INFO - Sent to +79180376606 (Амир кебаб)
+2026-03-13 10:04:12,827 - bot.services.outreach - INFO - Sent to +79678049705 (Академия)
+2026-03-13 10:04:21,759 - bot.services.outreach - INFO - Sent to +79384195488 (Pandora Sushi)
+2026-03-13 10:04:35,957 - bot.services.outreach - INFO - Phone +79186112414 not in Telegram
+2026-03-13 10:04:36,070 - bot.services.outreach - INFO - Phone +79996524697 not in Telegram
+2026-03-13 10:04:36,375 - bot.services.outreach - INFO - Sent to +79183068739 (Еда от души)
+2026-03-13 10:04:50,322 - bot.services.outreach - INFO - Sent to +79184037260 (Прожарка)
+2026-03-13 10:04:57,412 - bot.services.outreach - INFO - Sent to +79787751822 (Старик Хинкалыч)
+2026-03-13 10:05:07,323 - bot.services.outreach - INFO - Sent to +79186002880 (Моё)
+2026-03-13 10:05:15,703 - bot.services.outreach - INFO - Sent to +79826230406 (Папина радость)
+2026-03-13 10:05:25,101 - bot.services.outreach - INFO - Sent to +79384599975 (Ламаджо)
+2026-03-13 10:05:33,409 - bot.services.outreach - INFO - Sent to +79883554448 (Море ролл)
+2026-03-13 10:05:46,472 - bot.services.outreach - INFO - Sent to +79654689897 (Шаурмянка)
+2026-03-13 10:05:54,855 - bot.services.outreach - INFO - Phone +79183031881 not in Telegram
+2026-03-13 10:05:55,056 - bot.services.outreach - INFO - Phone +79884140767 not in Telegram
+2026-03-13 10:05:55,636 - bot.services.outreach - INFO - Sent to +79384026165 (Колибри)
+2026-03-13 10:06:08,834 - bot.services.outreach - INFO - Sent to +79227968204 (Этолето)
+2026-03-13 10:06:23,929 - bot.services.outreach - INFO - Sent to +79672271313 (Frutinie)
+2026-03-13 10:06:31,729 - bot.services.outreach - INFO - Phone +79628898438 not in Telegram
+2026-03-13 10:06:31,851 - bot.services.outreach - INFO - Phone +79181047009 not in Telegram
+2026-03-13 10:06:31,851 - bot.services.outreach - INFO - Sending loop finished. cancelled=False, sent=14
+2026-03-13 10:06:31,988 - bot.services.outreach - INFO - Campaign status: listening
+2026-03-13 10:40:16,873 - aiogram.event - ERROR - Cause exception while process update id=220410787 by bot id=8505514297
+TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+Traceback (most recent call last):
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 309, in _process_update
+    response = await self.feed_update(bot, update, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 158, in feed_update
+    response = await self.update.wrap_outer_middleware(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\middlewares\error.py", line 25, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\middlewares\user_context.py", line 56, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\fsm\middleware.py", line 42, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 276, in _listen_update
+    return await self.propagate_event(update_type=update_type, event=event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 146, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 141, in _wrapped
+    return await self._propagate_event(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 174, in _propagate_event
+    response = await router.propagate_event(update_type=update_type, event=event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 146, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 141, in _wrapped
+    return await self._propagate_event(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 166, in _propagate_event
+    response = await observer.trigger(event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+  File "C:\Users\user\Desktop\Atilla\projects\LeadPhoneFinder\bot\handlers\outreach.py", line 599, in dialogs_filter
+    if not service or not service.campaign:
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\methods\base.py", line 84, in emit
+    return await bot(self)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\bot.py", line 488, in __call__
+    return await self.session(self, method, timeout=request_timeout)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\base.py", line 254, in __call__
+    return cast(TelegramType, await middleware(bot, method))
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\aiohttp.py", line 189, in make_request
+    response = self.check_response(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\base.py", line 120, in check_response
+    raise TelegramBadRequest(method=method, message=description)
+aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-03-13 19:20:04,707 - bot.services.outreach - INFO - [LISTENER] New incoming message from 307743867: Здравствуйте, в принципе  интересно
+2026-03-13 19:20:04,707 - bot.services.outreach - INFO - [LISTENER] Processing message from 307743867 (Моё): Здравствуйте, в принципе  интересно
+2026-03-13 19:20:04,810 - bot.services.outreach - INFO - [LISTENER] Calling AI for 307743867, attempt=1, history len=2
+2026-03-13 19:20:07,378 - bot.services.outreach - INFO - AI reply to 307743867: status=warm, text=Отлично! Как насчет короткого звонка на 15 минут? Завтра в 11 или 14 удобно?
+2026-03-13 19:20:16,009 - bot.services.outreach - INFO - Sent reply to Моё, status=warm
+2026-03-13 19:20:36,459 - bot.services.outreach - INFO - [LISTENER] New incoming message from 307743867: К 14 будет удобней
+2026-03-13 19:20:36,459 - bot.services.outreach - INFO - [LISTENER] Recipient Моё status=warm, skipping
+2026-03-13 20:49:38,498 - aiogram.event - ERROR - Cause exception while process update id=220410802 by bot id=8505514297
+TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+Traceback (most recent call last):
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 309, in _process_update
+    response = await self.feed_update(bot, update, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 158, in feed_update
+    response = await self.update.wrap_outer_middleware(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\middlewares\error.py", line 25, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\middlewares\user_context.py", line 56, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\fsm\middleware.py", line 42, in __call__
+    return await handler(event, data)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 276, in _listen_update
+    return await self.propagate_event(update_type=update_type, event=event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 146, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 141, in _wrapped
+    return await self._propagate_event(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 174, in _propagate_event
+    response = await router.propagate_event(update_type=update_type, event=event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 146, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 141, in _wrapped
+    return await self._propagate_event(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\router.py", line 166, in _propagate_event
+    response = await observer.trigger(event, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+  File "C:\Users\user\Desktop\Atilla\projects\LeadPhoneFinder\bot\handlers\outreach.py", line 557, in outreach_status
+    await state.clear()
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\methods\base.py", line 84, in emit
+    return await bot(self)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\bot.py", line 488, in __call__
+    return await self.session(self, method, timeout=request_timeout)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\base.py", line 254, in __call__
+    return cast(TelegramType, await middleware(bot, method))
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\aiohttp.py", line 189, in make_request
+    response = self.check_response(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\aiogram\client\session\base.py", line 120, in check_response
+    raise TelegramBadRequest(method=method, message=description)
+aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-03-13 21:35:06,483 - __main__ - INFO - Bot stopped
+2026-03-13 21:35:06,483 - __main__ - INFO - Bot stopped by user
+2026-03-13 21:35:06,697 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x0000017F11A539D0>
+2026-03-13 21:35:17,894 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-13 21:35:18,300 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-13 21:35:18,300 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-13 21:35:19,180 - bot.services.sherlock_client - INFO - Sherlock client started successfully
+2026-03-13 21:35:19,180 - bot.services.outreach - INFO - Listener target IDs: [307743867]
+2026-03-13 21:35:19,180 - bot.services.outreach - INFO - Listener started, tracking 1 recipients
+2026-03-13 21:35:19,180 - __main__ - INFO - Restored campaign for user 590317122 (status=listening, recipients=20)
+2026-03-13 21:35:19,320 - __main__ - INFO - Restored 1 active campaign(s)
+2026-03-14 10:23:07,308 - __main__ - INFO - Bot stopped
+2026-03-14 10:23:07,309 - __main__ - INFO - Bot stopped by user
+2026-03-14 10:23:13,459 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-14 10:23:14,450 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-14 10:23:14,450 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-14 10:23:15,259 - bot.services.sherlock_client - INFO - Sherlock client started successfully
+2026-03-14 10:23:17,621 - __main__ - INFO - Resolved 13 telegram_user_ids for campaign 590317122
+2026-03-14 10:23:17,621 - bot.services.outreach - INFO - Listener target IDs: [6763787155, 164455437, 1150093267, 7351837208, 723147212, 293725619, 307743867, 432577392, 8303721861, 5206109442, 5600396469, 490813673, 778346545, 1171609792]
+2026-03-14 10:23:17,621 - bot.services.outreach - INFO - Listener started, tracking 14 recipients
+2026-03-14 10:23:17,621 - __main__ - INFO - Restored campaign for user 590317122 (status=listening, recipients=20)
+2026-03-14 10:23:17,744 - __main__ - INFO - Restored 1 active campaign(s)

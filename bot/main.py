@@ -14,6 +14,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bot.utils.config import settings
 from bot.handlers import start, file_upload, callbacks, scrapper, outreach
+from bot.services.outreach_storage import OutreachStorage
+from bot.services.outreach import OutreachService, active_outreach, normalize_phone
+from bot.services.ai_sales import AISalesEngine
+from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
 
 # Настройка логирования
 logging.basicConfig(
@@ -61,6 +65,65 @@ async def main() -> None:
         logger.info(f"Whitelist enabled: {len(settings.allowed_users)} users")
     else:
         logger.info("Whitelist disabled: all users allowed")
+
+    # Восстанавливаем активные кампании после перезапуска
+    async def on_startup(bot: Bot) -> None:
+        storage = OutreachStorage()
+        campaigns = storage.load_all_active()
+        for campaign in campaigns:
+            ai_engine = AISalesEngine(
+                api_key=settings.openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
+                model=settings.openrouter_model,
+            )
+            service = OutreachService(ai_engine)
+            service._campaign = campaign
+            active_outreach[campaign.user_id] = service
+
+            if campaign.status == "paused":
+                service._pause_event.clear()
+
+            # Resolve telegram_user_id для получателей без него
+            if is_telethon_configured():
+                try:
+                    from telethon.tl.functions.contacts import ImportContactsRequest
+                    from telethon.tl.types import InputPhoneContact
+                    client_wrapper = await get_sherlock_client()
+                    client = client_wrapper.client
+                    resolved = 0
+                    for r in campaign.recipients:
+                        if r.status in ("sent", "talking") and not r.telegram_user_id:
+                            phone = normalize_phone(r.phone)
+                            contact = InputPhoneContact(
+                                client_id=0, phone=phone,
+                                first_name=r.company_name, last_name="",
+                            )
+                            result = await client(ImportContactsRequest([contact]))
+                            if result.users:
+                                r.telegram_user_id = result.users[0].id
+                                resolved += 1
+                    if resolved:
+                        storage.save(campaign)
+                        logger.info(f"Resolved {resolved} telegram_user_ids for campaign {campaign.user_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to resolve user IDs: {e}")
+
+            await service.start_listener()
+            service._ping_task = asyncio.create_task(service._ping_loop())
+
+            logger.info(f"Restored campaign for user {campaign.user_id} (status={campaign.status}, recipients={len(campaign.recipients)})")
+            try:
+                await bot.send_message(
+                    campaign.user_id,
+                    "🔄 Бот перезапущен. Ваша кампания восстановлена и продолжает работу.",
+                )
+            except Exception as e:
+                logger.warning(f"Failed to notify user {campaign.user_id}: {e}")
+
+        if campaigns:
+            logger.info(f"Restored {len(campaigns)} active campaign(s)")
+
+    dp.startup.register(on_startup)
 
     # Запускаем polling
     try:

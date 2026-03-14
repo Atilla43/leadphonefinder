@@ -19,7 +19,6 @@ from bot.services.result_generator import generate_excel
 from bot.utils.config import settings
 from bot.utils.keyboards import Keyboards
 from bot.ui.keyboards import get_scrapper_keyboard, get_source_keyboard
-
 logger = logging.getLogger(__name__)
 router = Router()
 

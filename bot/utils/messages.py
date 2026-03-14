@@ -263,14 +263,23 @@ class Messages:
     @staticmethod
     def outreach_warm_lead(recipient) -> str:
         """Уведомление о тёплом лиде."""
-        return (
+        # Последнее сообщение от лида
+        last_user_msg = ""
+        for msg in reversed(recipient.conversation_history):
+            if msg["role"] == "user":
+                last_user_msg = msg["content"]
+                break
+
+        text = (
             f"🔥 <b>ТЁПЛЫЙ ЛИД!</b>\n\n"
             f"🏢 {recipient.company_name}\n"
             f"👤 {recipient.contact_name or 'N/A'}\n"
-            f"📱 {recipient.phone}\n\n"
-            "Лид согласился на встречу/звонок.\n"
-            "Подхватите диалог в TG Master!"
+            f"📱 {recipient.phone}\n"
         )
+        if last_user_msg:
+            text += f"\n💬 <i>{last_user_msg[:200]}</i>\n"
+        text += "\nПодхватите диалог в TG Master!"
+        return text
 
     @staticmethod
     def outreach_complete(campaign) -> str:
