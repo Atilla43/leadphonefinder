@@ -229,6 +229,9 @@ def parse_outreach_file(file_bytes: bytes, filename: str) -> list[OutreachRecipi
     recipients = []
     for _, row in df.iterrows():
         raw_phone = str(row[phone_col]).strip() if pd.notna(row[phone_col]) else ""
+        # Берём первый телефон, если несколько через запятую
+        if "," in raw_phone:
+            raw_phone = raw_phone.split(",")[0].strip()
         phone = _normalize_phone(raw_phone)
         if not phone:
             continue
