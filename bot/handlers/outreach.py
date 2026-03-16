@@ -82,15 +82,16 @@ def _get_recipients_from_results(user_id: int) -> list[OutreachRecipient]:
     return recipients
 
 
-def _check_outreach_config(callback: CallbackQuery) -> str | None:
+def _check_outreach_config(callback: CallbackQuery, check_accounts: bool = False) -> str | None:
     """Проверяет конфигурацию для outreach. Возвращает текст ошибки или None."""
     if not settings.openrouter_api_key:
         return "OpenRouter API ключ не настроен (OPENROUTER_API_KEY в .env)"
-    pool = get_account_pool()
-    has_env = all([settings.telethon_api_id, settings.telethon_api_hash, settings.telethon_phone])
-    has_pool = len(pool.accounts) > 0
-    if not has_env and not has_pool:
-        return "Нет подключённых аккаунтов. Добавьте через 📱 Управление номерами"
+    if check_accounts:
+        pool = get_account_pool()
+        has_env = all([settings.telethon_api_id, settings.telethon_api_hash, settings.telethon_phone])
+        has_pool = len(pool.accounts) > 0
+        if not has_env and not has_pool:
+            return "Нет подключённых аккаунтов. Добавьте через 📱 Управление номерами"
     return None
 
 
@@ -259,7 +260,7 @@ async def start_outreach(callback: CallbackQuery, state: FSMContext) -> None:
         await callback.answer(Messages.access_denied(), show_alert=True)
         return
 
-    error = _check_outreach_config(callback)
+    error = _check_outreach_config(callback, check_accounts=True)
     if error:
         await callback.answer(error, show_alert=True)
         return
