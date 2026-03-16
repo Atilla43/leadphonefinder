@@ -15,8 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from bot.utils.config import settings
 from bot.handlers import start, file_upload, callbacks, scrapper, outreach
 from bot.services.outreach_storage import OutreachStorage
-from bot.services.outreach import OutreachService, active_outreach, normalize_phone
+from bot.services.outreach import OutreachService, active_outreach, add_service, normalize_phone
 from bot.services.ai_sales import AISalesEngine
+from bot.services.account_pool import get_account_pool
 from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
 
 # Настройка логирования
@@ -68,6 +69,11 @@ async def main() -> None:
 
     # Восстанавливаем активные кампании после перезапуска
     async def on_startup(bot: Bot) -> None:
+        # Инициализируем пул аккаунтов
+        pool = get_account_pool()
+        connected = await pool.connect_all()
+        logger.info(f"Account pool: {connected} account(s) connected")
+
         storage = OutreachStorage()
         campaigns = storage.load_all_active()
         for campaign in campaigns:
@@ -78,21 +84,29 @@ async def main() -> None:
             )
             service = OutreachService(ai_engine)
             service._campaign = campaign
-            active_outreach[campaign.user_id] = service
+            add_service(campaign.user_id, campaign.campaign_id, service)
 
             if campaign.status == "paused":
                 service._pause_event.clear()
 
             # Resolve telegram_user_id для получателей без него
-            if is_telethon_configured():
+            if pool.get_active_accounts():
                 try:
                     from telethon.tl.functions.contacts import ImportContactsRequest
                     from telethon.tl.types import InputPhoneContact
-                    client_wrapper = await get_sherlock_client()
-                    client = client_wrapper.client
                     resolved = 0
                     for r in campaign.recipients:
                         if r.status in ("sent", "talking") and not r.telegram_user_id:
+                            # Используем клиент с которого было отправлено
+                            client = None
+                            if r.account_phone:
+                                client = pool.get_client(r.account_phone)
+                            if not client:
+                                clients = pool.get_all_clients()
+                                client = clients[0] if clients else None
+                            if not client:
+                                continue
+
                             phone = normalize_phone(r.phone)
                             contact = InputPhoneContact(
                                 client_id=0, phone=phone,
@@ -115,7 +129,8 @@ async def main() -> None:
             try:
                 await bot.send_message(
                     campaign.user_id,
-                    "🔄 Бот перезапущен. Ваша кампания восстановлена и продолжает работу.",
+                    f"🔄 Бот перезапущен. Ваша кампания восстановлена.\n"
+                    f"📱 Аккаунтов: {connected} | Ёмкость: {pool.total_daily_capacity(settings.outreach_daily_limit)}/день",
                 )
             except Exception as e:
                 logger.warning(f"Failed to notify user {campaign.user_id}: {e}")

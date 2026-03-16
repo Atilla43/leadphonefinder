@@ -23,6 +23,7 @@ class OutreachRecipient:
     director_name: Optional[str] = None
 
     telegram_user_id: Optional[int] = None
+    account_phone: Optional[str] = None  # с какого аккаунта отправлено
     status: str = "pending"  # pending, sent, talking, warm, rejected, no_response, not_found, error
     conversation_history: list[dict] = field(default_factory=list)  # [{role, content}]
     last_message_at: Optional[datetime] = None
@@ -42,6 +43,7 @@ class OutreachRecipient:
             "address": self.address,
             "director_name": self.director_name,
             "telegram_user_id": self.telegram_user_id,
+            "account_phone": self.account_phone,
             "status": self.status,
             "conversation_history": self.conversation_history,
             "last_message_at": self.last_message_at.isoformat() if self.last_message_at else None,
@@ -66,6 +68,7 @@ class OutreachRecipient:
             address=data.get("address"),
             director_name=data.get("director_name"),
             telegram_user_id=data.get("telegram_user_id"),
+            account_phone=data.get("account_phone"),
             status=data.get("status", "pending"),
             conversation_history=data.get("conversation_history", []),
             last_message_at=last_msg,
@@ -81,6 +84,8 @@ class OutreachCampaign:
     user_id: int
     offer: str
     recipients: list[OutreachRecipient]
+    campaign_id: str = ""  # уникальный ID кампании (timestamp)
+    name: str = ""  # краткое название для UI
     status: str = "pending"  # pending, sending, listening, paused, completed, cancelled
     sent_count: int = 0
     warm_count: int = 0
@@ -89,11 +94,19 @@ class OutreachCampaign:
     manager_ids: list[int] = field(default_factory=list)  # Telegram IDs менеджеров для уведомлений
     system_prompt: str = ""
 
+    def __post_init__(self):
+        if not self.campaign_id:
+            self.campaign_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        if not self.name:
+            self.name = self.offer[:40].replace("\n", " ")
+
     def to_dict(self) -> dict:
         return {
             "user_id": self.user_id,
             "offer": self.offer,
             "recipients": [r.to_dict() for r in self.recipients],
+            "campaign_id": self.campaign_id,
+            "name": self.name,
             "status": self.status,
             "sent_count": self.sent_count,
             "warm_count": self.warm_count,
@@ -110,6 +123,8 @@ class OutreachCampaign:
             user_id=data["user_id"],
             offer=data["offer"],
             recipients=recipients,
+            campaign_id=data.get("campaign_id", ""),
+            name=data.get("name", ""),
             status=data.get("status", "pending"),
             sent_count=data.get("sent_count", 0),
             warm_count=data.get("warm_count", 0),

@@ -176,6 +176,7 @@ class Keyboards:
         buttons = [
             [InlineKeyboardButton(text="📄 Загрузить файл с контактами", callback_data="outreach_upload")],
             [InlineKeyboardButton(text="🔍 Из результатов поиска", callback_data="start_outreach")],
+            [InlineKeyboardButton(text="📱 Управление номерами", callback_data="accounts_menu")],
         ]
         if has_campaign:
             buttons.append([
@@ -184,6 +185,38 @@ class Keyboards:
             ])
         buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_menu")])
         return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    @staticmethod
+    def outreach_campaigns_list(services) -> InlineKeyboardMarkup:
+        """Список кампаний для выбора."""
+        buttons = []
+        for s in services:
+            c = s.campaign
+            if not c:
+                continue
+            status_emoji = {"sending": "📤", "listening": "👂", "paused": "⏸"}.get(c.status, "❓")
+            label = f"{status_emoji} {c.name[:30]}"
+            buttons.append([InlineKeyboardButton(text=label, callback_data=f"campaign_select:{c.campaign_id}")])
+        buttons.append([InlineKeyboardButton(text="◀️ Назад", callback_data="outreach_menu")])
+        return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    @staticmethod
+    def accounts_list(accounts_count: int) -> InlineKeyboardMarkup:
+        """Меню управления аккаунтами."""
+        buttons = [
+            [InlineKeyboardButton(text="➕ Добавить номер", callback_data="account_add")],
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="outreach_menu")],
+        ]
+        return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    @staticmethod
+    def account_add_cancel() -> InlineKeyboardMarkup:
+        """Кнопка отмены при добавлении аккаунта."""
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="❌ Отмена", callback_data="accounts_menu")],
+            ]
+        )
 
     @staticmethod
     def outreach_dialog_limit() -> InlineKeyboardMarkup:

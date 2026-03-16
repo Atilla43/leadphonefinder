@@ -15,6 +15,7 @@ from telethon.errors import FloodWaitError
 
 from bot.models.outreach import OutreachCampaign, OutreachRecipient
 from bot.services.ai_sales import AISalesEngine
+from bot.services.account_pool import get_account_pool, AccountPool
 from bot.services.outreach_storage import OutreachStorage
 from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
 from bot.utils.config import settings
@@ -92,6 +93,7 @@ class OutreachService:
         self._cancelled = False
         self._campaign: Optional[OutreachCampaign] = None
         self._listener_handler = None
+        self._listener_handlers: list = []
         self._ping_task: Optional[asyncio.Task] = None
         self._notify_callback: Optional[Callable] = None
 
@@ -117,32 +119,59 @@ class OutreachService:
 
     # ─── Фаза 1: Рассылка первых сообщений ───
 
+    def _calc_send_interval(self) -> float:
+        """Рассчитывает интервал между отправками чтобы растянуть на рабочий день."""
+        now_msk = datetime.now(timezone.utc) + MSK_OFFSET
+        end_hour = settings.outreach_work_hour_end
+        remaining_hours = max(end_hour - now_msk.hour - now_msk.minute / 60, 0.5)
+        remaining_seconds = remaining_hours * 3600
+
+        pool = get_account_pool()
+        # Сколько ещё можно отправить сегодня со всех аккаунтов
+        remaining_capacity = 0
+        for a in pool.get_active_accounts():
+            remaining_capacity += settings.outreach_daily_limit - pool.sent_today.get(a.phone, 0)
+        remaining_capacity = max(remaining_capacity, 1)
+
+        # Сколько pending получателей осталось
+        pending = sum(1 for r in self._campaign.recipients if r.status == "pending") if self._campaign else 1
+        sends_planned = min(pending, remaining_capacity)
+        sends_planned = max(sends_planned, 1)
+
+        interval = remaining_seconds / sends_planned
+        return max(interval, 30)  # Минимум 30 сек
+
     async def start_campaign(
         self,
         campaign: OutreachCampaign,
         progress_callback: Optional[Callable[..., Awaitable]] = None,
     ) -> None:
         """Запускает фазу 1: рассылка первых сообщений."""
-        if not is_telethon_configured():
-            raise RuntimeError("Telethon не настроен. Укажите TELETHON_API_ID/HASH/PHONE в .env")
+        pool = get_account_pool()
+        if not pool.get_active_accounts():
+            raise RuntimeError("Нет подключённых аккаунтов. Добавьте номер через меню.")
 
         self._campaign = campaign
         self._cancelled = False
         self._pause_event.set()
         campaign.status = "sending"
 
-        client_wrapper = await get_sherlock_client()
-        client = client_wrapper.client
+        # Распределяем получателей по аккаунтам (round-robin)
+        pool.assign_recipients(campaign.recipients, settings.outreach_daily_limit)
+        self._save()
 
         # Запускаем listener СРАЗУ, до рассылки — чтобы ловить быстрые ответы
         await self.start_listener()
         self._ping_task = asyncio.create_task(self._ping_loop())
 
-        sent_today = 0
+        total_sent = 0
 
         for i, recipient in enumerate(campaign.recipients):
             if self._cancelled:
                 break
+
+            if recipient.status != "pending":
+                continue
 
             # Проверка паузы
             await self._pause_event.wait()
@@ -152,11 +181,30 @@ class OutreachService:
             if self._cancelled:
                 break
 
-            # Дневной лимит
-            if sent_today >= settings.outreach_daily_limit:
-                logger.warning("Daily limit reached")
+            # Проверяем лимиты всех аккаунтов
+            if pool.all_limits_reached(settings.outreach_daily_limit):
+                logger.info("All accounts reached daily limit, waiting for next work day")
                 await self._notify("daily_limit", campaign=campaign)
-                break
+                # Ждём до 10:00 следующего рабочего дня
+                await self._wait_for_working_hours()
+                if self._cancelled:
+                    break
+                pool.reset_daily_counters()
+
+            # Берём клиент для этого получателя
+            account_phone = recipient.account_phone
+            client = pool.get_client(account_phone) if account_phone else None
+
+            if not client:
+                # Fallback: берём любой доступный
+                result = pool.get_next_available(settings.outreach_daily_limit)
+                if not result:
+                    logger.warning("No available accounts, waiting...")
+                    await self._wait_for_working_hours()
+                    pool.reset_daily_counters()
+                    continue
+                client, account_info = result
+                recipient.account_phone = account_info.phone
 
             phone = normalize_phone(recipient.phone)
 
@@ -190,9 +238,10 @@ class OutreachService:
                     "content": message_text,
                 })
                 campaign.sent_count += 1
-                sent_today += 1
+                total_sent += 1
+                pool.increment_sent(recipient.account_phone)
 
-                logger.info(f"Sent to {phone} ({recipient.company_name})")
+                logger.info(f"Sent to {phone} ({recipient.company_name}) from {recipient.account_phone}")
                 self._save()
 
                 # Прогресс
@@ -203,7 +252,6 @@ class OutreachService:
                 logger.warning(f"FloodWait: {e.seconds}s")
                 await self._notify("flood_wait", seconds=e.seconds, campaign=campaign)
                 await asyncio.sleep(e.seconds)
-                # Retry this recipient
                 continue
 
             except Exception as e:
@@ -211,8 +259,11 @@ class OutreachService:
                 recipient.error_message = str(e)
                 logger.error(f"Error sending to {phone}: {e}")
 
-            # Антибан задержка
-            delay = random.uniform(settings.outreach_delay_min, settings.outreach_delay_max)
+            # Растянутая задержка (≈14 мин при 30/день на 7 часов)
+            interval = self._calc_send_interval()
+            jitter = random.uniform(-120, 120)  # ±2 мин
+            delay = max(interval + jitter, 15)
+            logger.debug(f"Next send in {delay:.0f}s (interval={interval:.0f}s)")
             await asyncio.sleep(delay)
 
         # Фаза 1 завершена — переход к слушанию ответов
@@ -234,13 +285,33 @@ class OutreachService:
                 return r
         return None
 
+    def _get_client_for_recipient(self, recipient: OutreachRecipient) -> Optional["TelegramClient"]:
+        """Получает Telethon клиент для конкретного получателя."""
+        pool = get_account_pool()
+        if recipient.account_phone:
+            client = pool.get_client(recipient.account_phone)
+            if client:
+                return client
+        # Fallback: первый доступный клиент
+        clients = pool.get_all_clients()
+        return clients[0] if clients else None
+
     async def start_listener(self) -> None:
-        """Запускает event handler для входящих сообщений."""
+        """Запускает event handler для входящих сообщений на ВСЕХ клиентах."""
         if not self._campaign:
             return
 
-        client_wrapper = await get_sherlock_client()
-        client = client_wrapper.client
+        pool = get_account_pool()
+        all_clients = pool.get_all_clients()
+
+        if not all_clients:
+            # Fallback на старый singleton
+            try:
+                client_wrapper = await get_sherlock_client()
+                all_clients = [client_wrapper.client]
+            except Exception:
+                logger.error("No clients available for listener")
+                return
 
         # Логируем target IDs для отладки
         target_ids = [
@@ -250,28 +321,49 @@ class OutreachService:
         ]
         logger.info(f"Listener target IDs: {target_ids}")
 
-        # НЕ используем from_users фильтр — он замораживается при регистрации
-        # и может не совпадать. Фильтруем вручную через _find_recipient.
-        @client.on(events.NewMessage(incoming=True))
-        async def on_incoming(event):
-            logger.info(f"[LISTENER] New incoming message from {event.sender_id}: {(event.text or '')[:80]}")
+        self._listener_handlers = []
 
-            if self._cancelled:
-                logger.info("[LISTENER] Cancelled, skipping")
-                return
+        for client in all_clients:
+            # НЕ используем from_users фильтр — он замораживается при регистрации
+            @client.on(events.NewMessage(incoming=True))
+            async def on_incoming(event, _client=client):
+                logger.info(f"[LISTENER] New incoming message from {event.sender_id}: {(event.text or '')[:80]}")
 
-            sender_id = event.sender_id
+                if self._cancelled:
+                    logger.info("[LISTENER] Cancelled, skipping")
+                    return
 
-            # Динамический поиск
-            recipient = self._find_recipient(sender_id)
-            if not recipient:
-                # Не наш получатель — игнорируем молча
-                logger.debug(f"[LISTENER] sender {sender_id} not in recipients, ignoring")
-                return
+                sender_id = event.sender_id
 
-            if recipient.status in ("rejected", "no_response", "warm_confirmed"):
-                # Для warm_confirmed: только читаем и уведомляем
-                if recipient.status == "warm_confirmed":
+                # Динамический поиск
+                recipient = self._find_recipient(sender_id)
+                if not recipient:
+                    logger.debug(f"[LISTENER] sender {sender_id} not in recipients, ignoring")
+                    return
+
+                # Определяем клиент для ответа
+                reply_client = self._get_client_for_recipient(recipient) or _client
+
+                if recipient.status in ("rejected", "no_response", "warm_confirmed"):
+                    if recipient.status == "warm_confirmed":
+                        try:
+                            await event.mark_read()
+                        except Exception:
+                            pass
+                        recipient.conversation_history.append({
+                            "role": "user",
+                            "content": event.text,
+                        })
+                        recipient.last_message_at = datetime.now(timezone.utc)
+                        self._save()
+                        await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+                        logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {event.text[:80]}")
+                    else:
+                        logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
+                    return
+
+                # Warm-лид: AI отправляет финальное подтверждение, потом замолкает
+                if recipient.status == "warm":
                     try:
                         await event.mark_read()
                     except Exception:
@@ -281,141 +373,117 @@ class OutreachService:
                         "content": event.text,
                     })
                     recipient.last_message_at = datetime.now(timezone.utc)
+
+                    ai_response = None
+                    try:
+                        ai_response = await self.ai_engine.generate_response(
+                            recipient.conversation_history,
+                            self._campaign.system_prompt or None,
+                            company_context=self._build_company_context(recipient),
+                        )
+                    except Exception as e:
+                        logger.error(f"[LISTENER] AI error for warm confirm: {e}")
+
+                    if ai_response:
+                        reply_text = ai_response["reply"]
+                        char_delay = len(reply_text) * random.uniform(0.05, 0.08)
+                        base_delay = random.uniform(2.0, 4.0)
+                        delay = min(base_delay + char_delay, 45.0)
+                        async with reply_client.action(sender_id, 'typing'):
+                            await asyncio.sleep(delay)
+                        try:
+                            await reply_client.send_message(sender_id, reply_text)
+                            recipient.conversation_history.append({
+                                "role": "assistant",
+                                "content": reply_text,
+                            })
+                        except Exception as e:
+                            logger.error(f"Error sending warm confirm: {e}")
+
+                    recipient.status = "warm_confirmed"
                     self._save()
                     await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
-                    logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {event.text[:80]}")
-                else:
-                    logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
-                return
+                    logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed, AI sent final reply")
+                    return
 
-            # Warm-лид: AI отправляет финальное подтверждение, потом замолкает
-            if recipient.status == "warm":
-                try:
-                    await event.mark_read()
-                except Exception:
-                    pass
+                logger.info(f"[LISTENER] Processing message from {sender_id} ({recipient.company_name}): {event.text[:80]}")
+
                 recipient.conversation_history.append({
                     "role": "user",
                     "content": event.text,
                 })
                 recipient.last_message_at = datetime.now(timezone.utc)
+                recipient.ping_count = 0
+                recipient.status = "talking"
 
-                # AI генерирует финальный ответ-подтверждение
+                try:
+                    await event.mark_read()
+                except Exception:
+                    pass
+
+                # Генерируем AI ответ (с retry)
                 ai_response = None
-                try:
-                    ai_response = await self.ai_engine.generate_response(
-                        recipient.conversation_history,
-                        self._campaign.system_prompt or None,
-                        company_context=self._build_company_context(recipient),
-                    )
-                except Exception as e:
-                    logger.error(f"[LISTENER] AI error for warm confirm: {e}")
-
-                if ai_response:
-                    reply_text = ai_response["reply"]
-                    char_delay = len(reply_text) * random.uniform(0.05, 0.08)
-                    base_delay = random.uniform(2.0, 4.0)
-                    delay = min(base_delay + char_delay, 45.0)
-                    async with client.action(sender_id, 'typing'):
-                        await asyncio.sleep(delay)
+                for attempt in range(3):
+                    logger.info(f"[LISTENER] Calling AI for {sender_id}, attempt={attempt+1}")
                     try:
-                        await client.send_message(sender_id, reply_text)
-                        recipient.conversation_history.append({
-                            "role": "assistant",
-                            "content": reply_text,
-                        })
+                        ai_response = await self.ai_engine.generate_response(
+                            recipient.conversation_history,
+                            self._campaign.system_prompt or None,
+                            company_context=self._build_company_context(recipient),
+                        )
                     except Exception as e:
-                        logger.error(f"Error sending warm confirm: {e}")
+                        logger.error(f"[LISTENER] AI error for {sender_id}: {e}", exc_info=True)
 
-                recipient.status = "warm_confirmed"
-                self._save()
-                await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
-                logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed, AI sent final reply")
-                return
+                    if ai_response:
+                        break
+                    logger.warning(f"[LISTENER] AI returned None for {sender_id}, attempt {attempt+1}/3")
+                    await asyncio.sleep(2)
 
-            logger.info(f"[LISTENER] Processing message from {sender_id} ({recipient.company_name}): {event.text[:80]}")
+                if not ai_response:
+                    logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}")
+                    return
 
-            # Добавляем сообщение в историю
-            recipient.conversation_history.append({
-                "role": "user",
-                "content": event.text,
-            })
-            recipient.last_message_at = datetime.now(timezone.utc)
-            recipient.ping_count = 0
-            recipient.status = "talking"
+                reply_text = ai_response["reply"]
+                status = ai_response.get("status", "talking")
 
-            # Отмечаем сообщение как прочитанное
-            try:
-                await event.mark_read()
-            except Exception:
-                pass
+                logger.info(f"AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
 
-            # Генерируем AI ответ (с retry при пустом ответе)
-            ai_response = None
-            for attempt in range(3):
-                logger.info(f"[LISTENER] Calling AI for {sender_id}, attempt={attempt+1}, history len={len(recipient.conversation_history)}")
+                char_delay = len(reply_text) * random.uniform(0.05, 0.08)
+                base_delay = random.uniform(2.0, 4.0)
+                delay = min(base_delay + char_delay, 45.0)
+                async with reply_client.action(sender_id, 'typing'):
+                    await asyncio.sleep(delay)
+
                 try:
-                    ai_response = await self.ai_engine.generate_response(
-                        recipient.conversation_history,
-                        self._campaign.system_prompt or None,
-                        company_context=self._build_company_context(recipient),
-                    )
+                    await reply_client.send_message(sender_id, reply_text)
+
+                    recipient.conversation_history.append({
+                        "role": "assistant",
+                        "content": reply_text,
+                    })
+                    recipient.last_message_at = datetime.now(timezone.utc)
+
+                    if status == "warm":
+                        recipient.status = "warm"
+                        self._campaign.warm_count += 1
+                        await self._notify("warm_lead", recipient=recipient, campaign=self._campaign)
+                    elif status == "rejected":
+                        recipient.status = "rejected"
+                        self._campaign.rejected_count += 1
+
+                    logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
+                    self._save()
+
+                except FloodWaitError as e:
+                    logger.warning(f"FloodWait on reply: {e.seconds}s")
+                    await asyncio.sleep(e.seconds)
                 except Exception as e:
-                    logger.error(f"[LISTENER] AI error for {sender_id}: {e}", exc_info=True)
+                    logger.error(f"Error replying to {sender_id}: {e}")
 
-                if ai_response:
-                    break
-                logger.warning(f"[LISTENER] AI returned None for {sender_id}, attempt {attempt+1}/3")
-                await asyncio.sleep(2)
+            self._listener_handlers.append(on_incoming)
 
-            if not ai_response:
-                logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}")
-                return
-
-            reply_text = ai_response["reply"]
-            status = ai_response.get("status", "talking")
-
-            logger.info(f"AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
-
-            # Задержка перед ответом с индикатором "печатает"
-            # Базовая задержка + ~0.05-0.08 сек на символ (имитация печати)
-            char_delay = len(reply_text) * random.uniform(0.05, 0.08)
-            base_delay = random.uniform(2.0, 4.0)
-            delay = min(base_delay + char_delay, 45.0)
-            async with client.action(sender_id, 'typing'):
-                await asyncio.sleep(delay)
-
-            # Отправляем ответ
-            try:
-                await client.send_message(sender_id, reply_text)
-
-                recipient.conversation_history.append({
-                    "role": "assistant",
-                    "content": reply_text,
-                })
-                recipient.last_message_at = datetime.now(timezone.utc)
-
-                if status == "warm":
-                    recipient.status = "warm"
-                    self._campaign.warm_count += 1
-                    await self._notify("warm_lead", recipient=recipient, campaign=self._campaign)
-
-                elif status == "rejected":
-                    recipient.status = "rejected"
-                    self._campaign.rejected_count += 1
-
-                logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
-                self._save()
-
-            except FloodWaitError as e:
-                logger.warning(f"FloodWait on reply: {e.seconds}s")
-                await asyncio.sleep(e.seconds)
-
-            except Exception as e:
-                logger.error(f"Error replying to {sender_id}: {e}")
-
-        self._listener_handler = on_incoming
-        logger.info(f"Listener started, tracking {len(target_ids)} recipients")
+        self._listener_handler = self._listener_handlers[0] if self._listener_handlers else None
+        logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
 
     # ─── Фаза 2b: Follow-up при игноре ───
 
@@ -453,8 +521,6 @@ class OutreachService:
             if not self._is_working_hours():
                 continue
 
-            client_wrapper = await get_sherlock_client()
-            client = client_wrapper.client
             now = datetime.now(timezone.utc)
 
             for recipient in self._campaign.recipients:
@@ -475,9 +541,18 @@ class OutreachService:
                 if days_since < 1:
                     continue
 
+                # Используем клиент с которого было отправлено
+                client = self._get_client_for_recipient(recipient)
+                if not client:
+                    try:
+                        client_wrapper = await get_sherlock_client()
+                        client = client_wrapper.client
+                    except Exception:
+                        logger.error(f"No client for ping to {recipient.company_name}")
+                        continue
+
                 try:
                     if recipient.ping_count == 0:
-                        # День 2: персонализированное сообщение
                         name = extract_first_name(recipient.contact_name) if recipient.contact_name else ""
                         gender = detect_gender(recipient.contact_name) if recipient.contact_name else "unknown"
                         if name:
@@ -499,7 +574,6 @@ class OutreachService:
                         self._save()
 
                     elif recipient.ping_count == 1:
-                        # День 3: стикер с котиком
                         await self._send_cat_sticker(client, recipient.telegram_user_id)
                         recipient.last_message_at = now
                         recipient.ping_count = 2
@@ -595,8 +669,17 @@ class OutreachService:
         if self._ping_task and not self._ping_task.done():
             self._ping_task.cancel()
 
-        # Удаляем event handler
-        if self._listener_handler:
+        # Удаляем event handlers со всех клиентов
+        pool = get_account_pool()
+        for handler in getattr(self, '_listener_handlers', []):
+            for client in pool.get_all_clients():
+                try:
+                    client.remove_event_handler(handler)
+                except Exception:
+                    pass
+
+        # Fallback: старый singleton
+        if self._listener_handler and not getattr(self, '_listener_handlers', []):
             try:
                 client_wrapper = await get_sherlock_client()
                 client_wrapper.client.remove_event_handler(self._listener_handler)
@@ -608,7 +691,7 @@ class OutreachService:
 
         if self._campaign:
             self._campaign.status = "cancelled"
-            self._storage.delete(self._campaign.user_id)
+            self._storage.delete(self._campaign.user_id, self._campaign.campaign_id)
 
     async def _cleanup_contacts(self) -> None:
         """Удаляет добавленные контакты."""
@@ -616,23 +699,19 @@ class OutreachService:
             return
 
         try:
-            client_wrapper = await get_sherlock_client()
-            client = client_wrapper.client
+            pool = get_account_pool()
 
-            user_ids = [
-                r.telegram_user_id
-                for r in self._campaign.recipients
-                if r.telegram_user_id
-            ]
-
-            if user_ids:
-                # Получаем entities для удаления
-                for uid in user_ids:
-                    try:
-                        entity = await client.get_input_entity(uid)
-                        await client(DeleteContactsRequest([entity]))
-                    except Exception:
-                        pass
+            for recipient in self._campaign.recipients:
+                if not recipient.telegram_user_id:
+                    continue
+                client = self._get_client_for_recipient(recipient)
+                if not client:
+                    continue
+                try:
+                    entity = await client.get_input_entity(recipient.telegram_user_id)
+                    await client(DeleteContactsRequest([entity]))
+                except Exception:
+                    pass
 
         except Exception as e:
             logger.error(f"Cleanup contacts error: {e}")
@@ -642,5 +721,25 @@ class OutreachService:
         return self._campaign
 
 
-# Глобальные активные кампании: user_id -> OutreachService
-active_outreach: dict[int, OutreachService] = {}
+# Глобальные активные кампании: user_id -> {campaign_id -> OutreachService}
+active_outreach: dict[int, dict[str, OutreachService]] = {}
+
+
+def get_user_services(user_id: int) -> list[OutreachService]:
+    """Все активные сервисы пользователя."""
+    return list(active_outreach.get(user_id, {}).values())
+
+
+def add_service(user_id: int, campaign_id: str, service: "OutreachService") -> None:
+    """Добавляет сервис в глобальный реестр."""
+    if user_id not in active_outreach:
+        active_outreach[user_id] = {}
+    active_outreach[user_id][campaign_id] = service
+
+
+def remove_service(user_id: int, campaign_id: str) -> None:
+    """Удаляет сервис из реестра."""
+    if user_id in active_outreach:
+        active_outreach[user_id].pop(campaign_id, None)
+        if not active_outreach[user_id]:
+            del active_outreach[user_id]

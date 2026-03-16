@@ -14,8 +14,9 @@ from bot.handlers.callbacks import results_storage
 from bot.handlers.start import check_access
 from bot.models.outreach import OutreachCampaign, OutreachRecipient
 from bot.services.ai_sales import AISalesEngine
+from bot.services.account_pool import get_account_pool
 from bot.services.file_parser import parse_outreach_file, FileParseError
-from bot.services.outreach import OutreachService, active_outreach
+from bot.services.outreach import OutreachService, active_outreach, get_user_services, add_service, remove_service
 from bot.services.result_generator import generate_outreach_template
 from bot.utils.config import settings
 from bot.utils.keyboards import Keyboards
@@ -33,6 +34,11 @@ class OutreachStates(StatesGroup):
     waiting_managers = State()
     sending = State()
     listening = State()
+    # Account management
+    waiting_api_id = State()
+    waiting_api_hash = State()
+    waiting_phone = State()
+    waiting_code = State()
 
 
 def _get_recipients_from_results(user_id: int) -> list[OutreachRecipient]:
@@ -79,8 +85,11 @@ def _check_outreach_config(callback: CallbackQuery) -> str | None:
     """Проверяет конфигурацию для outreach. Возвращает текст ошибки или None."""
     if not settings.openrouter_api_key:
         return "OpenRouter API ключ не настроен (OPENROUTER_API_KEY в .env)"
-    if not all([settings.telethon_api_id, settings.telethon_api_hash, settings.telethon_phone]):
-        return "Telethon не настроен (TELETHON_API_ID/HASH/PHONE в .env)"
+    pool = get_account_pool()
+    has_env = all([settings.telethon_api_id, settings.telethon_api_hash, settings.telethon_phone])
+    has_pool = len(pool.accounts) > 0
+    if not has_env and not has_pool:
+        return "Нет подключённых аккаунтов. Добавьте через 📱 Управление номерами"
     return None
 
 
@@ -103,6 +112,23 @@ async def outreach_menu(callback: CallbackQuery, state: FSMContext) -> None:
         parse_mode="HTML",
     )
     await callback.answer()
+
+
+def _get_current_service(user_id: int, state_data: dict) -> tuple[Optional[OutreachService], Optional[str]]:
+    """Получает текущий выбранный сервис и campaign_id."""
+    campaign_id = state_data.get("current_campaign_id")
+    services = get_user_services(user_id)
+    if not services:
+        return None, None
+    if campaign_id:
+        user_campaigns = active_outreach.get(user_id, {})
+        service = user_campaigns.get(campaign_id)
+        if service:
+            return service, campaign_id
+    # Fallback: первый сервис
+    service = services[0]
+    cid = service.campaign.campaign_id if service.campaign else None
+    return service, cid
 
 
 @router.callback_query(F.data == "outreach_upload")
@@ -426,9 +452,10 @@ async def _launch_campaign(
 
     # Создаём сервис
     service = OutreachService(ai_engine)
-    active_outreach[user_id] = service
+    add_service(user_id, campaign.campaign_id, service)
 
     await state.set_state(OutreachStates.sending)
+    await state.update_data(current_campaign_id=campaign.campaign_id)
 
     # Сообщение с прогрессом
     progress_msg = await source_message.answer(
@@ -504,10 +531,10 @@ async def _launch_campaign(
 
 
 @router.callback_query(F.data == "outreach_pause")
-async def pause_outreach(callback: CallbackQuery) -> None:
+async def pause_outreach(callback: CallbackQuery, state: FSMContext) -> None:
     """Пауза кампании."""
-    user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    data = await state.get_data()
+    service, _ = _get_current_service(callback.from_user.id, data)
 
     if not service:
         await callback.answer("Нет активной кампании", show_alert=True)
@@ -522,10 +549,10 @@ async def pause_outreach(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(F.data == "outreach_resume")
-async def resume_outreach(callback: CallbackQuery) -> None:
+async def resume_outreach(callback: CallbackQuery, state: FSMContext) -> None:
     """Возобновление кампании."""
-    user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    data = await state.get_data()
+    service, _ = _get_current_service(callback.from_user.id, data)
 
     if not service:
         await callback.answer("Нет активной кампании", show_alert=True)
@@ -542,8 +569,8 @@ async def resume_outreach(callback: CallbackQuery) -> None:
 @router.callback_query(F.data == "outreach_stop")
 async def stop_outreach(callback: CallbackQuery, state: FSMContext) -> None:
     """Остановка кампании."""
-    user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    data = await state.get_data()
+    service, campaign_id = _get_current_service(callback.from_user.id, data)
 
     if not service:
         await callback.answer("Нет активной кампании", show_alert=True)
@@ -552,36 +579,78 @@ async def stop_outreach(callback: CallbackQuery, state: FSMContext) -> None:
     await service.cancel()
     campaign = service.campaign
 
-    # Очищаем
-    active_outreach.pop(user_id, None)
-    await state.clear()
+    # Очищаем конкретную кампанию
+    if campaign_id:
+        remove_service(callback.from_user.id, campaign_id)
 
-    if campaign:
+    # Если есть другие кампании — показываем их список
+    remaining = get_user_services(callback.from_user.id)
+    if remaining:
         await callback.message.edit_text(
-            Messages.outreach_complete(campaign),
-            reply_markup=Keyboards.back_to_menu(),
+            f"⏹ Кампания остановлена.\n\nУ вас ещё {len(remaining)} активных кампаний.",
+            reply_markup=Keyboards.outreach_campaigns_list(remaining),
             parse_mode="HTML",
         )
     else:
-        await callback.message.edit_text(
-            "⏹ Кампания остановлена.",
-            reply_markup=Keyboards.back_to_menu(),
-            parse_mode="HTML",
-        )
+        await state.clear()
+        if campaign:
+            await callback.message.edit_text(
+                Messages.outreach_complete(campaign),
+                reply_markup=Keyboards.back_to_menu(),
+                parse_mode="HTML",
+            )
+        else:
+            await callback.message.edit_text(
+                "⏹ Кампания остановлена.",
+                reply_markup=Keyboards.back_to_menu(),
+                parse_mode="HTML",
+            )
 
     await callback.answer("Кампания остановлена")
 
 
 @router.callback_query(F.data == "outreach_status")
-async def outreach_status(callback: CallbackQuery) -> None:
+async def outreach_status(callback: CallbackQuery, state: FSMContext) -> None:
     """Статус кампании."""
     user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    services = get_user_services(user_id)
 
-    if not service or not service.campaign:
+    if not services:
         await callback.answer("Нет активной кампании", show_alert=True)
         return
 
+    await callback.answer()
+
+    if len(services) == 1:
+        service = services[0]
+        await state.update_data(current_campaign_id=service.campaign.campaign_id)
+        await callback.message.edit_text(
+            Messages.outreach_status(service.campaign),
+            reply_markup=Keyboards.outreach_listening(),
+            parse_mode="HTML",
+        )
+    else:
+        # Показываем список кампаний
+        await callback.message.edit_text(
+            _render_campaigns_list(services),
+            reply_markup=Keyboards.outreach_campaigns_list(services),
+            parse_mode="HTML",
+        )
+
+
+@router.callback_query(F.data.startswith("campaign_select:"))
+async def select_campaign(callback: CallbackQuery, state: FSMContext) -> None:
+    """Выбор конкретной кампании для управления."""
+    campaign_id = callback.data.split(":")[1]
+    user_id = callback.from_user.id
+    user_campaigns = active_outreach.get(user_id, {})
+    service = user_campaigns.get(campaign_id)
+
+    if not service or not service.campaign:
+        await callback.answer("Кампания не найдена", show_alert=True)
+        return
+
+    await state.update_data(current_campaign_id=campaign_id)
     await callback.answer()
 
     await callback.message.edit_text(
@@ -592,10 +661,10 @@ async def outreach_status(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(F.data == "outreach_dialogs")
-async def outreach_dialogs(callback: CallbackQuery) -> None:
+async def outreach_dialogs(callback: CallbackQuery, state: FSMContext) -> None:
     """Список диалогов кампании."""
-    user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    data = await state.get_data()
+    service, _ = _get_current_service(callback.from_user.id, data)
 
     if not service or not service.campaign:
         await callback.answer("Нет активной кампании", show_alert=True)
@@ -611,10 +680,10 @@ async def outreach_dialogs(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(F.data.startswith("dial_filter:"))
-async def dialogs_filter(callback: CallbackQuery) -> None:
+async def dialogs_filter(callback: CallbackQuery, state: FSMContext) -> None:
     """Фильтрация диалогов по статусу."""
-    user_id = callback.from_user.id
-    service = active_outreach.get(user_id)
+    data = await state.get_data()
+    service, _ = _get_current_service(callback.from_user.id, data)
 
     if not service or not service.campaign:
         await callback.answer("Нет активной кампании", show_alert=True)
@@ -634,3 +703,224 @@ async def dialogs_filter(callback: CallbackQuery) -> None:
         )
     except TelegramBadRequest:
         pass
+
+
+def _render_campaigns_list(services: list[OutreachService]) -> str:
+    """Рендерит список кампаний."""
+    lines = ["📊 <b>Ваши кампании:</b>\n"]
+    for s in services:
+        c = s.campaign
+        if not c:
+            continue
+        status_emoji = {"sending": "📤", "listening": "👂", "paused": "⏸"}.get(c.status, "❓")
+        lines.append(
+            f"{status_emoji} <b>{c.name}</b>\n"
+            f"   📨 {c.sent_count} отправлено | 🔥 {c.warm_count} тёплых | 👥 {len(c.recipients)} всего"
+        )
+    return "\n".join(lines)
+
+
+# ─── Управление аккаунтами ───
+
+@router.callback_query(F.data == "accounts_menu")
+async def accounts_menu(callback: CallbackQuery, state: FSMContext) -> None:
+    """Список подключённых аккаунтов."""
+    if not check_access(callback.from_user.id):
+        await callback.answer(Messages.access_denied(), show_alert=True)
+        return
+
+    pool = get_account_pool()
+    pool._load()
+
+    if not pool.accounts:
+        text = (
+            "📱 <b>Управление номерами</b>\n\n"
+            "Нет подключённых аккаунтов.\n"
+            "Добавьте номер для рассылки."
+        )
+    else:
+        lines = ["📱 <b>Управление номерами</b>\n"]
+        for a in pool.accounts:
+            status = "✅" if a.active and a.phone in pool.clients else "⏸"
+            sent = pool.sent_today.get(a.phone, 0)
+            lines.append(f"{status} <code>{a.phone}</code> — отправлено сегодня: {sent}/{settings.outreach_daily_limit}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(
+        text,
+        reply_markup=Keyboards.accounts_list(len(pool.accounts)),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "account_add")
+async def account_add_start(callback: CallbackQuery, state: FSMContext) -> None:
+    """Начало добавления аккаунта — инструкция + ввод API ID."""
+    if not check_access(callback.from_user.id):
+        await callback.answer(Messages.access_denied(), show_alert=True)
+        return
+
+    text = (
+        "📱 <b>Добавление нового номера для рассылки</b>\n\n"
+        "Для подключения нужны API ключи от Telegram:\n\n"
+        "1. Перейдите на https://my.telegram.org\n"
+        "2. Войдите с номером телефона который хотите добавить\n"
+        "3. Нажмите «API development tools»\n"
+        "4. Создайте приложение (название любое, например «MyApp»)\n"
+        "5. Скопируйте <b>API ID</b> (число) и <b>API Hash</b> (строка)\n\n"
+        "Отправьте <b>API ID</b> (число):"
+    )
+
+    await callback.message.edit_text(
+        text,
+        reply_markup=Keyboards.account_add_cancel(),
+        parse_mode="HTML",
+    )
+    await state.set_state(OutreachStates.waiting_api_id)
+    await callback.answer()
+
+
+@router.message(OutreachStates.waiting_api_id, F.text)
+async def receive_api_id(message: Message, state: FSMContext) -> None:
+    """Получение API ID."""
+    text = message.text.strip()
+    try:
+        api_id = int(text)
+    except ValueError:
+        await message.answer("API ID должен быть числом. Попробуйте ещё раз:")
+        return
+
+    await state.update_data(new_api_id=api_id)
+    await state.set_state(OutreachStates.waiting_api_hash)
+    await message.answer(
+        "Отправьте <b>API Hash</b> (строка из букв и цифр):",
+        parse_mode="HTML",
+    )
+
+
+@router.message(OutreachStates.waiting_api_hash, F.text)
+async def receive_api_hash(message: Message, state: FSMContext) -> None:
+    """Получение API Hash."""
+    api_hash = message.text.strip()
+    if len(api_hash) < 10:
+        await message.answer("API Hash слишком короткий. Попробуйте ещё раз:")
+        return
+
+    await state.update_data(new_api_hash=api_hash)
+    await state.set_state(OutreachStates.waiting_phone)
+    await message.answer(
+        "Отправьте <b>номер телефона</b> в формате +79XXXXXXXXX:",
+        parse_mode="HTML",
+    )
+
+
+@router.message(OutreachStates.waiting_phone, F.text)
+async def receive_phone(message: Message, state: FSMContext) -> None:
+    """Получение номера телефона — отправка кода."""
+    phone = message.text.strip()
+    if not phone.startswith("+"):
+        phone = "+" + phone
+
+    data = await state.get_data()
+    api_id = data["new_api_id"]
+    api_hash = data["new_api_hash"]
+
+    # Проверяем дубли
+    pool = get_account_pool()
+    for a in pool.accounts:
+        if a.phone == phone:
+            await message.answer(f"Аккаунт {phone} уже добавлен.")
+            await state.clear()
+            return
+
+    # Создаём клиент и отправляем код
+    from telethon import TelegramClient
+
+    session_name = f"userbot_{phone.replace('+', '').replace(' ', '')}"
+    client = TelegramClient(
+        session_name,
+        api_id,
+        api_hash,
+        lang_code="ru",
+        system_lang_code="ru-RU",
+    )
+
+    try:
+        await client.connect()
+        sent_code = await client.send_code_request(phone)
+        await state.update_data(
+            new_phone=phone,
+            new_session_name=session_name,
+            phone_code_hash=sent_code.phone_code_hash,
+        )
+        # Сохраняем клиент для использования в следующем шаге
+        # Используем временное хранилище
+        if not hasattr(receive_phone, '_pending_clients'):
+            receive_phone._pending_clients = {}
+        receive_phone._pending_clients[message.from_user.id] = client
+
+        await state.set_state(OutreachStates.waiting_code)
+        await message.answer(
+            f"📨 Код отправлен на <b>{phone}</b>.\n\n"
+            "Введите код из SMS или Telegram:",
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        logger.error(f"Failed to send code to {phone}: {e}")
+        await client.disconnect()
+        await message.answer(
+            f"Ошибка: {e}\n\nПроверьте API ID, API Hash и номер телефона.",
+            reply_markup=Keyboards.account_add_cancel(),
+        )
+        await state.clear()
+
+
+@router.message(OutreachStates.waiting_code, F.text)
+async def receive_code(message: Message, state: FSMContext) -> None:
+    """Получение кода подтверждения — завершение авторизации."""
+    code = message.text.strip().replace("-", "").replace(" ", "")
+    data = await state.get_data()
+
+    client = None
+    if hasattr(receive_phone, '_pending_clients'):
+        client = receive_phone._pending_clients.pop(message.from_user.id, None)
+
+    if not client:
+        await message.answer("Сессия истекла. Начните добавление заново.")
+        await state.clear()
+        return
+
+    try:
+        await client.sign_in(
+            phone=data["new_phone"],
+            code=code,
+            phone_code_hash=data["phone_code_hash"],
+        )
+
+        # Успех — добавляем в пул
+        pool = get_account_pool()
+        account = pool.add_account(
+            phone=data["new_phone"],
+            api_id=data["new_api_id"],
+            api_hash=data["new_api_hash"],
+        )
+        pool.clients[account.phone] = client
+        pool.sent_today[account.phone] = 0
+
+        await state.clear()
+        await message.answer(
+            f"✅ Аккаунт <b>{data['new_phone']}</b> успешно подключён!\n\n"
+            f"Всего аккаунтов: {len(pool.accounts)}\n"
+            f"Дневная ёмкость: {pool.total_daily_capacity(settings.outreach_daily_limit)} сообщений/день",
+            parse_mode="HTML",
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to sign in {data['new_phone']}: {e}")
+        await client.disconnect()
+        await message.answer(
+            f"Ошибка авторизации: {e}\n\nПопробуйте заново.",
+            reply_markup=Keyboards.account_add_cancel(),
+        )
+        await state.clear()
