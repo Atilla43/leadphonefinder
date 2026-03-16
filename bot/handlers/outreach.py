@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from io import BytesIO
+from typing import Optional
 
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
