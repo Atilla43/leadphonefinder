@@ -99,6 +99,7 @@ class OutreachService:
         # Дебаунс: собираем сообщения перед обработкой
         self._pending_messages: dict[int, list[str]] = {}  # sender_id → [texts]
         self._debounce_tasks: dict[int, asyncio.Task] = {}  # sender_id → task
+        self._process_locks: dict[int, asyncio.Lock] = {}  # sender_id → lock
 
     def set_notify_callback(self, callback: Callable[..., Awaitable]) -> None:
         """Устанавливает callback для уведомлений (тёплый лид, прогресс и т.д.)."""
@@ -399,6 +400,15 @@ class OutreachService:
         if not messages or self._cancelled:
             return
 
+        # Лок: ждём пока предыдущая обработка для этого sender завершится
+        if sender_id not in self._process_locks:
+            self._process_locks[sender_id] = asyncio.Lock()
+
+        async with self._process_locks[sender_id]:
+            await self._process_recipient_messages(sender_id, messages, fallback_client)
+
+    async def _process_recipient_messages(self, sender_id: int, messages: list[str], fallback_client) -> None:
+        """Обрабатывает собранные сообщения от получателя (под локом)."""
         combined_text = "\n".join(messages)
 
         recipient = self._find_recipient(sender_id)
