@@ -1,5 +1,7 @@
 """Текстовые сообщения для бота."""
 
+from datetime import timedelta
+
 from bot.models.company import EnrichmentResult, EnrichmentStatus
 from bot.services.phone_extractor import mask_phone
 from bot.utils.config import settings
@@ -325,17 +327,41 @@ class Messages:
         )
 
     @staticmethod
-    def outreach_status(campaign) -> str:
+    def outreach_status(campaign, next_send_at=None) -> str:
         """Текущий статус кампании."""
+        total = len(campaign.recipients)
+        pending = sum(1 for r in campaign.recipients if r.status == "pending")
+        sent = campaign.sent_count
+        not_found = campaign.not_found_count
         active = sum(1 for r in campaign.recipients if r.status in ("sent", "talking"))
-        return (
-            "📨 <b>Статус AI-Продажника</b>\n\n"
+
+        text = "📨 <b>Статус AI-Продажника</b>\n\n"
+
+        if campaign.status == "sending" and total > 0:
+            done = sent + not_found
+            progress = int((done / total) * 20)
+            bar = "█" * progress + "░" * (20 - progress)
+            percent = int((done / total) * 100)
+            text += (
+                f"📤 <b>Рассылка:</b> {done}/{total} ({percent}%)\n"
+                f"{bar}\n"
+                f"✅ Отправлено: {sent}\n"
+                f"📵 Нет в TG: {not_found}\n"
+                f"⏳ Осталось: {pending}\n"
+            )
+            if next_send_at:
+                msk_time = next_send_at + timedelta(hours=3)
+                text += f"⏰ Следующая: ~{msk_time.strftime('%H:%M')} мск\n"
+            text += "\n"
+
+        text += (
             f"📊 Активных диалогов: {active}\n"
             f"🔥 Тёплых лидов: {campaign.warm_count}\n"
             f"❌ Отказов: {campaign.rejected_count}\n"
             f"😶 Без ответа: {sum(1 for r in campaign.recipients if r.status == 'no_response')}\n"
-            f"📵 Нет в Telegram: {campaign.not_found_count}"
+            f"📵 Нет в Telegram: {not_found}"
         )
+        return text
 
     @staticmethod
     def outreach_managers_prompt() -> str:

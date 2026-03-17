@@ -100,6 +100,7 @@ class OutreachService:
         self._pending_messages: dict[int, list[str]] = {}  # sender_id → [texts]
         self._debounce_tasks: dict[int, asyncio.Task] = {}  # sender_id → task
         self._process_locks: dict[int, asyncio.Lock] = {}  # sender_id → lock
+        self.next_send_at: Optional[datetime] = None  # время следующей отправки (UTC)
 
     def set_notify_callback(self, callback: Callable[..., Awaitable]) -> None:
         """Устанавливает callback для уведомлений (тёплый лид, прогресс и т.д.)."""
@@ -267,10 +268,12 @@ class OutreachService:
             interval = self._calc_send_interval()
             jitter = random.uniform(-120, 120)  # ±2 мин
             delay = max(interval + jitter, 15)
+            self.next_send_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
             logger.debug(f"Next send in {delay:.0f}s (interval={interval:.0f}s)")
             await asyncio.sleep(delay)
 
         # Фаза 1 завершена — переход к слушанию ответов
+        self.next_send_at = None
         logger.info(f"Sending loop finished. cancelled={self._cancelled}, sent={campaign.sent_count}")
         if not self._cancelled:
             campaign.status = "listening"

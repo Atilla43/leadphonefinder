@@ -642,7 +642,7 @@ async def outreach_status(callback: CallbackQuery, state: FSMContext) -> None:
         service = services[0]
         await state.update_data(current_campaign_id=service.campaign.campaign_id)
         await callback.message.edit_text(
-            Messages.outreach_status(service.campaign),
+            Messages.outreach_status(service.campaign, next_send_at=service.next_send_at),
             reply_markup=Keyboards.outreach_listening(),
             parse_mode="HTML",
         )
@@ -671,7 +671,7 @@ async def select_campaign(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
 
     await callback.message.edit_text(
-        Messages.outreach_status(service.campaign),
+        Messages.outreach_status(service.campaign, next_send_at=service.next_send_at),
         reply_markup=Keyboards.outreach_listening(),
         parse_mode="HTML",
     )
