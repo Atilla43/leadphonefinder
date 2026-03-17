@@ -193,7 +193,7 @@ class OutreachService:
                 logger.info("All accounts reached daily limit, waiting for next work day")
                 await self._notify("daily_limit", campaign=campaign)
                 # Ждём до 10:00 следующего рабочего дня
-                await self._wait_for_working_hours()
+                await self._wait_until_next_work_day()
                 if self._cancelled:
                     break
                 pool.reset_daily_counters()
@@ -772,6 +772,20 @@ class OutreachService:
                 chunk = min(sleep_seconds, 300)
                 await asyncio.sleep(chunk)
                 sleep_seconds -= chunk
+
+    async def _wait_until_next_work_day(self) -> None:
+        """Ждёт до 10:00 МСК следующего дня (при достижении дневного лимита)."""
+        now_msk = datetime.now(timezone.utc) + MSK_OFFSET
+        tomorrow = now_msk + timedelta(days=1)
+        target = tomorrow.replace(
+            hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
+        )
+        sleep_seconds = (target - now_msk).total_seconds()
+        logger.info(f"Daily limit reached. Sleeping {sleep_seconds/3600:.1f}h until tomorrow {settings.outreach_work_hour_start}:00 MSK")
+        while sleep_seconds > 0 and not self._cancelled:
+            chunk = min(sleep_seconds, 300)
+            await asyncio.sleep(chunk)
+            sleep_seconds -= chunk
 
     # ─── Управление кампанией ───
 
