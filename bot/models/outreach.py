@@ -24,7 +24,7 @@ class OutreachRecipient:
 
     telegram_user_id: Optional[int] = None
     account_phone: Optional[str] = None  # с какого аккаунта отправлено
-    status: str = "pending"  # pending, sent, talking, warm, rejected, no_response, not_found, error
+    status: str = "pending"  # pending, sent, talking, warm, rejected, referral, no_response, not_found, error
     conversation_history: list[dict] = field(default_factory=list)  # [{role, content}]
     last_message_at: Optional[datetime] = None
     ping_count: int = 0

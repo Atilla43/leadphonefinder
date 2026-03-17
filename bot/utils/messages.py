@@ -282,6 +282,36 @@ class Messages:
         return text
 
     @staticmethod
+    def outreach_referral(recipient, referral_name=None, referral_phone=None, referral_found=None) -> str:
+        """Уведомление о перенаправлении на другого контакта."""
+        text = (
+            f"🔄 <b>Перенаправление</b>\n\n"
+            f"🏢 {recipient.company_name}\n"
+        )
+        if referral_name and referral_phone:
+            text += (
+                f"👤 → {referral_name}\n"
+                f"📱 {referral_phone}\n"
+            )
+            if referral_found is True:
+                text += "\n✅ Первое сообщение отправлено новому контакту"
+            elif referral_found is False:
+                text += "\n📵 Контакт не найден в Telegram"
+        else:
+            text += "\n⚠️ Лид перенаправил, но контакт не распознан"
+
+        # Последнее сообщение от лида
+        last_msg = ""
+        for msg in reversed(recipient.conversation_history):
+            if msg["role"] == "user":
+                last_msg = msg["content"]
+                break
+        if last_msg:
+            text += f"\n\n💬 <i>{last_msg[:200]}</i>"
+
+        return text
+
+    @staticmethod
     def outreach_complete(campaign) -> str:
         """Итоги кампании."""
         return (
@@ -323,7 +353,7 @@ class Messages:
         """Список диалогов кампании."""
         STATUS_ICONS = {
             "warm": "🔥", "talking": "💬", "sent": "📨",
-            "rejected": "❌", "no_response": "😶",
+            "rejected": "❌", "referral": "🔄", "no_response": "😶",
             "not_found": "📵", "error": "⚠️", "pending": "⏳",
         }
 

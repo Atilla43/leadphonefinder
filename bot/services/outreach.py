@@ -96,6 +96,9 @@ class OutreachService:
         self._listener_handlers: list = []
         self._ping_task: Optional[asyncio.Task] = None
         self._notify_callback: Optional[Callable] = None
+        # Дебаунс: собираем сообщения перед обработкой
+        self._pending_messages: dict[int, list[str]] = {}  # sender_id → [texts]
+        self._debounce_tasks: dict[int, asyncio.Task] = {}  # sender_id → task
 
     def set_notify_callback(self, callback: Callable[..., Awaitable]) -> None:
         """Устанавливает callback для уведомлений (тёплый лид, прогресс и т.д.)."""
@@ -327,10 +330,7 @@ class OutreachService:
             # НЕ используем from_users фильтр — он замораживается при регистрации
             @client.on(events.NewMessage(incoming=True))
             async def on_incoming(event, _client=client):
-                logger.info(f"[LISTENER] New incoming message from {event.sender_id}: {(event.text or '')[:80]}")
-
                 if self._cancelled:
-                    logger.info("[LISTENER] Cancelled, skipping")
                     return
 
                 sender_id = event.sender_id
@@ -338,152 +338,253 @@ class OutreachService:
                 # Динамический поиск
                 recipient = self._find_recipient(sender_id)
                 if not recipient:
-                    logger.debug(f"[LISTENER] sender {sender_id} not in recipients, ignoring")
                     return
 
-                # Определяем клиент для ответа
-                reply_client = self._get_client_for_recipient(recipient) or _client
+                # Извлекаем текст + контакт-карточку
+                text = event.text or ""
+                if event.message.contact:
+                    c = event.message.contact
+                    contact_phone = c.phone_number or ""
+                    contact_name = f"{c.first_name or ''} {c.last_name or ''}".strip()
+                    text += f"\n[Контакт: {contact_name}, {contact_phone}]"
 
-                if recipient.status in ("rejected", "no_response", "warm_confirmed"):
-                    if recipient.status == "warm_confirmed":
-                        try:
-                            await event.mark_read()
-                        except Exception:
-                            pass
-                        recipient.conversation_history.append({
-                            "role": "user",
-                            "content": event.text,
-                        })
-                        recipient.last_message_at = datetime.now(timezone.utc)
-                        self._save()
-                        await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
-                        logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {event.text[:80]}")
-                    else:
-                        logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
+                if not text.strip():
                     return
 
-                # Warm-лид: AI отправляет финальное подтверждение, потом замолкает
-                if recipient.status == "warm":
-                    try:
-                        await event.mark_read()
-                    except Exception:
-                        pass
-                    recipient.conversation_history.append({
-                        "role": "user",
-                        "content": event.text,
-                    })
-                    recipient.last_message_at = datetime.now(timezone.utc)
-
-                    ai_response = None
-                    try:
-                        ai_response = await self.ai_engine.generate_response(
-                            recipient.conversation_history,
-                            self._campaign.system_prompt or None,
-                            company_context=self._build_company_context(recipient),
-                        )
-                    except Exception as e:
-                        logger.error(f"[LISTENER] AI error for warm confirm: {e}")
-
-                    if ai_response:
-                        reply_text = ai_response["reply"]
-                        char_delay = len(reply_text) * random.uniform(0.05, 0.08)
-                        base_delay = random.uniform(2.0, 4.0)
-                        delay = min(base_delay + char_delay, 45.0)
-                        async with reply_client.action(sender_id, 'typing'):
-                            await asyncio.sleep(delay)
-                        try:
-                            await reply_client.send_message(sender_id, reply_text)
-                            recipient.conversation_history.append({
-                                "role": "assistant",
-                                "content": reply_text,
-                            })
-                        except Exception as e:
-                            logger.error(f"Error sending warm confirm: {e}")
-
-                    recipient.status = "warm_confirmed"
-                    self._save()
-                    await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
-                    logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed, AI sent final reply")
-                    return
-
-                logger.info(f"[LISTENER] Processing message from {sender_id} ({recipient.company_name}): {event.text[:80]}")
-
-                recipient.conversation_history.append({
-                    "role": "user",
-                    "content": event.text,
-                })
-                recipient.last_message_at = datetime.now(timezone.utc)
-                recipient.ping_count = 0
-                recipient.status = "talking"
+                logger.info(f"[LISTENER] New message from {sender_id}: {text[:80]}")
 
                 try:
                     await event.mark_read()
                 except Exception:
                     pass
 
-                # Генерируем AI ответ (с retry)
-                ai_response = None
-                for attempt in range(3):
-                    logger.info(f"[LISTENER] Calling AI for {sender_id}, attempt={attempt+1}")
-                    try:
-                        ai_response = await self.ai_engine.generate_response(
-                            recipient.conversation_history,
-                            self._campaign.system_prompt or None,
-                            company_context=self._build_company_context(recipient),
-                        )
-                    except Exception as e:
-                        logger.error(f"[LISTENER] AI error for {sender_id}: {e}", exc_info=True)
-
-                    if ai_response:
-                        break
-                    logger.warning(f"[LISTENER] AI returned None for {sender_id}, attempt {attempt+1}/3")
-                    await asyncio.sleep(2)
-
-                if not ai_response:
-                    logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}")
+                # Статусы которые не нуждаются в дебаунсе
+                if recipient.status in ("rejected", "no_response"):
+                    logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
                     return
 
-                reply_text = ai_response["reply"]
-                status = ai_response.get("status", "talking")
-
-                logger.info(f"AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
-
-                char_delay = len(reply_text) * random.uniform(0.05, 0.08)
-                base_delay = random.uniform(2.0, 4.0)
-                delay = min(base_delay + char_delay, 45.0)
-                async with reply_client.action(sender_id, 'typing'):
-                    await asyncio.sleep(delay)
-
-                try:
-                    await reply_client.send_message(sender_id, reply_text)
-
-                    recipient.conversation_history.append({
-                        "role": "assistant",
-                        "content": reply_text,
-                    })
+                if recipient.status == "warm_confirmed":
+                    recipient.conversation_history.append({"role": "user", "content": text})
                     recipient.last_message_at = datetime.now(timezone.utc)
-
-                    if status == "warm":
-                        recipient.status = "warm"
-                        self._campaign.warm_count += 1
-                        await self._notify("warm_lead", recipient=recipient, campaign=self._campaign)
-                    elif status == "rejected":
-                        recipient.status = "rejected"
-                        self._campaign.rejected_count += 1
-
-                    logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
                     self._save()
+                    await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+                    logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {text[:80]}")
+                    return
 
-                except FloodWaitError as e:
-                    logger.warning(f"FloodWait on reply: {e.seconds}s")
-                    await asyncio.sleep(e.seconds)
-                except Exception as e:
-                    logger.error(f"Error replying to {sender_id}: {e}")
+                # Дебаунс: собираем сообщения 3 секунды перед обработкой
+                if sender_id not in self._pending_messages:
+                    self._pending_messages[sender_id] = []
+                self._pending_messages[sender_id].append(text)
+
+                # Отменяем предыдущий debounce task
+                if sender_id in self._debounce_tasks:
+                    self._debounce_tasks[sender_id].cancel()
+
+                self._debounce_tasks[sender_id] = asyncio.create_task(
+                    self._debounced_process(sender_id, _client)
+                )
 
             self._listener_handlers.append(on_incoming)
 
         self._listener_handler = self._listener_handlers[0] if self._listener_handlers else None
         logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
+
+    async def _debounced_process(self, sender_id: int, fallback_client) -> None:
+        """Ждёт 3 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
+        await asyncio.sleep(3)
+
+        messages = self._pending_messages.pop(sender_id, [])
+        self._debounce_tasks.pop(sender_id, None)
+
+        if not messages or self._cancelled:
+            return
+
+        combined_text = "\n".join(messages)
+
+        recipient = self._find_recipient(sender_id)
+        if not recipient:
+            return
+
+        reply_client = self._get_client_for_recipient(recipient) or fallback_client
+
+        # Warm-лид: AI отправляет финальное подтверждение
+        if recipient.status == "warm":
+            recipient.conversation_history.append({"role": "user", "content": combined_text})
+            recipient.last_message_at = datetime.now(timezone.utc)
+
+            ai_response = None
+            try:
+                ai_response = await self.ai_engine.generate_response(
+                    recipient.conversation_history,
+                    self._campaign.system_prompt or None,
+                    company_context=self._build_company_context(recipient),
+                )
+            except Exception as e:
+                logger.error(f"[LISTENER] AI error for warm confirm: {e}")
+
+            if ai_response:
+                reply_text = ai_response["reply"]
+                await self._send_with_typing(reply_client, sender_id, reply_text)
+                recipient.conversation_history.append({"role": "assistant", "content": reply_text})
+
+            recipient.status = "warm_confirmed"
+            self._save()
+            await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+            logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed")
+            return
+
+        # Обычная обработка
+        logger.info(f"[LISTENER] Processing {len(messages)} message(s) from {sender_id} ({recipient.company_name})")
+
+        recipient.conversation_history.append({"role": "user", "content": combined_text})
+        recipient.last_message_at = datetime.now(timezone.utc)
+        recipient.ping_count = 0
+        recipient.status = "talking"
+
+        # Генерируем AI ответ (с retry)
+        ai_response = None
+        for attempt in range(3):
+            try:
+                ai_response = await self.ai_engine.generate_response(
+                    recipient.conversation_history,
+                    self._campaign.system_prompt or None,
+                    company_context=self._build_company_context(recipient),
+                )
+            except Exception as e:
+                logger.error(f"[LISTENER] AI error for {sender_id}: {e}", exc_info=True)
+            if ai_response:
+                break
+            logger.warning(f"[LISTENER] AI returned None, attempt {attempt+1}/3")
+            await asyncio.sleep(2)
+
+        if not ai_response:
+            logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}")
+            return
+
+        reply_text = ai_response["reply"]
+        status = ai_response.get("status", "talking")
+        logger.info(f"AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
+
+        try:
+            await self._send_with_typing(reply_client, sender_id, reply_text)
+
+            recipient.conversation_history.append({"role": "assistant", "content": reply_text})
+            recipient.last_message_at = datetime.now(timezone.utc)
+
+            if status == "warm":
+                recipient.status = "warm"
+                self._campaign.warm_count += 1
+                await self._notify("warm_lead", recipient=recipient, campaign=self._campaign)
+            elif status == "rejected":
+                recipient.status = "rejected"
+                self._campaign.rejected_count += 1
+            elif status == "referral":
+                recipient.status = "referral"
+                await self._handle_referral(recipient, combined_text, reply_client)
+
+            logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
+            self._save()
+
+        except FloodWaitError as e:
+            logger.warning(f"FloodWait on reply: {e.seconds}s")
+            await asyncio.sleep(e.seconds)
+        except Exception as e:
+            logger.error(f"Error replying to {sender_id}: {e}")
+
+    async def _send_with_typing(self, client, user_id: int, text: str) -> None:
+        """Отправляет сообщение с имитацией набора текста."""
+        char_delay = len(text) * random.uniform(0.05, 0.08)
+        base_delay = random.uniform(2.0, 4.0)
+        delay = min(base_delay + char_delay, 45.0)
+        async with client.action(user_id, 'typing'):
+            await asyncio.sleep(delay)
+        await client.send_message(user_id, text)
+
+    async def _handle_referral(self, original_recipient: OutreachRecipient, text: str, client) -> None:
+        """Обработка перенаправления: извлекает контакт и пишет новому получателю."""
+        # Извлекаем телефон и имя из [Контакт: имя, +7...]
+        match = re.search(r'\[Контакт:\s*(.+?),\s*(\+?\d[\d\s-]+)\]', text)
+        if not match:
+            logger.info(f"[REFERRAL] No contact found in message from {original_recipient.company_name}")
+            await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
+                               referral_name=None, referral_phone=None)
+            return
+
+        referral_name = match.group(1).strip()
+        referral_phone = normalize_phone(match.group(2).strip())
+
+        logger.info(f"[REFERRAL] {original_recipient.company_name} -> {referral_name} ({referral_phone})")
+
+        # Проверяем что такого телефона ещё нет в кампании
+        for r in self._campaign.recipients:
+            if normalize_phone(r.phone) == referral_phone:
+                logger.info(f"[REFERRAL] Phone {referral_phone} already in campaign, skipping")
+                await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
+                                   referral_name=referral_name, referral_phone=referral_phone)
+                return
+
+        # Создаём нового получателя
+        new_recipient = OutreachRecipient(
+            phone=referral_phone,
+            company_name=original_recipient.company_name,
+            contact_name=referral_name,
+            category=original_recipient.category,
+            address=original_recipient.address,
+            account_phone=original_recipient.account_phone,
+        )
+
+        # Импортируем контакт через Telethon
+        try:
+            contact = InputPhoneContact(
+                client_id=0,
+                phone=referral_phone,
+                first_name=referral_name,
+                last_name="",
+            )
+            result = await client(ImportContactsRequest([contact]))
+
+            if not result.users:
+                logger.info(f"[REFERRAL] Phone {referral_phone} not in Telegram")
+                new_recipient.status = "not_found"
+                self._campaign.recipients.append(new_recipient)
+                await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
+                                   referral_name=referral_name, referral_phone=referral_phone,
+                                   referral_found=False)
+                return
+
+            user = result.users[0]
+            new_recipient.telegram_user_id = user.id
+
+            # Отправляем первое сообщение с упоминанием перенаправления
+            first_name = extract_first_name(referral_name) if referral_name else ""
+            greeting = f"{first_name}, здравствуйте" if first_name else "Здравствуйте"
+            referral_msg = (
+                f"{greeting}! {original_recipient.company_name} порекомендовала "
+                f"обратиться к вам.\n\n{self._campaign.offer}"
+            )
+
+            await self._send_with_typing(client, user.id, referral_msg)
+
+            new_recipient.status = "sent"
+            new_recipient.last_message_at = datetime.now(timezone.utc)
+            new_recipient.conversation_history.append({
+                "role": "assistant",
+                "content": referral_msg,
+            })
+            self._campaign.recipients.append(new_recipient)
+            self._campaign.sent_count += 1
+            self._save()
+
+            logger.info(f"[REFERRAL] Sent first message to {referral_name} ({referral_phone})")
+            await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
+                               referral_name=referral_name, referral_phone=referral_phone,
+                               referral_found=True)
+
+        except FloodWaitError as e:
+            logger.warning(f"[REFERRAL] FloodWait: {e.seconds}s")
+            await asyncio.sleep(e.seconds)
+        except Exception as e:
+            logger.error(f"[REFERRAL] Error sending to {referral_phone}: {e}")
 
     # ─── Фаза 2b: Follow-up при игноре ───
 

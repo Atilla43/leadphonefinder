@@ -516,6 +516,21 @@ async def _launch_campaign(
                     "⚠️ Достигнут дневной лимит рассылки. Кампания продолжится завтра.",
                     parse_mode="HTML",
                 )
+            elif event_type == "referral":
+                recipient = kwargs["recipient"]
+                msg_text = Messages.outreach_referral(
+                    recipient,
+                    referral_name=kwargs.get("referral_name"),
+                    referral_phone=kwargs.get("referral_phone"),
+                    referral_found=kwargs.get("referral_found"),
+                )
+                await bot.send_message(user_id, msg_text, parse_mode="HTML")
+                camp = kwargs["campaign"]
+                for manager_id in camp.manager_ids:
+                    try:
+                        await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                    except Exception:
+                        pass
             elif event_type == "flood_wait":
                 seconds = kwargs.get("seconds", 0)
                 await bot.send_message(
