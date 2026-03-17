@@ -125,6 +125,10 @@ async def main() -> None:
             await service.start_listener()
             service._ping_task = asyncio.create_task(service._ping_loop())
 
+            # Если кампания была в процессе рассылки — продолжить
+            if campaign.status == "sending":
+                asyncio.create_task(service.start_campaign(campaign, resume=True))
+
             logger.info(f"Restored campaign for user {campaign.user_id} (status={campaign.status}, recipients={len(campaign.recipients)})")
             try:
                 await bot.send_message(

@@ -79,7 +79,7 @@ def render_first_message(offer: str, recipient: OutreachRecipient) -> str:
     name = extract_first_name(recipient.contact_name) if recipient.contact_name else ""
     company = recipient.company_name
     greeting = f"{name}, здравствуйте" if name else "Здравствуйте"
-    return f"{greeting}, хочу коротко обсудить сотрудничество с «{company}».\n\n{offer}"
+    return f"{greeting}, коротко по «{company}».\n\n{offer}"
 
 
 class OutreachService:
@@ -150,6 +150,7 @@ class OutreachService:
         self,
         campaign: OutreachCampaign,
         progress_callback: Optional[Callable[..., Awaitable]] = None,
+        resume: bool = False,
     ) -> None:
         """Запускает фазу 1: рассылка первых сообщений."""
         pool = get_account_pool()
@@ -161,13 +162,14 @@ class OutreachService:
         self._pause_event.set()
         campaign.status = "sending"
 
-        # Распределяем получателей по аккаунтам (round-robin)
-        pool.assign_recipients(campaign.recipients, settings.outreach_daily_limit)
-        self._save()
+        if not resume:
+            # Распределяем получателей по аккаунтам (round-robin)
+            pool.assign_recipients(campaign.recipients, settings.outreach_daily_limit)
+            self._save()
 
-        # Запускаем listener СРАЗУ, до рассылки — чтобы ловить быстрые ответы
-        await self.start_listener()
-        self._ping_task = asyncio.create_task(self._ping_loop())
+            # Запускаем listener СРАЗУ, до рассылки — чтобы ловить быстрые ответы
+            await self.start_listener()
+            self._ping_task = asyncio.create_task(self._ping_loop())
 
         total_sent = 0
 
