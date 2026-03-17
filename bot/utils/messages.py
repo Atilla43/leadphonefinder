@@ -265,6 +265,8 @@ class Messages:
     @staticmethod
     def outreach_warm_lead(recipient) -> str:
         """Уведомление о тёплом лиде."""
+        from urllib.parse import quote
+
         # Последнее сообщение от лида
         last_user_msg = ""
         for msg in reversed(recipient.conversation_history):
@@ -280,6 +282,20 @@ class Messages:
         )
         if last_user_msg:
             text += f"\n💬 <i>{last_user_msg[:200]}</i>\n"
+
+        # Ссылки на карточки компании
+        search_query = recipient.company_name
+        if getattr(recipient, 'address', None):
+            search_query += " " + recipient.address
+        encoded = quote(search_query)
+        encoded_name = quote(recipient.company_name)
+        text += (
+            f"\n🔗 <b>Ссылки:</b>\n"
+            f"• <a href='https://eda.yandex.ru/search?text={encoded_name}'>Яндекс Еда</a>\n"
+            f"• <a href='https://2gis.ru/search/{encoded}'>2ГИС</a>\n"
+            f"• <a href='https://yandex.ru/maps/?text={encoded}'>Яндекс Карты</a>\n"
+        )
+
         text += "\nПодхватите диалог в TG Master!"
         return text
 

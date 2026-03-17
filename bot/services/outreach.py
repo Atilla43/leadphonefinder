@@ -410,6 +410,14 @@ class OutreachService:
             self._process_locks[sender_id] = asyncio.Lock()
 
         async with self._process_locks[sender_id]:
+            # После получения лока проверяем — не пришли ли ещё сообщения пока ждали
+            extra = self._pending_messages.pop(sender_id, [])
+            if extra:
+                messages.extend(extra)
+                # Отменяем дебаунс-таск для этих сообщений, мы их уже забрали
+                task = self._debounce_tasks.pop(sender_id, None)
+                if task:
+                    task.cancel()
             await self._process_recipient_messages(sender_id, messages, fallback_client)
 
     async def _process_recipient_messages(self, sender_id: int, messages: list[str], fallback_client) -> None:
@@ -765,6 +773,7 @@ class OutreachService:
                     hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
                 )
             sleep_seconds = (target - now_msk).total_seconds()
+            self.next_send_at = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
             logger.info(f"Outside working hours ({now_msk.strftime('%H:%M')} MSK). Sleeping {sleep_seconds/3600:.1f}h until {settings.outreach_work_hour_start}:00")
             await self._notify("waiting_hours", campaign=self._campaign, sleep_hours=sleep_seconds / 3600)
             # Спим порциями по 5 минут чтобы можно было отменить
@@ -781,6 +790,7 @@ class OutreachService:
             hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
         )
         sleep_seconds = (target - now_msk).total_seconds()
+        self.next_send_at = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
         logger.info(f"Daily limit reached. Sleeping {sleep_seconds/3600:.1f}h until tomorrow {settings.outreach_work_hour_start}:00 MSK")
         while sleep_seconds > 0 and not self._cancelled:
             chunk = min(sleep_seconds, 300)
