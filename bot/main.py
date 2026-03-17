@@ -76,6 +76,18 @@ async def main() -> None:
 
         storage = OutreachStorage()
         campaigns = storage.load_all_active()
+
+        # Восстанавливаем sent_today из данных кампаний
+        from datetime import datetime, timezone
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        for campaign in campaigns:
+            for r in campaign.recipients:
+                if r.account_phone and r.last_message_at and r.status not in ("pending", "not_found"):
+                    if r.last_message_at >= today_start:
+                        pool.sent_today[r.account_phone] = pool.sent_today.get(r.account_phone, 0) + 1
+        if pool.sent_today:
+            logger.info(f"Restored sent_today counters: {dict(pool.sent_today)}")
+
         for campaign in campaigns:
             ai_engine = AISalesEngine(
                 api_key=settings.openrouter_api_key,
