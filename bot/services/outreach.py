@@ -397,7 +397,7 @@ class OutreachService:
 
     async def _debounced_process(self, sender_id: int, fallback_client) -> None:
         """Ждёт 3 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
-        await asyncio.sleep(3)
+        await asyncio.sleep(60)
 
         messages = self._pending_messages.pop(sender_id, [])
         self._debounce_tasks.pop(sender_id, None)
