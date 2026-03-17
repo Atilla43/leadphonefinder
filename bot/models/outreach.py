@@ -24,6 +24,7 @@ class OutreachRecipient:
 
     telegram_user_id: Optional[int] = None
     account_phone: Optional[str] = None  # с какого аккаунта отправлено
+    referral_context: Optional[str] = None  # контекст из оригинальной переписки (для referral)
     status: str = "pending"  # pending, sent, talking, warm, rejected, referral, no_response, not_found, error
     conversation_history: list[dict] = field(default_factory=list)  # [{role, content}]
     last_message_at: Optional[datetime] = None
@@ -44,6 +45,7 @@ class OutreachRecipient:
             "director_name": self.director_name,
             "telegram_user_id": self.telegram_user_id,
             "account_phone": self.account_phone,
+            "referral_context": self.referral_context,
             "status": self.status,
             "conversation_history": self.conversation_history,
             "last_message_at": self.last_message_at.isoformat() if self.last_message_at else None,
@@ -69,6 +71,7 @@ class OutreachRecipient:
             director_name=data.get("director_name"),
             telegram_user_id=data.get("telegram_user_id"),
             account_phone=data.get("account_phone"),
+            referral_context=data.get("referral_context"),
             status=data.get("status", "pending"),
             conversation_history=data.get("conversation_history", []),
             last_message_at=last_msg,

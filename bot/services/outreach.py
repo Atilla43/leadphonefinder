@@ -523,6 +523,15 @@ class OutreachService:
                                    referral_name=referral_name, referral_phone=referral_phone)
                 return
 
+        # Формируем выжимку из оригинальной переписки
+        referral_summary = f"Перенаправлен от: {original_recipient.company_name}"
+        if original_recipient.contact_name:
+            referral_summary += f" ({original_recipient.contact_name})"
+        referral_summary += "\nИстория переписки с ним:\n"
+        for msg in original_recipient.conversation_history:
+            role = "Мы" if msg["role"] == "assistant" else "Клиент"
+            referral_summary += f"- {role}: {msg['content'][:150]}\n"
+
         # Создаём нового получателя
         new_recipient = OutreachRecipient(
             phone=referral_phone,
@@ -531,6 +540,7 @@ class OutreachService:
             category=original_recipient.category,
             address=original_recipient.address,
             account_phone=original_recipient.account_phone,
+            referral_context=referral_summary,
         )
 
         # Импортируем контакт через Telethon
@@ -713,6 +723,8 @@ class OutreachService:
             parts.append(f"Адрес: {recipient.address}")
         if recipient.director_name:
             parts.append(f"Директор: {recipient.director_name}")
+        if recipient.referral_context:
+            parts.append(f"\n{recipient.referral_context}")
         return "\n".join(parts) if parts else None
 
     def _is_working_hours(self) -> bool:
