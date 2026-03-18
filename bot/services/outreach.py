@@ -391,28 +391,30 @@ class OutreachService:
         logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
 
     async def _debounced_process(self, sender_id: int, fallback_client) -> None:
-        """Ждёт 3 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
+        """Ждёт 30 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
         await asyncio.sleep(30)
 
-        messages = self._pending_messages.pop(sender_id, [])
-        self._debounce_tasks.pop(sender_id, None)
-
-        if not messages or self._cancelled:
-            return
-
-        # Лок: ждём пока предыдущая обработка для этого sender завершится
         if sender_id not in self._process_locks:
             self._process_locks[sender_id] = asyncio.Lock()
 
+        # Если лок занят (идёт обработка) — не ждём, просто выходим.
+        # Текущий обработчик отменит отправку при обнаружении новых сообщений
+        # и новый debounce подхватит всё.
+        if self._process_locks[sender_id].locked():
+            logger.info(f"[DEBOUNCE] Lock held for {sender_id}, skipping (messages will be picked up)")
+            return
+
         async with self._process_locks[sender_id]:
-            # После получения лока проверяем — не пришли ли ещё сообщения пока ждали
-            extra = self._pending_messages.pop(sender_id, [])
-            if extra:
-                messages.extend(extra)
-                # Отменяем дебаунс-таск для этих сообщений, мы их уже забрали
-                task = self._debounce_tasks.pop(sender_id, None)
-                if task:
-                    task.cancel()
+            # Забираем ВСЕ накопленные сообщения внутри лока
+            messages = self._pending_messages.pop(sender_id, [])
+            # Отменяем любой pending debounce — мы забрали все сообщения
+            task = self._debounce_tasks.pop(sender_id, None)
+            if task:
+                task.cancel()
+
+            if not messages or self._cancelled:
+                return
+
             await self._process_recipient_messages(sender_id, messages, fallback_client)
 
     async def _process_recipient_messages(self, sender_id: int, messages: list[str], fallback_client) -> None:
@@ -451,6 +453,17 @@ class OutreachService:
             logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed")
             return
 
+        # Если статус referral — лид уже перенаправил, ждём контакт
+        if recipient.status == "referral":
+            recipient.conversation_history.append({"role": "user", "content": combined_text})
+            recipient.last_message_at = datetime.now(timezone.utc)
+            # Пробуем найти контакт во всей истории
+            handled = await self._handle_referral(recipient, combined_text, reply_client)
+            if not handled:
+                logger.info(f"[LISTENER] Referral {recipient.company_name}: still waiting for contact info")
+            self._save()
+            return
+
         # Обычная обработка
         logger.info(f"[LISTENER] Processing {len(messages)} message(s) from {sender_id} ({recipient.company_name})")
 
@@ -484,7 +497,13 @@ class OutreachService:
         logger.info(f"AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
 
         try:
-            await self._send_with_typing(reply_client, sender_id, reply_text)
+            sent = await self._send_with_typing(reply_client, sender_id, reply_text, check_sender_id=sender_id)
+
+            if not sent:
+                # Typing отменён — пришли новые сообщения, AI ответ не отправлен
+                # Новый debounce подхватит все сообщения и сгенерирует один ответ
+                logger.info(f"[LISTENER] Send aborted for {recipient.company_name}, new messages arrived")
+                return
 
             recipient.conversation_history.append({"role": "assistant", "content": reply_text})
             recipient.last_message_at = datetime.now(timezone.utc)
@@ -509,8 +528,10 @@ class OutreachService:
         except Exception as e:
             logger.error(f"Error replying to {sender_id}: {e}")
 
-    async def _send_with_typing(self, client, user_id: int, text: str) -> None:
-        """Отправляет сообщение с имитацией набора текста."""
+    async def _send_with_typing(self, client, user_id: int, text: str, check_sender_id: int = None) -> bool:
+        """Отправляет сообщение с имитацией набора текста.
+        Если check_sender_id указан — проверяет новые сообщения во время typing.
+        Returns True если отправлено, False если отменено (пришли новые сообщения)."""
         # Прочитываем сообщение перед тем как начать печатать
         try:
             await client.send_read_acknowledge(user_id)
@@ -520,34 +541,49 @@ class OutreachService:
         base_delay = random.uniform(4.0, 8.0)
         delay = min(base_delay + char_delay, 45.0)
         async with client.action(user_id, 'typing'):
-            await asyncio.sleep(delay)
+            # Спим порциями, проверяя не пришли ли новые сообщения
+            while delay > 0 and not self._cancelled:
+                chunk = min(delay, 3.0)
+                await asyncio.sleep(chunk)
+                delay -= chunk
+                if check_sender_id and self._pending_messages.get(check_sender_id):
+                    logger.info(f"[TYPING] New messages arrived for {user_id}, aborting send")
+                    return False
+        if self._cancelled:
+            return False
         await client.send_message(user_id, text)
+        return True
 
-    async def _handle_referral(self, original_recipient: OutreachRecipient, text: str, client) -> None:
-        """Обработка перенаправления: извлекает контакт и пишет новому получателю."""
-        # Извлекаем телефон и имя — сначала из визитки [Контакт: имя, +7...], потом из текста
+    async def _handle_referral(self, original_recipient: OutreachRecipient, text: str, client) -> bool:
+        """Обработка перенаправления: извлекает контакт и пишет новому получателю.
+        Returns True если контакт найден и обработан."""
+        # Собираем весь текст клиента из истории для поиска контакта
+        all_user_text = "\n".join(
+            msg["content"] for msg in original_recipient.conversation_history
+            if msg["role"] == "user"
+        )
+
+        # Извлекаем телефон и имя — сначала из визитки, потом из всего текста
         referral_name = None
         referral_phone = None
 
-        match = re.search(r'\[Контакт:\s*(.+?),\s*(\+?\d[\d\s-]+)\]', text)
+        match = re.search(r'\[Контакт:\s*(.+?),\s*(\+?\d[\d\s-]+)\]', all_user_text)
         if match:
             referral_name = match.group(1).strip()
             referral_phone = normalize_phone(match.group(2).strip())
         else:
-            # Ищем телефон в обычном тексте
-            phone_match = re.search(r'(\+?[78][\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})', text)
+            # Ищем телефон во всём тексте клиента
+            phone_match = re.search(r'(\+?[78][\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})', all_user_text)
             if phone_match:
                 referral_phone = normalize_phone(phone_match.group(1).strip())
-                # Ищем имя рядом: "это Александр", "контакт Александра", имя после/перед телефоном
-                name_match = re.search(r'(?:это|контакт|написать|позвонить|свяжитесь с)\s+([А-ЯЁ][а-яё]+)', text)
+                # Ищем имя: "это Александр", "зовут Иван", "контакт Сергея"
+                name_match = re.search(r'(?:это|зовут|контакт|написать|позвонить|свяжитесь с)\s+([А-ЯЁ][а-яё]+)', all_user_text)
                 if name_match:
                     referral_name = name_match.group(1).strip()
 
         if not referral_phone:
-            logger.info(f"[REFERRAL] No contact found in message from {original_recipient.company_name}")
-            await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
-                               referral_name=None, referral_phone=None)
-            return
+            logger.info(f"[REFERRAL] No phone found yet for {original_recipient.company_name}, waiting...")
+            return False
 
         logger.info(f"[REFERRAL] {original_recipient.company_name} -> {referral_name} ({referral_phone})")
 
@@ -557,7 +593,7 @@ class OutreachService:
                 logger.info(f"[REFERRAL] Phone {referral_phone} already in campaign, skipping")
                 await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
                                    referral_name=referral_name, referral_phone=referral_phone)
-                return
+                return True
 
         # Формируем выжимку из оригинальной переписки
         referral_summary = f"Перенаправлен от: {original_recipient.company_name}"
@@ -596,7 +632,7 @@ class OutreachService:
                 await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
                                    referral_name=referral_name, referral_phone=referral_phone,
                                    referral_found=False)
-                return
+                return True
 
             user = result.users[0]
             new_recipient.telegram_user_id = user.id
@@ -626,11 +662,15 @@ class OutreachService:
                                referral_name=referral_name, referral_phone=referral_phone,
                                referral_found=True)
 
+            return True
+
         except FloodWaitError as e:
             logger.warning(f"[REFERRAL] FloodWait: {e.seconds}s")
             await asyncio.sleep(e.seconds)
+            return True
         except Exception as e:
             logger.error(f"[REFERRAL] Error sending to {referral_phone}: {e}")
+            return True
 
     # ─── Фаза 2b: Follow-up при игноре ───
 
