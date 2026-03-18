@@ -380,6 +380,12 @@ class OutreachService:
                     target_service._save()
                     await target_service._notify("warm_lead_reply", recipient=recipient, campaign=target_service._campaign)
                     logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {text[:80]}")
+                    # Проверяем на referral — лид может дать контакт после подтверждения
+                    if any(ch in text for ch in ['+7', '+8', '89', '79', 'Контакт:']):
+                        reply_client = target_service._get_client_for_recipient(recipient) or _client
+                        asyncio.create_task(
+                            target_service._check_warm_referral(recipient, reply_client)
+                        )
                     return
 
                 # Дебаунс
@@ -397,6 +403,16 @@ class OutreachService:
             _clients_with_handler.add(client_id)
 
         logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
+
+    async def _check_warm_referral(self, recipient: OutreachRecipient, client) -> None:
+        """Проверяет сообщения warm_confirmed лида на наличие referral-контакта."""
+        await asyncio.sleep(30)  # Дебаунс — подождём остальные сообщения
+        if self._cancelled:
+            return
+        handled = await self._handle_referral(recipient, "", client)
+        if handled:
+            logger.info(f"[REFERRAL] Warm lead {recipient.company_name} gave referral contact")
+            self._save()
 
     async def _retry_failed_ai(self, sender_id: int, fallback_client) -> None:
         """Повторная попытка ответить лиду после провала AI."""
