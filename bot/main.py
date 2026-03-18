@@ -137,6 +137,9 @@ async def main() -> None:
             await service.start_listener()
             service._ping_task = asyncio.create_task(service._ping_loop())
 
+            # Ответить неотвеченным лидам (AI провал до рестарта)
+            asyncio.create_task(service.retry_unanswered())
+
             # Если кампания была в процессе рассылки — продолжить
             if campaign.status == "sending":
                 asyncio.create_task(service.start_campaign(campaign, resume=True))

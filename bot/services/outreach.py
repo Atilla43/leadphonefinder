@@ -398,6 +398,109 @@ class OutreachService:
 
         logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
 
+    async def _retry_failed_ai(self, sender_id: int, fallback_client) -> None:
+        """Повторная попытка ответить лиду после провала AI."""
+        await asyncio.sleep(60)
+        if self._cancelled:
+            return
+        recipient = self._find_recipient(sender_id)
+        if not recipient:
+            return
+        # Проверяем что последнее сообщение в истории от user (нет ответа)
+        if not recipient.conversation_history or recipient.conversation_history[-1]["role"] != "user":
+            return
+        logger.info(f"[RETRY] Retrying AI response for {sender_id} ({recipient.company_name})")
+        await self._process_recipient_messages(sender_id, [], fallback_client)
+
+    async def retry_unanswered(self) -> None:
+        """При старте: находит лидов с неотвеченными сообщениями и отвечает."""
+        if not self._campaign:
+            return
+        pool = get_account_pool()
+        clients = pool.get_all_clients()
+        if not clients:
+            return
+        default_client = clients[0]
+
+        for recipient in self._campaign.recipients:
+            if not recipient.conversation_history:
+                continue
+            if recipient.status in ("rejected", "no_response", "not_found", "pending", "error"):
+                continue
+            # Последнее сообщение от user — значит AI не ответил
+            if recipient.conversation_history[-1]["role"] == "user" and recipient.telegram_user_id:
+                logger.info(f"[RETRY] Found unanswered lead: {recipient.company_name} (id={recipient.telegram_user_id})")
+                client = self._get_client_for_recipient(recipient) or default_client
+                # Не передаём messages — они уже в conversation_history
+                asyncio.create_task(
+                    self._process_unanswered(recipient.telegram_user_id, client)
+                )
+
+    async def _process_unanswered(self, sender_id: int, fallback_client) -> None:
+        """Обрабатывает неотвеченного лида (сообщения уже в conversation_history)."""
+        await asyncio.sleep(5)  # Небольшая задержка чтобы бот полностью запустился
+        if sender_id not in self._process_locks:
+            self._process_locks[sender_id] = asyncio.Lock()
+        async with self._process_locks[sender_id]:
+            recipient = self._find_recipient(sender_id)
+            if not recipient or not recipient.conversation_history:
+                return
+            if recipient.conversation_history[-1]["role"] != "user":
+                return
+            # Берём текст последнего сообщения user для логирования
+            last_msg = recipient.conversation_history[-1]["content"]
+            logger.info(f"[RETRY] Processing unanswered {sender_id}: {last_msg[:80]}")
+            # Не добавляем в conversation_history — уже там
+            # Сразу генерируем AI ответ
+            reply_client = self._get_client_for_recipient(recipient) or fallback_client
+            company_ctx = self._build_company_context(recipient)
+            custom_prompt = self._campaign.system_prompt or None
+
+            ai_response = None
+            for attempt in range(3):
+                try:
+                    ai_response = await asyncio.wait_for(
+                        self.ai_engine.generate_response(
+                            recipient.conversation_history,
+                            custom_prompt,
+                            company_context=company_ctx,
+                        ),
+                        timeout=60,
+                    )
+                except asyncio.TimeoutError:
+                    logger.error(f"[RETRY] AI timeout for {sender_id}, attempt {attempt+1}/3")
+                except Exception as e:
+                    logger.error(f"[RETRY] AI error for {sender_id}: {e}")
+                if ai_response:
+                    break
+                await asyncio.sleep(2)
+
+            if not ai_response:
+                logger.error(f"[RETRY] AI still failed for {sender_id}")
+                return
+
+            reply_text = ai_response["reply"]
+            status = ai_response.get("status", "talking")
+            logger.info(f"[RETRY] AI reply to {sender_id}: status={status}, text={reply_text[:80]}")
+
+            try:
+                sent = await self._send_with_typing(reply_client, sender_id, reply_text, check_sender_id=sender_id)
+                if not sent:
+                    return
+                recipient.conversation_history.append({"role": "assistant", "content": reply_text})
+                recipient.last_message_at = datetime.now(timezone.utc)
+                if status == "warm":
+                    recipient.status = "warm"
+                    self._campaign.warm_count += 1
+                    await self._notify("warm_lead", recipient=recipient, campaign=self._campaign)
+                elif status == "rejected":
+                    recipient.status = "rejected"
+                    self._campaign.rejected_count += 1
+                self._save()
+                logger.info(f"[RETRY] Sent reply to {recipient.company_name}, status={recipient.status}")
+            except Exception as e:
+                logger.error(f"[RETRY] Error sending to {sender_id}: {e}")
+
     async def _debounced_process(self, sender_id: int, fallback_client) -> None:
         """Ждёт 30 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
         await asyncio.sleep(30)
@@ -506,7 +609,9 @@ class OutreachService:
             await asyncio.sleep(2)
 
         if not ai_response:
-            logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}")
+            logger.error(f"[LISTENER] AI failed after 3 attempts for {sender_id}, scheduling retry in 60s")
+            # Планируем повтор через 60 сек
+            asyncio.create_task(self._retry_failed_ai(sender_id, fallback_client))
             return
 
         reply_text = ai_response["reply"]

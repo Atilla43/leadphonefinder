@@ -140,7 +140,7 @@ class AISalesEngine:
                     *messages,
                 ],
                 "temperature": 0.9,
-                "max_tokens": 200,
+                "max_tokens": 500,
                 "response_format": {"type": "json_object"},
             }
 
