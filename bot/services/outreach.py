@@ -359,11 +359,6 @@ class OutreachService:
 
                 logger.info(f"[LISTENER] New message from {sender_id}: {text[:80]}")
 
-                try:
-                    await event.mark_read()
-                except Exception:
-                    pass
-
                 # Статусы которые не нуждаются в дебаунсе
                 if recipient.status in ("rejected", "no_response"):
                     logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
@@ -397,7 +392,7 @@ class OutreachService:
 
     async def _debounced_process(self, sender_id: int, fallback_client) -> None:
         """Ждёт 3 сек, собирает все сообщения от sender_id, обрабатывает как одно."""
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
         messages = self._pending_messages.pop(sender_id, [])
         self._debounce_tasks.pop(sender_id, None)
@@ -516,8 +511,13 @@ class OutreachService:
 
     async def _send_with_typing(self, client, user_id: int, text: str) -> None:
         """Отправляет сообщение с имитацией набора текста."""
-        char_delay = len(text) * random.uniform(0.05, 0.08)
-        base_delay = random.uniform(2.0, 4.0)
+        # Прочитываем сообщение перед тем как начать печатать
+        try:
+            await client.send_read_acknowledge(user_id)
+        except Exception:
+            pass
+        char_delay = len(text) * random.uniform(0.10, 0.16)
+        base_delay = random.uniform(4.0, 8.0)
         delay = min(base_delay + char_delay, 45.0)
         async with client.action(user_id, 'typing'):
             await asyncio.sleep(delay)
