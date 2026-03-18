@@ -593,10 +593,20 @@ class OutreachService:
             phone_match = re.search(r'(\+?[78][\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})', all_user_text)
             if phone_match:
                 referral_phone = normalize_phone(phone_match.group(1).strip())
-                # Ищем имя: "это Александр", "зовут Иван", "контакт Сергея"
-                name_match = re.search(r'(?:это|зовут|контакт|написать|позвонить|свяжитесь с)\s+([А-ЯЁ][а-яё]+)', all_user_text)
+                # Ищем имя: "это Александр", "зовут Иван", "маркетолога Сергея"
+                name_match = re.search(
+                    r'(?:это|зовут|контакт[а-яё]*|написать|позвонить|свяжитесь с|'
+                    r'маркетолог[а-яё]*|директор[а-яё]*|коллег[а-яё]*|менеджер[а-яё]*)'
+                    r'\s+([А-ЯЁ][а-яё]+)', all_user_text
+                )
                 if name_match:
                     referral_name = name_match.group(1).strip()
+                else:
+                    # Fallback: ищем любое русское имя с заглавной рядом с телефоном
+                    # Пример: "нашего Сергея", "спросите Ивана"
+                    fallback = re.search(r'(?:наш[а-яё]*|спросите|обратитесь к)\s+([А-ЯЁ][а-яё]+)', all_user_text)
+                    if fallback:
+                        referral_name = fallback.group(1).strip()
 
         if not referral_phone:
             logger.info(f"[REFERRAL] No phone found yet for {original_recipient.company_name}, waiting...")
@@ -637,7 +647,7 @@ class OutreachService:
             contact = InputPhoneContact(
                 client_id=0,
                 phone=referral_phone,
-                first_name=referral_name,
+                first_name=referral_name or original_recipient.company_name or "Контакт",
                 last_name="",
             )
             result = await client(ImportContactsRequest([contact]))
