@@ -74,6 +74,16 @@ SALES_SYSTEM_PROMPT = """Ты — Александр, менеджер. Пише
 
 Формат — ТОЛЬКО JSON: {"reply": "текст", "status": "talking|warm|rejected|referral"}"""
 
+REFERRAL_EXTRACT_PROMPT = """Из переписки клиента извлеки контактные данные человека, на которого он перенаправляет.
+
+Правила:
+- Телефон: любой российский номер (+7/8...), вернуть в формате +7XXXXXXXXXX (только цифры, без пробелов)
+- Имя: имя человека, на которого перенаправляют (не имя самого клиента, не должность)
+- Если контакт передан визиткой [Контакт: имя, телефон] — извлеки оттуда
+- Если телефон или имя не найдены — верни null для соответствующего поля
+
+Формат — ТОЛЬКО JSON: {"phone": "+7XXXXXXXXXX", "name": "Имя"}"""
+
 FOLLOWUP_SYSTEM_PROMPT = """Клиент не ответил. Напиши ОДНО короткое сообщение-крючок.
 Не повторяй предыдущее. Варианты: вопрос, мини-кейс, интересный факт.
 Пиши как в мессенджере — коротко, по делу, без канцелярита.
@@ -196,6 +206,22 @@ class AISalesEngine:
                 result["status"] = "talking"
             return result
 
+        return None
+
+    async def extract_referral_contact(self, user_messages: list[str]) -> Optional[dict]:
+        """
+        Извлекает контактные данные из сообщений клиента при referral.
+
+        Args:
+            user_messages: Список сообщений клиента (role=user)
+
+        Returns:
+            {"phone": "+7XXXXXXXXXX", "name": "Имя"} или None
+        """
+        messages = [{"role": "user", "content": "\n".join(user_messages)}]
+        result = await self._call_llm(REFERRAL_EXTRACT_PROMPT, messages)
+        if result and result.get("phone"):
+            return result
         return None
 
     async def generate_followup(self, conversation: list[dict]) -> Optional[str]:

@@ -580,33 +580,31 @@ class OutreachService:
             if msg["role"] == "user"
         )
 
-        # Извлекаем телефон и имя — сначала из визитки, потом из всего текста
-        referral_name = None
-        referral_phone = None
+        # Извлекаем телефон и имя через AI-агент
+        user_messages = [
+            msg["content"] for msg in original_recipient.conversation_history
+            if msg["role"] == "user"
+        ]
 
-        match = re.search(r'\[Контакт:\s*(.+?),\s*(\+?\d[\d\s-]+)\]', all_user_text)
-        if match:
-            referral_name = match.group(1).strip()
-            referral_phone = normalize_phone(match.group(2).strip())
-        else:
-            # Ищем телефон во всём тексте клиента
-            phone_match = re.search(r'(\+?[78][\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})', all_user_text)
-            if phone_match:
-                referral_phone = normalize_phone(phone_match.group(1).strip())
-                # Ищем имя: "это Александр", "зовут Иван", "маркетолога Сергея"
-                name_match = re.search(
-                    r'(?:это|зовут|контакт[а-яё]*|написать|позвонить|свяжитесь с|'
-                    r'маркетолог[а-яё]*|директор[а-яё]*|коллег[а-яё]*|менеджер[а-яё]*)'
-                    r'\s+([А-ЯЁ][а-яё]+)', all_user_text
-                )
-                if name_match:
-                    referral_name = name_match.group(1).strip()
-                else:
-                    # Fallback: ищем любое русское имя с заглавной рядом с телефоном
-                    # Пример: "нашего Сергея", "спросите Ивана"
-                    fallback = re.search(r'(?:наш[а-яё]*|спросите|обратитесь к)\s+([А-ЯЁ][а-яё]+)', all_user_text)
-                    if fallback:
-                        referral_name = fallback.group(1).strip()
+        contact_info = None
+        try:
+            contact_info = await asyncio.wait_for(
+                self.ai_engine.extract_referral_contact(user_messages),
+                timeout=30,
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"[REFERRAL] AI extract timeout for {original_recipient.company_name}")
+        except Exception as e:
+            logger.error(f"[REFERRAL] AI extract error: {e}")
+
+        referral_phone = None
+        referral_name = None
+
+        if contact_info:
+            if contact_info.get("phone"):
+                referral_phone = normalize_phone(contact_info["phone"])
+            referral_name = contact_info.get("name")
+            logger.info(f"[REFERRAL] AI extracted: name={referral_name}, phone={referral_phone}")
 
         if not referral_phone:
             logger.info(f"[REFERRAL] No phone found yet for {original_recipient.company_name}, waiting...")
