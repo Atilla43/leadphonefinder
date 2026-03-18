@@ -306,7 +306,7 @@ class OutreachService:
         return clients[0] if clients else None
 
     async def start_listener(self) -> None:
-        """Запускает event handler для входящих сообщений на ВСЕХ клиентах."""
+        """Регистрирует глобальный event handler (один на клиент) для входящих сообщений."""
         if not self._campaign:
             return
 
@@ -314,7 +314,6 @@ class OutreachService:
         all_clients = pool.get_all_clients()
 
         if not all_clients:
-            # Fallback на старый singleton
             try:
                 client_wrapper = await get_sherlock_client()
                 all_clients = [client_wrapper.client]
@@ -322,7 +321,6 @@ class OutreachService:
                 logger.error("No clients available for listener")
                 return
 
-        # Логируем target IDs для отладки
         target_ids = [
             r.telegram_user_id
             for r in self._campaign.recipients
@@ -330,20 +328,31 @@ class OutreachService:
         ]
         logger.info(f"Listener target IDs: {target_ids}")
 
-        self._listener_handlers = []
-
         for client in all_clients:
-            # НЕ используем from_users фильтр — он замораживается при регистрации
+            client_id = id(client)
+            if client_id in _clients_with_handler:
+                continue  # Обработчик уже зарегистрирован на этом клиенте
+
             @client.on(events.NewMessage(incoming=True))
             async def on_incoming(event, _client=client):
-                if self._cancelled:
-                    return
-
                 sender_id = event.sender_id
 
-                # Динамический поиск
-                recipient = self._find_recipient(sender_id)
-                if not recipient:
+                # Ищем нужную кампанию и recipient по sender_id
+                target_service = None
+                target_recipient = None
+                for user_services in active_outreach.values():
+                    for service in user_services.values():
+                        if service._cancelled:
+                            continue
+                        r = service._find_recipient(sender_id)
+                        if r:
+                            target_service = service
+                            target_recipient = r
+                            break
+                    if target_service:
+                        break
+
+                if not target_service or not target_recipient:
                     return
 
                 # Извлекаем текст + контакт-карточку
@@ -359,7 +368,8 @@ class OutreachService:
 
                 logger.info(f"[LISTENER] New message from {sender_id}: {text[:80]}")
 
-                # Статусы которые не нуждаются в дебаунсе
+                recipient = target_recipient
+
                 if recipient.status in ("rejected", "no_response"):
                     logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
                     return
@@ -367,27 +377,25 @@ class OutreachService:
                 if recipient.status == "warm_confirmed":
                     recipient.conversation_history.append({"role": "user", "content": text})
                     recipient.last_message_at = datetime.now(timezone.utc)
-                    self._save()
-                    await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
+                    target_service._save()
+                    await target_service._notify("warm_lead_reply", recipient=recipient, campaign=target_service._campaign)
                     logger.info(f"[LISTENER] Confirmed lead {recipient.company_name} replied: {text[:80]}")
                     return
 
-                # Дебаунс: собираем сообщения 3 секунды перед обработкой
-                if sender_id not in self._pending_messages:
-                    self._pending_messages[sender_id] = []
-                self._pending_messages[sender_id].append(text)
+                # Дебаунс
+                if sender_id not in target_service._pending_messages:
+                    target_service._pending_messages[sender_id] = []
+                target_service._pending_messages[sender_id].append(text)
 
-                # Отменяем предыдущий debounce task
-                if sender_id in self._debounce_tasks:
-                    self._debounce_tasks[sender_id].cancel()
+                if sender_id in target_service._debounce_tasks:
+                    target_service._debounce_tasks[sender_id].cancel()
 
-                self._debounce_tasks[sender_id] = asyncio.create_task(
-                    self._debounced_process(sender_id, _client)
+                target_service._debounce_tasks[sender_id] = asyncio.create_task(
+                    target_service._debounced_process(sender_id, _client)
                 )
 
-            self._listener_handlers.append(on_incoming)
+            _clients_with_handler.add(client_id)
 
-        self._listener_handler = self._listener_handlers[0] if self._listener_handlers else None
         logger.info(f"Listener started on {len(all_clients)} client(s), tracking {len(target_ids)} recipients")
 
     async def _debounced_process(self, sender_id: int, fallback_client) -> None:
@@ -874,22 +882,7 @@ class OutreachService:
         if self._ping_task and not self._ping_task.done():
             self._ping_task.cancel()
 
-        # Удаляем event handlers со всех клиентов
-        pool = get_account_pool()
-        for handler in getattr(self, '_listener_handlers', []):
-            for client in pool.get_all_clients():
-                try:
-                    client.remove_event_handler(handler)
-                except Exception:
-                    pass
-
-        # Fallback: старый singleton
-        if self._listener_handler and not getattr(self, '_listener_handlers', []):
-            try:
-                client_wrapper = await get_sherlock_client()
-                client_wrapper.client.remove_event_handler(self._listener_handler)
-            except Exception:
-                pass
+        # Глобальный обработчик остаётся — он проверяет _cancelled сам
 
         # Удаляем контакты
         await self._cleanup_contacts()
@@ -928,6 +921,9 @@ class OutreachService:
 
 # Глобальные активные кампании: user_id -> {campaign_id -> OutreachService}
 active_outreach: dict[int, dict[str, OutreachService]] = {}
+
+# Глобальный set клиентов с зарегистрированным обработчиком
+_clients_with_handler: set = set()
 
 
 def get_user_services(user_id: int) -> list[OutreachService]:
