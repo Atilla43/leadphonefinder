@@ -429,7 +429,8 @@ class OutreachService:
         await self._process_recipient_messages(sender_id, [], fallback_client)
 
     async def retry_unanswered(self) -> None:
-        """При старте: находит лидов с неотвеченными сообщениями и отвечает."""
+        """При старте: находит лидов с неотвеченными сообщениями и отвечает.
+        Также проверяет warm_confirmed лидов на необработанные referral-контакты."""
         if not self._campaign:
             return
         pool = get_account_pool()
@@ -443,6 +444,22 @@ class OutreachService:
                 continue
             if recipient.status in ("rejected", "no_response", "not_found", "pending", "error"):
                 continue
+
+            # Проверяем warm_confirmed лидов на необработанные referral-контакты
+            if recipient.status == "warm_confirmed":
+                user_texts = [msg["content"] for msg in recipient.conversation_history if msg["role"] == "user"]
+                has_phone_pattern = any(
+                    any(p in text for p in ['+7', '+8', '89', '79', 'Контакт:'])
+                    for text in user_texts
+                )
+                if has_phone_pattern:
+                    logger.info(f"[RETRY] Found warm_confirmed lead with potential referral: {recipient.company_name}")
+                    client = self._get_client_for_recipient(recipient) or default_client
+                    asyncio.create_task(
+                        self._check_warm_referral(recipient, client)
+                    )
+                continue
+
             # Последнее сообщение от user — значит AI не ответил
             if recipient.conversation_history[-1]["role"] == "user" and recipient.telegram_user_id:
                 logger.info(f"[RETRY] Found unanswered lead: {recipient.company_name} (id={recipient.telegram_user_id})")
