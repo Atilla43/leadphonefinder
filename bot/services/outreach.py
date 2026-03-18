@@ -662,13 +662,29 @@ class OutreachService:
             user = result.users[0]
             new_recipient.telegram_user_id = user.id
 
-            # Отправляем первое сообщение с упоминанием перенаправления
-            first_name = extract_first_name(referral_name) if referral_name else ""
-            greeting = f"{first_name}, здравствуйте" if first_name else "Здравствуйте"
-            referral_msg = (
-                f"{greeting}! {original_recipient.company_name} порекомендовала "
-                f"обратиться к вам.\n\n{self._campaign.offer}"
-            )
+            # Генерируем первое сообщение через AI с контекстом
+            referrer_name = extract_first_name(original_recipient.contact_name) if original_recipient.contact_name else None
+            referral_msg = None
+            try:
+                referral_msg = await asyncio.wait_for(
+                    self.ai_engine.generate_referral_first_message(
+                        referral_name=referral_name,
+                        referrer_name=referrer_name,
+                        company_name=original_recipient.company_name,
+                        offer=self._campaign.offer,
+                        referral_context=referral_summary,
+                    ),
+                    timeout=30,
+                )
+            except Exception as e:
+                logger.error(f"[REFERRAL] AI first message error: {e}")
+
+            if not referral_msg:
+                # Fallback на простой шаблон
+                first_name = extract_first_name(referral_name) if referral_name else ""
+                who = referrer_name or original_recipient.company_name
+                greeting = f"{first_name}, здравствуйте" if first_name else "Здравствуйте"
+                referral_msg = f"{greeting}! {who} посоветовал обратиться к вам.\n\n{self._campaign.offer}"
 
             await self._send_with_typing(client, user.id, referral_msg)
 
@@ -825,7 +841,11 @@ class OutreachService:
         if recipient.director_name:
             parts.append(f"Директор: {recipient.director_name}")
         if recipient.referral_context:
-            parts.append(f"\n{recipient.referral_context}")
+            parts.append(f"\nЭТОТ КОНТАКТ — ПЕРЕНАПРАВЛЕНИЕ. {recipient.referral_context}")
+            parts.append(
+                "Учитывай: этот человек НЕ холодный лид. На него направил коллега/знакомый. "
+                "Если человек не понимает контекст — объясни кто ты и зачем пишешь, не дави на звонок."
+            )
         return "\n".join(parts) if parts else None
 
     def _is_working_hours(self) -> bool:

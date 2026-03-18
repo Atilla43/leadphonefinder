@@ -74,6 +74,18 @@ SALES_SYSTEM_PROMPT = """Ты — Александр, менеджер. Пише
 
 Формат — ТОЛЬКО JSON: {"reply": "текст", "status": "talking|warm|rejected|referral"}"""
 
+REFERRAL_FIRST_MSG_PROMPT = """Напиши ПЕРВОЕ сообщение человеку, на которого тебя перенаправили.
+
+КАК ПИСАТЬ:
+- Коротко, 2-3 предложения максимум
+- Упомяни кто конкретно направил (имя человека, не компанию)
+- Кратко объясни зачем пишешь
+- НЕ дави на звонок в первом сообщении — просто представься и объясни контекст
+- Пиши как в мессенджере, без формальностей
+- Поздоровайся с человеком по имени если оно известно
+
+Формат — ТОЛЬКО JSON: {"reply": "текст сообщения"}"""
+
 REFERRAL_EXTRACT_PROMPT = """Из переписки клиента извлеки контактные данные человека, на которого он перенаправляет.
 
 Правила:
@@ -206,6 +218,36 @@ class AISalesEngine:
                 result["status"] = "talking"
             return result
 
+        return None
+
+    async def generate_referral_first_message(
+        self,
+        referral_name: Optional[str],
+        referrer_name: Optional[str],
+        company_name: str,
+        offer: str,
+        referral_context: str,
+    ) -> Optional[str]:
+        """
+        Генерирует первое сообщение для referral-контакта.
+
+        Args:
+            referral_name: Имя человека которому пишем
+            referrer_name: Имя того кто перенаправил
+            company_name: Название компании
+            offer: Оффер кампании
+            referral_context: Контекст из переписки с оригинальным лидом
+        """
+        context = (
+            f"Человек которому пишешь: {referral_name or 'имя неизвестно'}\n"
+            f"Кто перенаправил: {referrer_name or 'сотрудник'} из {company_name}\n"
+            f"Оффер: {offer}\n"
+            f"Контекст переписки:\n{referral_context}"
+        )
+        messages = [{"role": "user", "content": context}]
+        result = await self._call_llm(REFERRAL_FIRST_MSG_PROMPT, messages)
+        if result and result.get("reply"):
+            return result["reply"]
         return None
 
     async def extract_referral_contact(self, user_messages: list[str]) -> Optional[dict]:
