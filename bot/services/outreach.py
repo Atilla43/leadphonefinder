@@ -525,16 +525,29 @@ class OutreachService:
 
     async def _handle_referral(self, original_recipient: OutreachRecipient, text: str, client) -> None:
         """Обработка перенаправления: извлекает контакт и пишет новому получателю."""
-        # Извлекаем телефон и имя из [Контакт: имя, +7...]
+        # Извлекаем телефон и имя — сначала из визитки [Контакт: имя, +7...], потом из текста
+        referral_name = None
+        referral_phone = None
+
         match = re.search(r'\[Контакт:\s*(.+?),\s*(\+?\d[\d\s-]+)\]', text)
-        if not match:
+        if match:
+            referral_name = match.group(1).strip()
+            referral_phone = normalize_phone(match.group(2).strip())
+        else:
+            # Ищем телефон в обычном тексте
+            phone_match = re.search(r'(\+?[78][\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})', text)
+            if phone_match:
+                referral_phone = normalize_phone(phone_match.group(1).strip())
+                # Ищем имя рядом: "это Александр", "контакт Александра", имя после/перед телефоном
+                name_match = re.search(r'(?:это|контакт|написать|позвонить|свяжитесь с)\s+([А-ЯЁ][а-яё]+)', text)
+                if name_match:
+                    referral_name = name_match.group(1).strip()
+
+        if not referral_phone:
             logger.info(f"[REFERRAL] No contact found in message from {original_recipient.company_name}")
             await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
                                referral_name=None, referral_phone=None)
             return
-
-        referral_name = match.group(1).strip()
-        referral_phone = normalize_phone(match.group(2).strip())
 
         logger.info(f"[REFERRAL] {original_recipient.company_name} -> {referral_name} ({referral_phone})")
 
