@@ -415,9 +415,10 @@ class OutreachService:
         async with self._process_locks[sender_id]:
             # Забираем ВСЕ накопленные сообщения внутри лока
             messages = self._pending_messages.pop(sender_id, [])
-            # Отменяем любой pending debounce — мы забрали все сообщения
+            # Убираем ссылку на текущий debounce task (не cancel — это мы сами!)
+            current = asyncio.current_task()
             task = self._debounce_tasks.pop(sender_id, None)
-            if task:
+            if task and task is not current:
                 task.cancel()
 
             if not messages or self._cancelled:
