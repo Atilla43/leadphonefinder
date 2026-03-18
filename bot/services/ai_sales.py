@@ -122,11 +122,14 @@ class AISalesEngine:
                 "response_format": {"type": "json_object"},
             }
 
+            logger.info(f"[LLM] Calling {self.base_url}/chat/completions, model={self.model}, msgs={len(messages)}")
+
             async with session.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=payload,
             ) as response:
+                logger.info(f"[LLM] Response status: {response.status}")
                 if response.status != 200:
                     error = await response.text()
                     logger.error(f"LLM API error: {response.status} - {error}")
@@ -137,10 +140,11 @@ class AISalesEngine:
                 if not content or not content.strip():
                     logger.warning(f"LLM returned empty content. Full response: {data}")
                     return None
+                logger.info(f"[LLM] Got response: {content[:100]}")
                 return self._parse_json(content)
 
         except Exception as e:
-            logger.error(f"LLM call error: {e}")
+            logger.error(f"LLM call error: {e}", exc_info=True)
             return None
 
     def _parse_json(self, content: str) -> Optional[dict]:

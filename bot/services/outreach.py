@@ -482,13 +482,21 @@ class OutreachService:
 
         # Генерируем AI ответ (с retry)
         ai_response = None
+        company_ctx = self._build_company_context(recipient)
+        custom_prompt = self._campaign.system_prompt or None
+        logger.info(f"[LISTENER] Starting AI call for {sender_id}, history_len={len(recipient.conversation_history)}")
         for attempt in range(3):
             try:
-                ai_response = await self.ai_engine.generate_response(
-                    recipient.conversation_history,
-                    self._campaign.system_prompt or None,
-                    company_context=self._build_company_context(recipient),
+                ai_response = await asyncio.wait_for(
+                    self.ai_engine.generate_response(
+                        recipient.conversation_history,
+                        custom_prompt,
+                        company_context=company_ctx,
+                    ),
+                    timeout=60,
                 )
+            except asyncio.TimeoutError:
+                logger.error(f"[LISTENER] AI call TIMEOUT (60s) for {sender_id}, attempt {attempt+1}/3")
             except Exception as e:
                 logger.error(f"[LISTENER] AI error for {sender_id}: {e}", exc_info=True)
             if ai_response:
