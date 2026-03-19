@@ -458,7 +458,6 @@ class OutreachService:
                     asyncio.create_task(
                         self._check_warm_referral(recipient, client)
                     )
-                continue
 
             # Последнее сообщение от user — значит AI не ответил
             if recipient.conversation_history[-1]["role"] == "user" and recipient.telegram_user_id:
@@ -578,14 +577,25 @@ class OutreachService:
             recipient.last_message_at = datetime.now(timezone.utc)
 
             ai_response = None
-            try:
-                ai_response = await self.ai_engine.generate_response(
-                    recipient.conversation_history,
-                    self._campaign.system_prompt or None,
-                    company_context=self._build_company_context(recipient),
-                )
-            except Exception as e:
-                logger.error(f"[LISTENER] AI error for warm confirm: {e}")
+            company_ctx = self._build_company_context(recipient)
+            custom_prompt = self._campaign.system_prompt or None
+            for attempt in range(3):
+                try:
+                    ai_response = await asyncio.wait_for(
+                        self.ai_engine.generate_response(
+                            recipient.conversation_history,
+                            custom_prompt,
+                            company_context=company_ctx,
+                        ),
+                        timeout=60,
+                    )
+                except asyncio.TimeoutError:
+                    logger.error(f"[LISTENER] AI timeout for warm confirm {sender_id}, attempt {attempt+1}/3")
+                except Exception as e:
+                    logger.error(f"[LISTENER] AI error for warm confirm: {e}")
+                if ai_response:
+                    break
+                await asyncio.sleep(2)
 
             if ai_response:
                 reply_text = ai_response["reply"]
@@ -596,6 +606,11 @@ class OutreachService:
             self._save()
             await self._notify("warm_lead_reply", recipient=recipient, campaign=self._campaign)
             logger.info(f"[LISTENER] Warm lead {recipient.company_name} confirmed")
+
+            # Если AI не ответил — планируем retry
+            if not ai_response:
+                logger.warning(f"[LISTENER] AI failed for warm confirm {sender_id}, scheduling retry")
+                asyncio.create_task(self._retry_failed_ai(sender_id, fallback_client))
             return
 
         # Если статус referral — лид уже перенаправил, ждём контакт
