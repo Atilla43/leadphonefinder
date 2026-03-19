@@ -561,6 +561,18 @@ class OutreachService:
 
             await self._process_recipient_messages(sender_id, messages, fallback_client)
 
+            # После обработки: проверяем не накопились ли новые сообщения
+            # пока мы обрабатывали + печатали. Если да — обрабатываем сразу,
+            # чтобы не плодить отдельный ответ.
+            extra = self._pending_messages.pop(sender_id, [])
+            if extra and not self._cancelled:
+                # Отменяем ожидающий дебаунс — мы сами обработаем
+                pending_task = self._debounce_tasks.pop(sender_id, None)
+                if pending_task and pending_task is not current:
+                    pending_task.cancel()
+                logger.info(f"[DEBOUNCE] Found {len(extra)} extra message(s) from {sender_id}, processing immediately")
+                await self._process_recipient_messages(sender_id, extra, fallback_client)
+
     async def _process_recipient_messages(self, sender_id: int, messages: list[str], fallback_client) -> None:
         """Обрабатывает собранные сообщения от получателя (под локом)."""
         combined_text = "\n".join(messages)
