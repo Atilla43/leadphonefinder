@@ -394,14 +394,17 @@ class Messages:
     def outreach_dialogs_list(campaign, filter_status=None) -> str:
         """Список диалогов кампании."""
         STATUS_ICONS = {
-            "warm": "🔥", "talking": "💬", "sent": "📨",
+            "warm": "🔥", "warm_confirmed": "🔥", "talking": "💬", "sent": "📨",
             "rejected": "❌", "referral": "🔄", "no_response": "😶",
             "not_found": "📵", "error": "⚠️", "pending": "⏳",
         }
 
         recipients = campaign.recipients
         if filter_status:
-            recipients = [r for r in recipients if r.status == filter_status]
+            if filter_status == "warm":
+                recipients = [r for r in recipients if r.status in ("warm", "warm_confirmed")]
+            else:
+                recipients = [r for r in recipients if r.status == filter_status]
 
         total = len(campaign.recipients)
         shown = len(recipients)
