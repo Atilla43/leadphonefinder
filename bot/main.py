@@ -17,6 +17,7 @@ from bot.handlers import start, file_upload, callbacks, scrapper, outreach
 from bot.services.outreach_storage import OutreachStorage
 from bot.services.outreach import OutreachService, active_outreach, add_service, normalize_phone
 from bot.services.ai_sales import AISalesEngine
+from bot.utils.messages import Messages
 from bot.services.account_pool import get_account_pool
 from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
 
@@ -97,6 +98,42 @@ async def main() -> None:
             service = OutreachService(ai_engine)
             service._campaign = campaign
             add_service(campaign.user_id, campaign.campaign_id, service)
+
+            # Устанавливаем notify callback для уведомлений после рестарта
+            def _make_notify(uid, camp):
+                async def on_notify(event_type: str, **kwargs):
+                    try:
+                        if event_type in ("warm_lead", "warm_lead_reply"):
+                            recipient = kwargs["recipient"]
+                            msg_text = Messages.outreach_warm_lead(recipient)
+                            await bot.send_message(uid, msg_text, parse_mode="HTML")
+                            for manager_id in camp.manager_ids:
+                                try:
+                                    await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                                except Exception:
+                                    pass
+                        elif event_type == "referral":
+                            recipient = kwargs["recipient"]
+                            msg_text = Messages.outreach_referral(
+                                recipient,
+                                referral_name=kwargs.get("referral_name"),
+                                referral_phone=kwargs.get("referral_phone"),
+                                referral_found=kwargs.get("referral_found"),
+                            )
+                            await bot.send_message(uid, msg_text, parse_mode="HTML")
+                            for manager_id in camp.manager_ids:
+                                try:
+                                    await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                                except Exception:
+                                    pass
+                        elif event_type == "flood_wait":
+                            seconds = kwargs.get("seconds", 0)
+                            await bot.send_message(uid, f"⚠️ Telegram rate limit. Пауза {seconds} сек...", parse_mode="HTML")
+                    except Exception as e:
+                        logger.error(f"Restored notify error: {e}")
+                return on_notify
+
+            service.set_notify_callback(_make_notify(campaign.user_id, campaign))
 
             if campaign.status == "paused":
                 service._pause_event.clear()
