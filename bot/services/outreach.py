@@ -798,9 +798,7 @@ class OutreachService:
         # Проверяем что такого телефона ещё нет в кампании
         for r in self._campaign.recipients:
             if normalize_phone(r.phone) == referral_phone:
-                logger.info(f"[REFERRAL] Phone {referral_phone} already in campaign, skipping")
-                await self._notify("referral", recipient=original_recipient, campaign=self._campaign,
-                                   referral_name=referral_name, referral_phone=referral_phone)
+                logger.info(f"[REFERRAL] Phone {referral_phone} already in campaign, skipping (no notify)")
                 return True
 
         # Формируем выжимку из оригинальной переписки

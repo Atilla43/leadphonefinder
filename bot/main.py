@@ -182,16 +182,22 @@ async def main() -> None:
                 asyncio.create_task(service.start_campaign(campaign, resume=True))
 
             logger.info(f"Restored campaign for user {campaign.user_id} (status={campaign.status}, recipients={len(campaign.recipients)})")
-            try:
-                await bot.send_message(
-                    campaign.user_id,
-                    f"🔄 Бот перезапущен. Ваша кампания восстановлена.\n"
-                    f"📱 Аккаунтов: {connected} | Ёмкость: {pool.total_daily_capacity(settings.outreach_daily_limit)}/день",
-                )
-            except Exception as e:
-                logger.warning(f"Failed to notify user {campaign.user_id}: {e}")
 
+        # Одно уведомление на пользователя вместо спама по каждой кампании
         if campaigns:
+            notified_users = set()
+            for campaign in campaigns:
+                if campaign.user_id not in notified_users:
+                    notified_users.add(campaign.user_id)
+                    user_camps = [c for c in campaigns if c.user_id == campaign.user_id]
+                    try:
+                        await bot.send_message(
+                            campaign.user_id,
+                            f"🔄 Бот перезапущен. Восстановлено кампаний: {len(user_camps)}\n"
+                            f"📱 Аккаунтов: {connected} | Ёмкость: {pool.total_daily_capacity(settings.outreach_daily_limit)}/день",
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to notify user {campaign.user_id}: {e}")
             logger.info(f"Restored {len(campaigns)} active campaign(s)")
 
     dp.startup.register(on_startup)
