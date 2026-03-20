@@ -382,9 +382,15 @@ class OutreachService:
 
                 recipient = target_recipient
 
-                if recipient.status in ("rejected", "no_response"):
-                    logger.info(f"[LISTENER] Recipient {recipient.company_name} status={recipient.status}, skipping")
+                if recipient.status == "rejected":
+                    logger.info(f"[LISTENER] Recipient {recipient.company_name} status=rejected, skipping")
                     return
+
+                # Лид со статусом no_response ответил — возвращаем в диалог
+                if recipient.status == "no_response":
+                    logger.info(f"[LISTENER] Recipient {recipient.company_name} came back from no_response!")
+                    recipient.status = "talking"
+                    recipient.ping_count = 0
 
                 if recipient.status == "warm_confirmed":
                     recipient.conversation_history.append({"role": "user", "content": text})
