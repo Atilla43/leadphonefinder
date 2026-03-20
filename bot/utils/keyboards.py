@@ -132,7 +132,18 @@ class Keyboards:
             inline_keyboard=[
                 [InlineKeyboardButton(text="📊 Статус", callback_data="outreach_status")],
                 [InlineKeyboardButton(text="📋 Диалоги", callback_data="outreach_dialogs")],
+                [InlineKeyboardButton(text="✏️ Изменить услуги", callback_data="outreach_edit_services")],
                 [InlineKeyboardButton(text="⏹ Остановить кампанию", callback_data="outreach_stop")],
+            ]
+        )
+
+    @staticmethod
+    def outreach_skip_service_info() -> InlineKeyboardMarkup:
+        """Кнопка пропуска информации об услугах."""
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="⏩ Пропустить", callback_data="outreach_skip_service_info")],
+                [InlineKeyboardButton(text="❌ Отмена", callback_data="outreach_cancel")],
             ]
         )
 

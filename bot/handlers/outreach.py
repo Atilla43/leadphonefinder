@@ -31,10 +31,12 @@ class OutreachStates(StatesGroup):
     waiting_file = State()
     waiting_dialog_limit = State()
     waiting_offer = State()
+    waiting_service_info = State()
     confirming = State()
     waiting_managers = State()
     sending = State()
     listening = State()
+    editing_service_info = State()
     # Account management
     waiting_api_id = State()
     waiting_api_hash = State()
@@ -312,21 +314,57 @@ async def receive_offer(message: Message, state: FSMContext) -> None:
         return
 
     await state.update_data(offer=offer)
+    await state.set_state(OutreachStates.waiting_service_info)
+
+    await message.answer(
+        Messages.outreach_service_info_prompt(),
+        reply_markup=Keyboards.outreach_skip_service_info(),
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "outreach_skip_service_info", OutreachStates.waiting_service_info)
+async def skip_service_info(callback: CallbackQuery, state: FSMContext) -> None:
+    """Пропустить ввод информации об услугах."""
+    await state.update_data(service_info="")
+    await _show_preview(callback.message, state)
+    await callback.answer()
+
+
+@router.message(OutreachStates.waiting_service_info, F.text)
+async def receive_service_info(message: Message, state: FSMContext) -> None:
+    """Получение информации об услугах и ценах."""
+    if not check_access(message.from_user.id):
+        return
+
+    service_info = message.text.strip()
+    if not service_info:
+        await message.answer("Введите информацию об услугах или нажмите «Пропустить».")
+        return
+
+    await state.update_data(service_info=service_info)
+    await _show_preview(message, state, is_callback_msg=False)
+
+
+async def _show_preview(msg_or_callback_msg, state: FSMContext, is_callback_msg: bool = True) -> None:
+    """Показать превью первого сообщения."""
     await state.set_state(OutreachStates.confirming)
 
     data = await state.get_data()
     recipients = data["recipients"]
+    offer = data["offer"]
 
-    # Берём первого получателя для превью
     sample = recipients[0]
     name = sample.get("contact_name") or "коллега"
     company = sample["company_name"]
 
-    await message.answer(
-        Messages.outreach_preview(offer, name, company, len(recipients)),
-        reply_markup=Keyboards.outreach_confirm(len(recipients)),
-        parse_mode="HTML",
-    )
+    text = Messages.outreach_preview(offer, name, company, len(recipients))
+    kb = Keyboards.outreach_confirm(len(recipients))
+
+    if is_callback_msg:
+        await msg_or_callback_msg.edit_text(text, reply_markup=kb, parse_mode="HTML")
+    else:
+        await msg_or_callback_msg.answer(text, reply_markup=kb, parse_mode="HTML")
 
 
 @router.callback_query(F.data == "outreach_edit", OutreachStates.confirming)
@@ -443,6 +481,7 @@ async def _launch_campaign(
         offer=data["offer"],
         recipients=recipients,
         manager_ids=manager_ids,
+        service_info=data.get("service_info", ""),
     )
 
     # Создаём AI engine
@@ -735,6 +774,58 @@ def _render_campaigns_list(services: list[OutreachService]) -> str:
             f"   📨 {c.sent_count} отправлено | 🔥 {c.warm_count} тёплых | 👥 {len(c.recipients)} всего"
         )
     return "\n".join(lines)
+
+
+# ─── Редактирование информации об услугах ───
+
+
+@router.callback_query(F.data == "outreach_edit_services")
+async def edit_services_start(callback: CallbackQuery, state: FSMContext) -> None:
+    """Начало редактирования информации об услугах."""
+    data = await state.get_data()
+    service, _ = _get_current_service(callback.from_user.id, data)
+
+    if not service or not service.campaign:
+        await callback.answer("Нет активной кампании", show_alert=True)
+        return
+
+    current = service.campaign.service_info
+    text = "✏️ <b>Информация об услугах</b>\n\n"
+    if current:
+        text += f"Текущая:\n<code>{current[:500]}</code>\n\n"
+    else:
+        text += "Сейчас не заполнена.\n\n"
+    text += "Отправьте новый текст с описанием услуг и цен:"
+
+    await state.set_state(OutreachStates.editing_service_info)
+    await callback.message.edit_text(text, parse_mode="HTML")
+    await callback.answer()
+
+
+@router.message(OutreachStates.editing_service_info, F.text)
+async def receive_edited_service_info(message: Message, state: FSMContext) -> None:
+    """Получение обновлённой информации об услугах."""
+    if not check_access(message.from_user.id):
+        return
+
+    data = await state.get_data()
+    service, _ = _get_current_service(message.from_user.id, data)
+
+    if not service or not service.campaign:
+        await message.answer("Кампания не найдена.")
+        await state.set_state(None)
+        return
+
+    service.campaign.service_info = message.text.strip()
+    service._save()
+
+    await state.set_state(None)
+    await message.answer(
+        "✅ Информация об услугах обновлена.\n\n"
+        "AI будет использовать новые данные в следующих ответах.",
+        reply_markup=Keyboards.outreach_listening(),
+        parse_mode="HTML",
+    )
 
 
 # ─── Управление аккаунтами ───

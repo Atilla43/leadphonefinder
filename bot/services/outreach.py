@@ -114,6 +114,18 @@ class OutreachService:
             except Exception as e:
                 logger.error(f"Notify callback error: {e}")
 
+    def _get_custom_prompt(self) -> Optional[str]:
+        """Возвращает кастомный системный промпт если задан."""
+        if self._campaign and self._campaign.system_prompt:
+            return self._campaign.system_prompt
+        return None
+
+    def _get_service_info(self) -> Optional[str]:
+        """Возвращает информацию об услугах если задана."""
+        if self._campaign and self._campaign.service_info:
+            return self._campaign.service_info
+        return None
+
     def _save(self) -> None:
         """Сохраняет текущее состояние кампании на диск."""
         if self._campaign:
@@ -486,7 +498,8 @@ class OutreachService:
             # Сразу генерируем AI ответ
             reply_client = self._get_client_for_recipient(recipient) or fallback_client
             company_ctx = self._build_company_context(recipient)
-            custom_prompt = self._campaign.system_prompt or None
+            custom_prompt = self._get_custom_prompt()
+            svc_info = self._get_service_info()
 
             ai_response = None
             for attempt in range(3):
@@ -496,6 +509,7 @@ class OutreachService:
                             recipient.conversation_history,
                             custom_prompt,
                             company_context=company_ctx,
+                            service_info=svc_info,
                         ),
                         timeout=60,
                     )
@@ -590,7 +604,8 @@ class OutreachService:
 
             ai_response = None
             company_ctx = self._build_company_context(recipient)
-            custom_prompt = self._campaign.system_prompt or None
+            custom_prompt = self._get_custom_prompt()
+            svc_info = self._get_service_info()
             for attempt in range(3):
                 try:
                     ai_response = await asyncio.wait_for(
@@ -598,6 +613,7 @@ class OutreachService:
                             recipient.conversation_history,
                             custom_prompt,
                             company_context=company_ctx,
+                            service_info=svc_info,
                         ),
                         timeout=60,
                     )
@@ -647,7 +663,8 @@ class OutreachService:
         # Генерируем AI ответ (с retry)
         ai_response = None
         company_ctx = self._build_company_context(recipient)
-        custom_prompt = self._campaign.system_prompt or None
+        custom_prompt = self._get_custom_prompt()
+        svc_info = self._get_service_info()
         logger.info(f"[LISTENER] Starting AI call for {sender_id}, history_len={len(recipient.conversation_history)}")
         for attempt in range(3):
             try:
@@ -656,6 +673,7 @@ class OutreachService:
                         recipient.conversation_history,
                         custom_prompt,
                         company_context=company_ctx,
+                        service_info=svc_info,
                     ),
                     timeout=60,
                 )

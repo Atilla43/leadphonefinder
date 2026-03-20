@@ -96,6 +96,7 @@ class OutreachCampaign:
     not_found_count: int = 0
     manager_ids: list[int] = field(default_factory=list)  # Telegram IDs менеджеров для уведомлений
     system_prompt: str = ""
+    service_info: str = ""  # Информация об услугах и ценах (заполняется при создании кампании)
 
     def __post_init__(self):
         if not self.campaign_id:
@@ -117,6 +118,7 @@ class OutreachCampaign:
             "not_found_count": self.not_found_count,
             "manager_ids": self.manager_ids,
             "system_prompt": self.system_prompt,
+            "service_info": self.service_info,
         }
 
     @classmethod
@@ -135,4 +137,5 @@ class OutreachCampaign:
             not_found_count=data.get("not_found_count", 0),
             manager_ids=data.get("manager_ids", []),
             system_prompt=data.get("system_prompt", ""),
+            service_info=data.get("service_info", ""),
         )
