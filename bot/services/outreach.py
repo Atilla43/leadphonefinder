@@ -481,18 +481,17 @@ class OutreachService:
             if recipient.conversation_history[-1]["role"] == "user" and recipient.telegram_user_id:
                 logger.info(f"[RETRY] Found unanswered lead: {recipient.company_name} (id={recipient.telegram_user_id})")
                 client = self._get_client_for_recipient(recipient) or default_client
-                # Не передаём messages — они уже в conversation_history
                 asyncio.create_task(
-                    self._process_unanswered(recipient.telegram_user_id, client)
+                    self._process_unanswered(recipient.telegram_user_id, client, target_recipient=recipient)
                 )
 
-    async def _process_unanswered(self, sender_id: int, fallback_client) -> None:
+    async def _process_unanswered(self, sender_id: int, fallback_client, target_recipient: Optional[OutreachRecipient] = None) -> None:
         """Обрабатывает неотвеченного лида (сообщения уже в conversation_history)."""
         await asyncio.sleep(5)  # Небольшая задержка чтобы бот полностью запустился
         if sender_id not in self._process_locks:
             self._process_locks[sender_id] = asyncio.Lock()
         async with self._process_locks[sender_id]:
-            recipient = self._find_recipient(sender_id)
+            recipient = target_recipient or self._find_recipient(sender_id)
             if not recipient or not recipient.conversation_history:
                 return
             if recipient.conversation_history[-1]["role"] != "user":
