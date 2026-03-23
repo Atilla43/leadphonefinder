@@ -263,6 +263,19 @@ class Messages:
         )
 
     @staticmethod
+    def outreach_first_reply(recipient, lead_message: str = "") -> str:
+        """Уведомление о первом ответе лида."""
+        text = (
+            f"💬 <b>Лид ответил!</b>\n\n"
+            f"🏢 {recipient.company_name}\n"
+            f"👤 {recipient.contact_name or 'N/A'}\n"
+            f"📱 {recipient.phone}\n"
+        )
+        if lead_message:
+            text += f"\n💬 <i>{lead_message[:200]}</i>"
+        return text
+
+    @staticmethod
     def outreach_warm_lead(recipient) -> str:
         """Уведомление о тёплом лиде."""
         from urllib.parse import quote

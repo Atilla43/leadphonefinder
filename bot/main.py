@@ -103,7 +103,16 @@ async def main() -> None:
             def _make_notify(uid, camp):
                 async def on_notify(event_type: str, **kwargs):
                     try:
-                        if event_type in ("warm_lead", "warm_lead_reply"):
+                        if event_type == "first_reply":
+                            recipient = kwargs["recipient"]
+                            msg_text = Messages.outreach_first_reply(recipient, kwargs.get("lead_message", ""))
+                            await bot.send_message(uid, msg_text, parse_mode="HTML")
+                            for manager_id in camp.manager_ids:
+                                try:
+                                    await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                                except Exception:
+                                    pass
+                        elif event_type in ("warm_lead", "warm_lead_reply"):
                             recipient = kwargs["recipient"]
                             msg_text = Messages.outreach_warm_lead(recipient)
                             await bot.send_message(uid, msg_text, parse_mode="HTML")

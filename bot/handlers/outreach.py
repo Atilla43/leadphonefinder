@@ -519,7 +519,17 @@ async def _launch_campaign(
     # Callback для уведомлений
     async def on_notify(event_type: str, **kwargs):
         try:
-            if event_type in ("warm_lead", "warm_lead_reply"):
+            if event_type == "first_reply":
+                recipient = kwargs["recipient"]
+                camp = kwargs["campaign"]
+                msg_text = Messages.outreach_first_reply(recipient, kwargs.get("lead_message", ""))
+                await bot.send_message(user_id, msg_text, parse_mode="HTML")
+                for manager_id in camp.manager_ids:
+                    try:
+                        await bot.send_message(manager_id, msg_text, parse_mode="HTML")
+                    except Exception:
+                        pass
+            elif event_type in ("warm_lead", "warm_lead_reply"):
                 recipient = kwargs["recipient"]
                 camp = kwargs["campaign"]
                 msg_text = Messages.outreach_warm_lead(recipient)

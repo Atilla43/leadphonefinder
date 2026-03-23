@@ -660,6 +660,8 @@ class OutreachService:
         # Обычная обработка
         logger.info(f"[LISTENER] Processing {len(messages)} message(s) from {sender_id} ({recipient.company_name})")
 
+        was_first_reply = recipient.status == "sent"
+
         recipient.conversation_history.append({"role": "user", "content": combined_text})
         recipient.last_message_at = datetime.now(timezone.utc)
         recipient.ping_count = 0
@@ -726,6 +728,9 @@ class OutreachService:
 
             logger.info(f"Sent reply to {recipient.company_name}, status={recipient.status}")
             self._save()
+
+            if was_first_reply:
+                await self._notify("first_reply", recipient=recipient, campaign=self._campaign, lead_message=combined_text)
 
         except FloodWaitError as e:
             logger.warning(f"FloodWait on reply: {e.seconds}s")
