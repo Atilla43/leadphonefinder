@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     openrouter_api_key: Optional[str] = None
     openrouter_model: str = "openai/gpt-4o-mini"
 
+    # Groq (для транскрибации голосовых через Whisper)
+    groq_api_key: Optional[str] = None
+
     # История
     history_retention_days: int = 7
 

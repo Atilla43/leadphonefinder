@@ -18,6 +18,7 @@ from bot.services.ai_sales import AISalesEngine
 from bot.services.account_pool import get_account_pool, AccountPool
 from bot.services.outreach_storage import OutreachStorage
 from bot.services.sherlock_client import get_sherlock_client, is_telethon_configured
+from bot.services.voice_transcriber import get_voice_transcriber
 from bot.utils.config import settings
 
 logger = logging.getLogger(__name__)
@@ -374,6 +375,25 @@ class OutreachService:
                     contact_phone = c.phone_number or ""
                     contact_name = f"{c.first_name or ''} {c.last_name or ''}".strip()
                     text += f"\n[Контакт: {contact_name}, {contact_phone}]"
+
+                # Голосовое сообщение → транскрибация
+                if not text.strip() and event.message.voice:
+                    transcriber = get_voice_transcriber()
+                    if transcriber:
+                        import tempfile, os
+                        tmp_path = tempfile.mktemp(suffix=".ogg")
+                        try:
+                            await _client.download_media(event.message, file=tmp_path)
+                            transcribed = await transcriber.transcribe(tmp_path)
+                            if transcribed:
+                                text = f"[голосовое] {transcribed}"
+                        except Exception as e:
+                            logger.error(f"[VOICE] Download/transcribe error: {e}")
+                        finally:
+                            try:
+                                os.remove(tmp_path)
+                            except OSError:
+                                pass
 
                 if not text.strip():
                     return
