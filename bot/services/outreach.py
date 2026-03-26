@@ -1024,13 +1024,17 @@ class OutreachService:
                         self._save()
                         continue
 
-                    await asyncio.sleep(random.uniform(10, 30))
+                    await asyncio.sleep(random.uniform(30, 60))
 
                 except FloodWaitError as e:
-                    logger.warning(f"FloodWait on ping: {e.seconds}s")
+                    logger.warning(f"FloodWait on ping: {e.seconds}s, pausing all pings")
                     await asyncio.sleep(e.seconds)
                 except Exception as e:
                     logger.error(f"Ping error for {recipient.company_name}: {e}")
+                    if "Too many requests" in str(e):
+                        logger.warning("Rate limited on pings, pausing 5 min")
+                        await asyncio.sleep(300)
+                        break
 
     @staticmethod
     def _build_company_context(recipient: OutreachRecipient) -> Optional[str]:
