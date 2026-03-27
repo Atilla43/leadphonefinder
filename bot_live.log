@@ -1992,3 +1992,25 @@ client_session: <aiohttp.client.ClientSession object at 0x000001C529333160>
 2026-03-16 17:21:39,974 - asyncio - ERROR - Unclosed connector
 connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x000001C529362080>, 28678.515)]']
 connector: <aiohttp.connector.TCPConnector object at 0x000001C529333100>
+2026-03-16 18:52:14,323 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-16 18:52:15,092 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-16 18:52:15,092 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-16 18:52:15,092 - __main__ - INFO - Account pool: 0 account(s) connected
+2026-03-16 18:52:15,097 - bot.services.outreach - ERROR - No clients available for listener
+2026-03-16 18:52:15,097 - __main__ - INFO - Restored campaign for user 590317122 (status=listening, recipients=20)
+2026-03-16 18:52:15,225 - __main__ - INFO - Restored 1 active campaign(s)
+2026-03-16 18:54:34,709 - __main__ - INFO - Bot stopped
+2026-03-16 18:54:34,709 - __main__ - INFO - Bot stopped by user
+2026-03-16 18:54:38,679 - __main__ - INFO - Starting LeadPhoneFinder bot...
+2026-03-16 18:54:39,174 - __main__ - INFO - Bot started: @FrogFinder_bot
+2026-03-16 18:54:39,174 - __main__ - INFO - Whitelist enabled: 1 users
+2026-03-16 18:54:39,175 - __main__ - INFO - Account pool: 0 account(s) connected
+2026-03-16 18:54:39,176 - bot.services.outreach - ERROR - No clients available for listener
+2026-03-16 18:54:39,176 - __main__ - INFO - Restored campaign for user 590317122 (status=listening, recipients=20)
+2026-03-16 18:54:39,370 - __main__ - INFO - Restored 1 active campaign(s)
+2026-03-16 18:59:29,432 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientOSError: [WinError 64] Указанное сетевое имя более недоступно
+2026-03-16 18:59:29,434 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8505514297)
+2026-03-16 19:00:40,904 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - Request timeout error
+2026-03-16 19:00:40,904 - aiogram.dispatcher - WARNING - Sleep for 1.246722 seconds and try again... (tryings = 1, bot id = 8505514297)
+2026-03-16 19:01:07,148 - __main__ - INFO - Bot stopped
+2026-03-16 19:01:07,149 - __main__ - INFO - Bot stopped by user
