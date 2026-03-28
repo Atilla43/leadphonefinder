@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Signal Grid — Dark Only */
+    --background: #08090d;
+    --foreground: #f1f5f9;
+
+    --card: #0f1117;
+    --card-foreground: #f1f5f9;
+
+    --muted: #161822;
+    --muted-foreground: #94a3b8;
+
+    --accent: #10b981;
+    --accent-foreground: #08090d;
+
+    --destructive: #f43f5e;
+    --destructive-foreground: #f1f5f9;
+
+    --primary: #10b981;
+    --primary-foreground: #08090d;
+
+    --secondary: #161822;
+    --secondary-foreground: #f1f5f9;
+
+    --border: #1e2030;
+    --input: #1e2030;
+    --ring: #10b981;
+
+    --radius: 12px;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Dot Grid Background */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Dot Grid for landing (larger spacing) */
+.dot-grid-lg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: rgba(15, 17, 23, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 32, 48, 0.6);
+}
+
+/* Emerald glow effect */
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2030;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2d42;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(to bottom, #ffffff, #ffffff, rgba(255, 255, 255, 0.6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stats number font */
+.font-stat {
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
