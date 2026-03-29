@@ -183,8 +183,9 @@ class OutreachService:
             pool.assign_recipients(campaign.recipients, settings.outreach_daily_limit)
             self._save()
 
-            # Запускаем listener СРАЗУ, до рассылки — чтобы ловить быстрые ответы
-            await self.start_listener()
+        # Запускаем listener (и для новых, и для возобновлённых кампаний)
+        await self.start_listener()
+        if not self._ping_task or self._ping_task.done():
             self._ping_task = asyncio.create_task(self._ping_loop())
 
         total_sent = 0
