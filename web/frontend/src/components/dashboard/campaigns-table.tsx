@@ -75,7 +75,7 @@ export function CampaignsTable({ campaigns, isLoading }: CampaignsTableProps) {
                     {formatNumber(c.rejected_count)}
                   </td>
                   <td className="px-5 py-3 text-right font-stat text-sm text-emerald-400">
-                    {formatPercent(c.response_rate)}
+                    {formatPercent(c.conversion_rate)}
                   </td>
                 </tr>
               ))}

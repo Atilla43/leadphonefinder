@@ -9,10 +9,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Добавляем backend в path для корректных импортов
-sys.path.insert(0, str(Path(__file__).parent))
+backend_dir = str(Path(__file__).parent)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+# Добавляем project root для импорта bot.* пакетов
+project_root = str(Path(__file__).resolve().parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from api.routes import auth, dashboard, campaigns, conversations, leads, scraper, accounts, ws
 from core.config import settings
+from core.deps import get_outreach_manager
 from services.ws_manager import ws_manager
 
 logging.basicConfig(
@@ -26,6 +34,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup / shutdown."""
     logger.info("Starting web backend...")
+    logger.info(f"Project root: {project_root}")
     logger.info(f"Outreach dir: {settings.outreach_dir}")
     logger.info(f"Cache dir: {settings.cache_dir}")
 
@@ -36,7 +45,27 @@ async def lifespan(app: FastAPI):
     )
     logger.info("File watcher started")
 
+    # Запускаем OutreachManager в фоне — не блокирует startup
+    import asyncio
+    outreach_mgr = get_outreach_manager()
+
+    async def _start_outreach():
+        try:
+            await outreach_mgr.startup()
+            logger.info("OutreachManager started successfully")
+        except Exception as e:
+            logger.error(f"OutreachManager startup failed: {e}")
+            logger.info("Web backend works in read-only mode (no outreach)")
+
+    asyncio.create_task(_start_outreach())
+
     yield
+
+    # Shutdown
+    try:
+        await outreach_mgr.shutdown()
+    except Exception as e:
+        logger.error(f"OutreachManager shutdown error: {e}")
 
     ws_manager.stop_file_watcher()
     logger.info("Web backend stopped")

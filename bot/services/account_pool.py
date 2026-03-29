@@ -79,8 +79,12 @@ class AccountPool:
 
     # ─── Подключение ───
 
-    async def connect_all(self) -> int:
-        """Подключает все активные аккаунты. Возвращает кол-во подключённых."""
+    async def connect_all(self, session_dir: str = "") -> int:
+        """Подключает все активные аккаунты. Возвращает кол-во подключённых.
+
+        Args:
+            session_dir: директория для .session файлов (по умолчанию CWD).
+        """
         self._load()
         self.migrate_from_env()
 
@@ -92,14 +96,22 @@ class AccountPool:
                 connected += 1
                 continue
             try:
+                session_name = account.session_name
+                if session_dir:
+                    import os
+                    session_name = os.path.join(session_dir, account.session_name)
                 client = TelegramClient(
-                    account.session_name,
+                    session_name,
                     account.api_id,
                     account.api_hash,
                     lang_code="ru",
                     system_lang_code="ru-RU",
                 )
-                await client.start(phone=account.phone)
+                await client.connect()
+                if not await client.is_user_authorized():
+                    logger.warning(f"Account {account.phone} session not authorized (need OTP)")
+                    await client.disconnect()
+                    continue
                 self.clients[account.phone] = client
                 self.sent_today[account.phone] = 0
                 connected += 1

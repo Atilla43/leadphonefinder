@@ -36,8 +36,8 @@ const cards = [
     format: formatNumber,
   },
   {
-    key: "response_rate" as const,
-    label: "Конверсия ответа",
+    key: "conversion_rate" as const,
+    label: "Конверсия",
     icon: TrendingUp,
     color: "text-emerald-400",
     bg: "bg-emerald-400/10",

@@ -1,24 +1,79 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, Search } from "lucide-react";
-import { useCampaign, useRecipients } from "@/hooks/use-campaigns";
+import {
+  ArrowLeft,
+  Search,
+  Play,
+  Pause,
+  XOctagon,
+  Loader2,
+} from "lucide-react";
+import {
+  useCampaign,
+  useRecipients,
+  launchCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  cancelCampaign,
+} from "@/hooks/use-campaigns";
 import { StatusBadge } from "@/components/ui/status-dot";
 import { Input } from "@/components/ui/input";
-import { formatNumber, formatPercent, formatPhoneMasked, formatRelativeTime } from "@/lib/formatters";
+import { Button } from "@/components/ui/button";
+import {
+  formatNumber,
+  formatPercent,
+  formatPhoneMasked,
+  formatRelativeTime,
+} from "@/lib/formatters";
 
 export default function CampaignDetailPage() {
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const { data: campaign, isLoading: campaignLoading } = useCampaign(id);
+  const {
+    data: campaign,
+    isLoading: campaignLoading,
+    mutate: mutateCampaign,
+  } = useCampaign(id);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const { data: recipientsData, isLoading: recipientsLoading } = useRecipients(
     id,
-    { status: statusFilter || undefined, search: search || undefined, limit: 100 }
+    {
+      status: statusFilter || undefined,
+      search: search || undefined,
+      limit: 100,
+    }
   );
+
+  async function handleAction(action: "launch" | "pause" | "resume" | "cancel") {
+    if (action === "cancel" && !confirm("Отменить кампанию? Это действие необратимо.")) {
+      return;
+    }
+
+    setActionLoading(true);
+    setActionError("");
+    try {
+      if (action === "launch") await launchCampaign(id);
+      else if (action === "pause") await pauseCampaign(id);
+      else if (action === "resume") await resumeCampaign(id);
+      else await cancelCampaign(id);
+      if (action === "cancel") {
+        router.push("/campaigns");
+        return;
+      }
+      mutateCampaign();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Ошибка выполнения действия");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   if (campaignLoading) {
     return (
@@ -57,14 +112,80 @@ export default function CampaignDetailPage() {
           <ArrowLeft size={14} />
           Все кампании
         </Link>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-foreground">
-            {campaign.name}
-          </h1>
-          <StatusBadge status={campaign.status} type="campaign" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-foreground">
+              {campaign.name}
+            </h1>
+            <StatusBadge status={campaign.status} type="campaign" />
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            {campaign.status === "pending" && (
+              <Button
+                onClick={() => handleAction("launch")}
+                disabled={actionLoading}
+                className="gap-1.5"
+              >
+                {actionLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Play size={16} />
+                )}
+                Запустить
+              </Button>
+            )}
+            {(campaign.status === "sending" ||
+              campaign.status === "listening") && (
+              <Button
+                variant="outline"
+                onClick={() => handleAction("pause")}
+                disabled={actionLoading}
+                className="gap-1.5 text-amber-400 border-amber-400/30 hover:bg-amber-400/10"
+              >
+                {actionLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Pause size={16} />
+                )}
+                Пауза
+              </Button>
+            )}
+            {campaign.status === "paused" && (
+              <>
+                <Button
+                  onClick={() => handleAction("resume")}
+                  disabled={actionLoading}
+                  className="gap-1.5"
+                >
+                  {actionLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Play size={16} />
+                  )}
+                  Возобновить
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleAction("cancel")}
+                  disabled={actionLoading}
+                  className="gap-1.5 text-rose-400 border-rose-400/30 hover:bg-rose-400/10"
+                >
+                  <XOctagon size={16} />
+                  Отменить
+                </Button>
+              </>
+            )}
+          </div>
         </div>
+        {actionError && (
+          <p className="text-sm text-rose-400 mt-2">{actionError}</p>
+        )}
         {campaign.offer && (
-          <p className="text-muted-foreground text-sm mt-1">{campaign.offer}</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            {campaign.offer}
+          </p>
         )}
       </motion.div>
 
@@ -78,12 +199,17 @@ export default function CampaignDetailPage() {
         {[
           { label: "Всего", value: campaign.recipients_total },
           { label: "Отправлено", value: campaign.sent_count },
-          { label: "Тёплые", value: campaign.warm_count, color: "text-amber-400" },
+          {
+            label: "Тёплые",
+            value: campaign.warm_count,
+            color: "text-amber-400",
+          },
           {
             label: "Конверсия",
-            value: campaign.sent_count > 0
-              ? formatPercent(campaign.warm_count / campaign.sent_count)
-              : "—",
+            value:
+              campaign.sent_count > 0
+                ? formatPercent(campaign.warm_count / campaign.sent_count)
+                : "—",
             isText: true,
             color: "text-emerald-400",
           },
@@ -94,9 +220,11 @@ export default function CampaignDetailPage() {
           >
             <p className="text-xs text-muted-foreground">{item.label}</p>
             <p
-              className={`text-2xl font-semibold font-stat mt-1 ${item.color || "text-foreground"}`}
+              className={`text-2xl font-semibold mt-1 ${item.color || "text-foreground"}`}
             >
-              {item.isText ? item.value : formatNumber(item.value as number)}
+              {item.isText
+                ? item.value
+                : formatNumber(item.value as number)}
             </p>
           </div>
         ))}
@@ -127,7 +255,7 @@ export default function CampaignDetailPage() {
                 }`}
               >
                 <StatusBadge status={status} type="recipient" />
-                <span className="font-stat">{count}</span>
+                <span className="font-medium">{count}</span>
               </button>
             ))}
           </div>
@@ -167,7 +295,10 @@ export default function CampaignDetailPage() {
         {recipientsLoading ? (
           <div className="p-5 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-10 rounded bg-sg-hover animate-pulse" />
+              <div
+                key={i}
+                className="h-10 rounded bg-sg-hover animate-pulse"
+              />
             ))}
           </div>
         ) : !recipientsData?.recipients?.length ? (
@@ -179,9 +310,15 @@ export default function CampaignDetailPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-sg-border text-xs text-muted-foreground">
-                  <th className="text-left px-5 py-3 font-medium">Компания</th>
-                  <th className="text-left px-5 py-3 font-medium">Контакт</th>
-                  <th className="text-left px-5 py-3 font-medium">Телефон</th>
+                  <th className="text-left px-5 py-3 font-medium">
+                    Компания
+                  </th>
+                  <th className="text-left px-5 py-3 font-medium">
+                    Контакт
+                  </th>
+                  <th className="text-left px-5 py-3 font-medium">
+                    Телефон
+                  </th>
                   <th className="text-left px-5 py-3 font-medium">Статус</th>
                   <th className="text-right px-5 py-3 font-medium">
                     Сообщений
@@ -212,13 +349,13 @@ export default function CampaignDetailPage() {
                     <td className="px-5 py-3 text-sm text-muted-foreground">
                       {r.contact_name || "—"}
                     </td>
-                    <td className="px-5 py-3 text-sm font-stat text-muted-foreground">
+                    <td className="px-5 py-3 text-sm font-mono text-muted-foreground">
                       {formatPhoneMasked(r.phone)}
                     </td>
                     <td className="px-5 py-3">
                       <StatusBadge status={r.status} type="recipient" />
                     </td>
-                    <td className="px-5 py-3 text-right font-stat text-sm text-foreground">
+                    <td className="px-5 py-3 text-right font-medium text-sm text-foreground">
                       {r.messages_count}
                     </td>
                     <td className="px-5 py-3 text-right text-xs text-muted-foreground">

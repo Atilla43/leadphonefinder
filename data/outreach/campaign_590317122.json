@@ -14,6 +14,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 6763787155,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -41,6 +43,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 164455437,
+      "account_phone": null,
+      "referral_context": null,
       "status": "rejected",
       "conversation_history": [
         {
@@ -84,6 +88,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 1150093267,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -111,6 +117,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 7351837208,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -138,6 +146,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 723147212,
+      "account_phone": null,
+      "referral_context": null,
       "status": "rejected",
       "conversation_history": [
         {
@@ -189,6 +199,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 293725619,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -216,7 +228,9 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 307743867,
-      "status": "warm_confirmed",
+      "account_phone": null,
+      "referral_context": null,
+      "status": "warm",
       "conversation_history": [
         {
           "role": "assistant",
@@ -245,9 +259,13 @@
         {
           "role": "user",
           "content": "После 15.00 лучше"
+        },
+        {
+          "role": "assistant",
+          "content": "В понедельник после 15:00 отлично. Давайте на 16:00 соберемся? Подтвердите, и я отправлю ссылку на звонок."
         }
       ],
-      "last_message_at": "2026-03-14T11:33:44.302863+00:00",
+      "last_message_at": "2026-03-29T09:52:47.083822+00:00",
       "ping_count": 0,
       "error_message": null
     },
@@ -263,6 +281,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 432577392,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -290,6 +310,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 8303721861,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -317,6 +339,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 5206109442,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -344,6 +368,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 5600396469,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -371,6 +397,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 490813673,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -398,6 +426,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 778346545,
+      "account_phone": null,
+      "referral_context": null,
       "status": "rejected",
       "conversation_history": [
         {
@@ -449,6 +479,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": 1171609792,
+      "account_phone": null,
+      "referral_context": null,
       "status": "sent",
       "conversation_history": [
         {
@@ -476,6 +508,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -494,6 +528,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -512,6 +548,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -530,6 +568,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -548,6 +588,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -566,6 +608,8 @@
       "address": null,
       "director_name": null,
       "telegram_user_id": null,
+      "account_phone": null,
+      "referral_context": null,
       "status": "not_found",
       "conversation_history": [],
       "last_message_at": null,
@@ -573,11 +617,14 @@
       "error_message": null
     }
   ],
-  "status": "listening",
+  "campaign_id": "590317122",
+  "name": "Я занимаюсь геомаркетингом и продвижение",
+  "status": "paused",
   "sent_count": 14,
-  "warm_count": 1,
+  "warm_count": 2,
   "rejected_count": 3,
   "not_found_count": 6,
   "manager_ids": [],
-  "system_prompt": ""
+  "system_prompt": "",
+  "service_info": ""
 }

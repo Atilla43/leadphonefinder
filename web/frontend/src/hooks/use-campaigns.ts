@@ -1,8 +1,9 @@
 import useSWR from "swr";
-import { fetcher } from "@/lib/api-client";
+import { apiFetch, fetcher } from "@/lib/api-client";
 import type {
   CampaignListResponse,
   CampaignDetail,
+  CampaignActionResponse,
   RecipientsResponse,
 } from "@/lib/types";
 
@@ -41,4 +42,30 @@ export function useRecipients(
     fetcher,
     { refreshInterval: 15_000 }
   );
+}
+
+// ─── Campaign lifecycle mutations ───
+
+export async function launchCampaign(id: string): Promise<CampaignActionResponse> {
+  return apiFetch<CampaignActionResponse>(`/api/campaigns/${id}/launch`, {
+    method: "POST",
+  });
+}
+
+export async function pauseCampaign(id: string): Promise<CampaignActionResponse> {
+  return apiFetch<CampaignActionResponse>(`/api/campaigns/${id}/pause`, {
+    method: "POST",
+  });
+}
+
+export async function resumeCampaign(id: string): Promise<CampaignActionResponse> {
+  return apiFetch<CampaignActionResponse>(`/api/campaigns/${id}/resume`, {
+    method: "POST",
+  });
+}
+
+export async function cancelCampaign(id: string): Promise<CampaignActionResponse> {
+  return apiFetch<CampaignActionResponse>(`/api/campaigns/${id}/cancel`, {
+    method: "POST",
+  });
 }

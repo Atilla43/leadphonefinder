@@ -15,6 +15,7 @@ class CampaignSummary(BaseModel):
     rejected_count: int = 0
     not_found_count: int = 0
     response_rate: float = 0.0
+    conversion_rate: float = 0.0
     has_system_prompt: bool = False
     has_service_info: bool = False
 
@@ -63,3 +64,16 @@ class RecipientsResponse(BaseModel):
     total: int
     offset: int
     limit: int
+
+
+class CampaignActionResponse(BaseModel):
+    """Ответ на действие с кампанией (launch/pause/resume/cancel)."""
+    campaign_id: str
+    status: str
+    message: str
+
+
+class CampaignCreateResponse(BaseModel):
+    """Результат создания кампании."""
+    campaign_id: str
+    recipients_count: int

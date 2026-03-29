@@ -1,0 +1,87 @@
+{
+  "user_id": 590317122,
+  "offer": "Бла бла",
+  "recipients": [
+    {
+      "phone": "+79278128922",
+      "company_name": "ООО КАБАНЧИКИ",
+      "contact_name": "Дмитрий",
+      "category": null,
+      "rating": null,
+      "reviews_count": null,
+      "website": null,
+      "working_hours": null,
+      "address": null,
+      "director_name": null,
+      "telegram_user_id": 590317122,
+      "account_phone": "+7 987 446 5106",
+      "referral_context": null,
+      "status": "warm_confirmed",
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "content": "Дмитрий, здравствуйте, коротко по «ООО КАБАНЧИКИ».\n\nБла бла"
+        },
+        {
+          "role": "user",
+          "content": "здравствуйте"
+        },
+        {
+          "role": "assistant",
+          "content": "Смотрел вашу карточку, есть пара идей как поднять. Вы сейчас только на Яндекс Картах или ещё где-то размещаетесь?"
+        },
+        {
+          "role": "user",
+          "content": "Только на яндекс картах"
+        },
+        {
+          "role": "assistant",
+          "content": "Яндекс Карты — это хорошая основа, но можно попробовать расширить охват. У кофейни в Краснодаре за месяц с подключения к 2ГИС пришло на 40% больше заказов. Как у вас сейчас с заказами через Яндекс?"
+        },
+        {
+          "role": "user",
+          "content": "все плохо"
+        },
+        {
+          "role": "assistant",
+          "content": "Понимаю, это действительно может быть сложно. У нас был случай с рестораном в Самаре, после доработки карточки и подключения отзывов заказов стало на 50% больше за 2 месяца. Какую конкретно проблему вы видите с видимостью?"
+        },
+        {
+          "role": "user",
+          "content": "можем созвониться обсудить?"
+        },
+        {
+          "role": "assistant",
+          "content": "Когда удобно созвониться на 10 минут, чтобы я мог показать на вашем примере, что можно улучшить?"
+        },
+        {
+          "role": "user",
+          "content": "давай через 15 минут"
+        },
+        {
+          "role": "assistant",
+          "content": "Отлично, жду вас через 15 минут. Поделитесь, пожалуйста, вашим номером для звонка."
+        },
+        {
+          "role": "user",
+          "content": "+79278128922"
+        }
+      ],
+      "last_message_at": "2026-03-29T10:59:36.867587+00:00",
+      "ping_count": 0,
+      "error_message": null
+    }
+  ],
+  "campaign_id": "20260329_104652",
+  "name": "тест",
+  "status": "sending",
+  "sent_count": 1,
+  "warm_count": 1,
+  "rejected_count": 0,
+  "not_found_count": 0,
+  "manager_ids": [
+    2040274974
+  ],
+  "system_prompt": "",
+  "service_info": ""
+}

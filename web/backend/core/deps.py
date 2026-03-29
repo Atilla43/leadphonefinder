@@ -4,6 +4,7 @@ from services.data_reader import DataReader
 from core.config import settings
 
 _data_reader: DataReader | None = None
+_outreach_manager = None  # OutreachManager, lazy import
 
 
 def get_data_reader() -> DataReader:
@@ -17,3 +18,12 @@ def get_data_reader() -> DataReader:
             cache_ttl=settings.data_cache_ttl_seconds,
         )
     return _data_reader
+
+
+def get_outreach_manager():
+    """Возвращает singleton OutreachManager (lazy import)."""
+    global _outreach_manager
+    if _outreach_manager is None:
+        from services.outreach_manager import OutreachManager
+        _outreach_manager = OutreachManager()
+    return _outreach_manager

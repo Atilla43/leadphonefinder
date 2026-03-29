@@ -19,9 +19,9 @@ class OutreachStorage:
         self.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
     def _path(self, user_id: int, campaign_id: str = "") -> Path:
-        if campaign_id:
+        if campaign_id and campaign_id != str(user_id):
             return self.STORAGE_DIR / f"campaign_{user_id}_{campaign_id}.json"
-        # Обратная совместимость со старым форматом
+        # Старый формат (campaign_id отсутствует или совпадает с user_id)
         return self.STORAGE_DIR / f"campaign_{user_id}.json"
 
     def save(self, campaign: OutreachCampaign) -> None:
@@ -54,16 +54,22 @@ class OutreachStorage:
             logger.debug(f"Campaign {campaign_id} deleted for user {user_id}")
 
     def load_all_active(self) -> list[OutreachCampaign]:
-        """Загружает все активные кампании."""
+        """Загружает все активные кампании (не удаляет остальные)."""
         campaigns = []
+        seen_ids: set[str] = set()
         for path in self.STORAGE_DIR.glob("campaign_*.json"):
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
+                # Фиксируем старый формат: если нет campaign_id, используем user_id
+                if not data.get("campaign_id"):
+                    data["campaign_id"] = str(data.get("user_id", ""))
                 campaign = OutreachCampaign.from_dict(data)
                 if campaign.status in ("sending", "listening", "paused"):
+                    # Дедупликация по campaign_id
+                    if campaign.campaign_id in seen_ids:
+                        continue
+                    seen_ids.add(campaign.campaign_id)
                     campaigns.append(campaign)
-                else:
-                    path.unlink()
             except Exception as e:
                 logger.error(f"Failed to load campaign from {path}: {e}")
         return campaigns

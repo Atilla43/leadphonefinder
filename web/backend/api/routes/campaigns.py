@@ -1,15 +1,23 @@
 """Эндпоинты кампаний."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import io
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 
 from api.schemas.campaign import (
+    CampaignActionResponse,
+    CampaignCreateResponse,
     CampaignDetail,
     CampaignListResponse,
     CampaignSummary,
     RecipientItem,
     RecipientsResponse,
 )
-from core.deps import get_data_reader
+from core.config import settings
+from core.deps import get_data_reader, get_outreach_manager
 from services.data_reader import DataReader
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
@@ -22,11 +30,16 @@ def _campaign_id(c: dict) -> str:
 def _to_summary(c: dict) -> CampaignSummary:
     recipients = c.get("recipients", [])
     sent = c.get("sent_count", 0)
+    warm = sum(
+        1 for r in recipients
+        if r.get("status") in ("warm", "warm_confirmed")
+    )
     replied = sum(
         1 for r in recipients
         if r.get("status") in ("talking", "warm", "warm_confirmed", "referral")
     )
     response_rate = (replied / sent * 100) if sent else 0.0
+    conversion_rate = (warm / sent * 100) if sent else 0.0
 
     return CampaignSummary(
         campaign_id=_campaign_id(c),
@@ -39,6 +52,7 @@ def _to_summary(c: dict) -> CampaignSummary:
         rejected_count=c.get("rejected_count", 0),
         not_found_count=c.get("not_found_count", 0),
         response_rate=round(response_rate, 2),
+        conversion_rate=round(conversion_rate, 2),
         has_system_prompt=bool(c.get("system_prompt")),
         has_service_info=bool(c.get("service_info")),
     )
@@ -142,3 +156,304 @@ async def list_recipients(
     ]
 
     return RecipientsResponse(recipients=items, total=total, offset=offset, limit=limit)
+
+
+@router.post("/create", response_model=CampaignCreateResponse, status_code=201)
+async def create_campaign(
+    file: UploadFile = File(...),
+    offer: str = Form(...),
+    name: str = Form(""),
+    service_info: str = Form(""),
+    system_prompt: str = Form(""),
+    user_id: int = Form(0),
+    manager_ids: str = Form(""),
+    reader: DataReader = Depends(get_data_reader),
+) -> CampaignCreateResponse:
+    """Создать кампанию из загруженного файла (CSV/XLSX)."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided")
+
+    # Если user_id не указан, используем owner из конфига
+    if user_id == 0 and settings.owner_telegram_id:
+        user_id = settings.owner_telegram_id
+
+    # Парсим manager_ids из строки "123,456,789"
+    parsed_manager_ids: list[int] = []
+    if manager_ids.strip():
+        for mid in manager_ids.split(","):
+            mid = mid.strip()
+            if mid.isdigit():
+                parsed_manager_ids.append(int(mid))
+
+    content = await file.read()
+    items: list[dict] = []
+
+    if file.filename.endswith(".csv"):
+        items = _parse_csv(content)
+    elif file.filename.endswith((".xlsx", ".xls")):
+        items = _parse_excel(content)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Неподдерживаемый формат. Используйте .csv или .xlsx",
+        )
+
+    if not items:
+        raise HTTPException(status_code=400, detail="Файл не содержит валидных данных")
+
+    # Конвертируем в recipients
+    recipients = [_to_recipient(item) for item in items]
+
+    # Генерируем campaign
+    campaign_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    campaign_name = name or offer[:40].replace("\n", " ")
+
+    campaign_data = {
+        "user_id": user_id,
+        "offer": offer,
+        "recipients": recipients,
+        "campaign_id": campaign_id,
+        "name": campaign_name,
+        "status": "pending",
+        "sent_count": 0,
+        "warm_count": 0,
+        "rejected_count": 0,
+        "not_found_count": 0,
+        "manager_ids": parsed_manager_ids,
+        "system_prompt": system_prompt,
+        "service_info": service_info,
+    }
+
+    # Сохраняем: data/outreach/campaign_{user_id}_{campaign_id}.json
+    outreach_dir = reader.outreach_dir
+    outreach_dir.mkdir(parents=True, exist_ok=True)
+    file_path = outreach_dir / f"campaign_{user_id}_{campaign_id}.json"
+    file_path.write_text(
+        json.dumps(campaign_data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    return CampaignCreateResponse(
+        campaign_id=campaign_id,
+        recipients_count=len(recipients),
+    )
+
+
+# ── Парсинг файлов ──
+
+_HEADER_MAP: dict[str, str] = {
+    "телефон": "phone",
+    "phone": "phone",
+    "компания": "company_name",
+    "название": "company_name",
+    "company": "company_name",
+    "company_name": "company_name",
+    "контакт": "contact_name",
+    "contact": "contact_name",
+    "contact_name": "contact_name",
+    "имя": "contact_name",
+    "категория": "category",
+    "category": "category",
+    "рейтинг": "rating",
+    "rating": "rating",
+    "отзывы": "reviews_count",
+    "reviews": "reviews_count",
+    "сайт": "website",
+    "website": "website",
+    "адрес": "address",
+    "address": "address",
+    "директор": "director_name",
+    "director": "director_name",
+    "часы работы": "working_hours",
+    "working_hours": "working_hours",
+}
+
+
+def _map_headers(raw_headers: list[str]) -> dict[int, str]:
+    mapping: dict[int, str] = {}
+    for idx, header in enumerate(raw_headers):
+        key = header.strip().lower()
+        if key in _HEADER_MAP:
+            mapping[idx] = _HEADER_MAP[key]
+    return mapping
+
+
+def _normalize_phone(raw: str) -> str:
+    digits = "".join(c for c in raw if c.isdigit())
+    if len(digits) == 11 and digits[0] in ("7", "8"):
+        digits = "7" + digits[1:]
+    elif len(digits) == 10:
+        digits = "7" + digits
+    return "+" + digits if digits else raw
+
+
+def _to_recipient(item: dict) -> dict:
+    phone = _normalize_phone(item.get("phone", ""))
+    return {
+        "phone": phone,
+        "company_name": item.get("company_name", ""),
+        "contact_name": item.get("contact_name"),
+        "category": item.get("category"),
+        "rating": item.get("rating"),
+        "reviews_count": item.get("reviews_count"),
+        "website": item.get("website"),
+        "address": item.get("address"),
+        "director_name": item.get("director_name"),
+        "status": "pending",
+        "conversation_history": [],
+        "ping_count": 0,
+    }
+
+
+def _parse_csv(content: bytes) -> list[dict]:
+    import csv
+
+    for encoding in ("utf-8", "cp1251", "latin-1"):
+        try:
+            text = content.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        return []
+
+    reader = csv.reader(io.StringIO(text))
+    rows = list(reader)
+    if len(rows) < 2:
+        return []
+
+    col_map = _map_headers(rows[0])
+    if "phone" not in col_map.values() or "company_name" not in col_map.values():
+        if len(rows[0]) >= 2:
+            col_map = {0: "phone", 1: "company_name"}
+
+    items: list[dict] = []
+    for row in rows[1:]:
+        item: dict = {}
+        for idx, field_name in col_map.items():
+            if idx < len(row) and row[idx].strip():
+                val = row[idx].strip()
+                if field_name == "rating":
+                    try:
+                        item[field_name] = float(val.replace(",", "."))
+                    except ValueError:
+                        pass
+                elif field_name == "reviews_count":
+                    try:
+                        item[field_name] = int(val)
+                    except ValueError:
+                        pass
+                else:
+                    item[field_name] = val
+        if item.get("phone") and item.get("company_name"):
+            items.append(item)
+
+    return items
+
+
+def _parse_excel(content: bytes) -> list[dict]:
+    try:
+        from openpyxl import load_workbook
+    except ImportError:
+        raise HTTPException(
+            status_code=500,
+            detail="openpyxl not installed. Run: pip install openpyxl",
+        )
+
+    wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    ws = wb.active
+    if ws is None:
+        return []
+
+    rows = list(ws.iter_rows(values_only=True))
+    if len(rows) < 2:
+        return []
+
+    headers = [str(h or "").strip() for h in rows[0]]
+    col_map = _map_headers(headers)
+    if "phone" not in col_map.values() or "company_name" not in col_map.values():
+        if len(headers) >= 2:
+            col_map = {0: "phone", 1: "company_name"}
+
+    items: list[dict] = []
+    for row in rows[1:]:
+        item: dict = {}
+        for idx, field_name in col_map.items():
+            if idx < len(row) and row[idx] is not None:
+                val = str(row[idx]).strip()
+                if not val:
+                    continue
+                if field_name == "rating":
+                    try:
+                        item[field_name] = float(val.replace(",", "."))
+                    except ValueError:
+                        pass
+                elif field_name == "reviews_count":
+                    try:
+                        item[field_name] = int(float(val))
+                    except ValueError:
+                        pass
+                else:
+                    item[field_name] = val
+        if item.get("phone") and item.get("company_name"):
+            items.append(item)
+
+    wb.close()
+    return items
+
+
+# ─── Campaign Lifecycle ───
+
+
+@router.post("/{campaign_id}/launch", response_model=CampaignActionResponse)
+async def launch_campaign(
+    campaign_id: str,
+    mgr=Depends(get_outreach_manager),
+) -> CampaignActionResponse:
+    """Запускает кампанию (pending → sending)."""
+    try:
+        result = await mgr.launch_campaign(campaign_id)
+        return CampaignActionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@router.post("/{campaign_id}/pause", response_model=CampaignActionResponse)
+async def pause_campaign(
+    campaign_id: str,
+    mgr=Depends(get_outreach_manager),
+) -> CampaignActionResponse:
+    """Ставит кампанию на паузу (sending/listening → paused)."""
+    try:
+        result = await mgr.pause_campaign(campaign_id)
+        return CampaignActionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{campaign_id}/resume", response_model=CampaignActionResponse)
+async def resume_campaign(
+    campaign_id: str,
+    mgr=Depends(get_outreach_manager),
+) -> CampaignActionResponse:
+    """Возобновляет кампанию (paused → sending/listening)."""
+    try:
+        result = await mgr.resume_campaign(campaign_id)
+        return CampaignActionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{campaign_id}/cancel", response_model=CampaignActionResponse)
+async def cancel_campaign(
+    campaign_id: str,
+    mgr=Depends(get_outreach_manager),
+) -> CampaignActionResponse:
+    """Отменяет кампанию."""
+    try:
+        result = await mgr.cancel_campaign(campaign_id)
+        return CampaignActionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
