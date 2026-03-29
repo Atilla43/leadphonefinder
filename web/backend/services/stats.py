@@ -3,7 +3,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from services.data_reader import DataReader
+from services.db_data_reader import DbDataReader
 
 REPLIED_STATUSES = {"talking", "warm", "warm_confirmed", "referral"}
 WARM_STATUSES = {"warm", "warm_confirmed"}
@@ -15,9 +15,9 @@ ALL_RECIPIENT_STATUSES = [
 ]
 
 
-def compute_dashboard_stats(reader: DataReader) -> dict:
+async def compute_dashboard_stats(reader: DbDataReader) -> dict:
     """Вычисляет общую статистику дашборда."""
-    campaigns = reader.get_all_campaigns()
+    campaigns = await reader.get_all_campaigns()
 
     total_recipients = 0
     total_sent = 0
@@ -65,12 +65,12 @@ def compute_dashboard_stats(reader: DataReader) -> dict:
     }
 
 
-def compute_funnel(reader: DataReader) -> list[dict]:
+async def compute_funnel(reader: DbDataReader) -> list[dict]:
     """Вычисляет воронку по статусам."""
     counts: dict[str, int] = defaultdict(int)
     total = 0
 
-    for c in reader.get_all_campaigns():
+    for c in await reader.get_all_campaigns():
         for r in c.get("recipients", []):
             total += 1
             counts[r.get("status", "pending")] += 1
@@ -107,8 +107,8 @@ def compute_funnel(reader: DataReader) -> list[dict]:
     return stages
 
 
-def compute_timeline(
-    reader: DataReader, days: int = 30, campaign_id: str | None = None,
+async def compute_timeline(
+    reader: DbDataReader, days: int = 30, campaign_id: str | None = None,
 ) -> list[dict]:
     """Вычисляет динамику по дням из last_message_at."""
     cutoff = datetime.utcnow() - timedelta(days=days)
@@ -116,7 +116,7 @@ def compute_timeline(
         "sent": 0, "replied": 0, "warm": 0, "rejected": 0,
     })
 
-    campaigns = reader.get_all_campaigns()
+    campaigns = await reader.get_all_campaigns()
     for c in campaigns:
         cid = c.get("campaign_id") or str(c.get("user_id", ""))
         if campaign_id and cid != campaign_id:

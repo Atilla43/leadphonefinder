@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     outreach_dir: Path = Path("")
     cache_dir: Path = Path("")
     accounts_file: Path = Path("")
+    db_path: Path = Path("")
 
     # CORS
     cors_origins: list[str] = [
@@ -57,6 +58,8 @@ class Settings(BaseSettings):
             self.cache_dir = self.project_root / "data" / "cache"
         if not self.accounts_file or str(self.accounts_file) == ".":
             self.accounts_file = self.project_root / "data" / "telethon_accounts.json"
+        if not self.db_path or str(self.db_path) == ".":
+            self.db_path = self.project_root / "data" / "signal_grid.db"
 
     class Config:
         env_prefix = "WEB_"

@@ -1,21 +1,31 @@
 """Dependency injection."""
 
-from services.data_reader import DataReader
 from core.config import settings
+from services.db_data_reader import DbDataReader
 
-_data_reader: DataReader | None = None
+_data_reader: DbDataReader | None = None
 _outreach_manager = None  # OutreachManager, lazy import
+_async_engine = None
 
 
-def get_data_reader() -> DataReader:
-    """Возвращает singleton DataReader."""
+def get_async_engine():
+    """Возвращает singleton async engine."""
+    global _async_engine
+    if _async_engine is None:
+        from db.engine import get_async_engine as _create
+        _async_engine = _create(settings.db_path)
+    return _async_engine
+
+
+def get_data_reader() -> DbDataReader:
+    """Возвращает singleton DbDataReader."""
     global _data_reader
     if _data_reader is None:
-        _data_reader = DataReader(
-            outreach_dir=settings.outreach_dir,
+        engine = get_async_engine()
+        _data_reader = DbDataReader(
+            engine=engine,
             cache_dir=settings.cache_dir,
             accounts_file=settings.accounts_file,
-            cache_ttl=settings.data_cache_ttl_seconds,
         )
     return _data_reader
 

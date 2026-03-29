@@ -8,6 +8,7 @@ import {
   launchCampaign,
   pauseCampaign,
   resumeCampaign,
+  deleteCampaign,
 } from "@/hooks/use-campaigns";
 import { StatusBadge } from "@/components/ui/status-dot";
 import { formatNumber, formatPercent } from "@/lib/formatters";
@@ -20,6 +21,7 @@ import {
   Pause,
   Plus,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,12 +31,16 @@ export default function CampaignsPage() {
 
   async function handleAction(
     campaignId: string,
-    action: "launch" | "pause" | "resume"
+    action: "launch" | "pause" | "resume" | "delete"
   ) {
+    if (action === "delete" && !confirm("Удалить кампанию и все данные?")) {
+      return;
+    }
     setActionLoading(campaignId);
     try {
       if (action === "launch") await launchCampaign(campaignId);
       else if (action === "pause") await pauseCampaign(campaignId);
+      else if (action === "delete") await deleteCampaign(campaignId);
       else await resumeCampaign(campaignId);
       mutate();
     } catch {
@@ -145,6 +151,20 @@ export default function CampaignsPage() {
                           <Loader2 size={14} className="animate-spin" />
                         ) : (
                           <Play size={14} />
+                        )}
+                      </button>
+                    )}
+                    {c.status === "cancelled" && (
+                      <button
+                        onClick={() => handleAction(c.campaign_id, "delete")}
+                        disabled={actionLoading === c.campaign_id}
+                        className="p-1 rounded-md hover:bg-rose-500/10 text-rose-400 transition-colors"
+                        title="Удалить"
+                      >
+                        {actionLoading === c.campaign_id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
                         )}
                       </button>
                     )}

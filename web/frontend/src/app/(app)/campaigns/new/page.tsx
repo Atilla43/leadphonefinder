@@ -37,6 +37,8 @@ export default function NewCampaignPage() {
   const [serviceInfo, setServiceInfo] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [managerIds, setManagerIds] = useState("");
+  const [workHourStart, setWorkHourStart] = useState("");
+  const [workHourEnd, setWorkHourEnd] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // State
@@ -82,6 +84,8 @@ export default function NewCampaignPage() {
       if (serviceInfo.trim()) formData.append("service_info", serviceInfo.trim());
       if (systemPrompt.trim()) formData.append("system_prompt", systemPrompt.trim());
       if (managerIds.trim()) formData.append("manager_ids", managerIds.trim());
+      if (workHourStart.trim()) formData.append("work_hour_start", workHourStart.trim());
+      if (workHourEnd.trim()) formData.append("work_hour_end", workHourEnd.trim());
 
       const res = await fetch(`${API_URL}/api/campaigns/create`, {
         method: "POST",
@@ -278,6 +282,44 @@ export default function NewCampaignPage() {
               />
               <p className="text-xs text-muted-foreground">
                 Менеджеры получат уведомления о тёплых лидах в Telegram
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Рабочие часы рассылки (МСК)</Label>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <Label htmlFor="work-start" className="text-xs text-muted-foreground whitespace-nowrap">
+                    С
+                  </Label>
+                  <Input
+                    id="work-start"
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={workHourStart}
+                    onChange={(e) => setWorkHourStart(e.target.value)}
+                    placeholder="10"
+                    className="w-20"
+                  />
+                </div>
+                <div className="flex items-center gap-2 flex-1">
+                  <Label htmlFor="work-end" className="text-xs text-muted-foreground whitespace-nowrap">
+                    До
+                  </Label>
+                  <Input
+                    id="work-end"
+                    type="number"
+                    min={0}
+                    max={24}
+                    value={workHourEnd}
+                    onChange={(e) => setWorkHourEnd(e.target.value)}
+                    placeholder="17"
+                    className="w-20"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                По умолчанию 10:00–17:00 МСК. Рассылка идёт только в рабочие часы.
               </p>
             </div>
           </div>

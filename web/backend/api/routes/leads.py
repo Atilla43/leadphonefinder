@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 
 from api.schemas.lead import LeadItem, LeadStats, LeadsResponse
 from core.deps import get_data_reader
-from services.data_reader import DataReader
+from services.db_data_reader import DbDataReader
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
@@ -22,11 +22,11 @@ def _normalize_phone(phone: str) -> str:
     return "+" + digits
 
 
-def _collect_leads(reader: DataReader) -> list[dict]:
+async def _collect_leads(reader: DbDataReader) -> list[dict]:
     """Собирает уникальных лидов из всех кампаний."""
     leads_map: dict[str, dict] = {}  # normalized_phone → lead data
 
-    for cid, r in reader.get_all_recipients():
+    for cid, r in await reader.get_all_recipients():
         phone = r.get("phone", "")
         if not phone:
             continue
@@ -68,10 +68,10 @@ async def list_leads(
     sort_by: str = Query(default="last_activity"),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> LeadsResponse:
     """Уникальные лиды из всех кампаний."""
-    leads = _collect_leads(reader)
+    leads = await _collect_leads(reader)
 
     if status:
         allowed = {s.strip() for s in status.split(",")}
@@ -109,10 +109,10 @@ async def list_leads(
 
 @router.get("/stats", response_model=LeadStats)
 async def get_lead_stats(
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> LeadStats:
     """Статистика по лидам."""
-    leads = _collect_leads(reader)
+    leads = await _collect_leads(reader)
 
     by_status: dict[str, int] = defaultdict(int)
     by_category: dict[str, int] = defaultdict(int)

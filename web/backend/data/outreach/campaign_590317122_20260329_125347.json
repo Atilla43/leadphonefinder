@@ -1,0 +1,43 @@
+{
+  "user_id": 590317122,
+  "offer": "Я продаю башмачки для хрюшек, вам это интересно?",
+  "recipients": [
+    {
+      "phone": "+79278128922",
+      "company_name": "ООО КАБАНЧИКИ",
+      "contact_name": "Дмитрий",
+      "category": null,
+      "rating": null,
+      "reviews_count": null,
+      "website": null,
+      "working_hours": null,
+      "address": null,
+      "director_name": null,
+      "telegram_user_id": 590317122,
+      "account_phone": "+7 987 446 5106",
+      "referral_context": null,
+      "status": "sent",
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "content": "Дмитрий, здравствуйте, коротко по «ООО КАБАНЧИКИ».\n\nЯ продаю башмачки для хрюшек, вам это интересно?"
+        }
+      ],
+      "last_message_at": "2026-03-29T12:57:03.035905+00:00",
+      "ping_count": 0,
+      "error_message": null
+    }
+  ],
+  "campaign_id": "20260329_125347",
+  "name": "Я продаю башмачки для хрюшек, вам это ин",
+  "status": "sending",
+  "sent_count": 1,
+  "warm_count": 0,
+  "rejected_count": 0,
+  "not_found_count": 0,
+  "manager_ids": [
+    2040274974
+  ],
+  "system_prompt": "",
+  "service_info": ""
+}

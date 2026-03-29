@@ -18,7 +18,7 @@ from api.schemas.campaign import (
 )
 from core.config import settings
 from core.deps import get_data_reader, get_outreach_manager
-from services.data_reader import DataReader
+from services.db_data_reader import DbDataReader
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
@@ -61,10 +61,10 @@ def _to_summary(c: dict) -> CampaignSummary:
 @router.get("", response_model=CampaignListResponse)
 async def list_campaigns(
     status: str | None = Query(default=None),
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> CampaignListResponse:
     """Список всех кампаний."""
-    campaigns = reader.get_all_campaigns()
+    campaigns = await reader.get_all_campaigns()
     if status:
         allowed = {s.strip() for s in status.split(",")}
         campaigns = [c for c in campaigns if c.get("status") in allowed]
@@ -74,10 +74,10 @@ async def list_campaigns(
 @router.get("/{campaign_id}", response_model=CampaignDetail)
 async def get_campaign(
     campaign_id: str,
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> CampaignDetail:
     """Детали кампании."""
-    c = reader.get_campaign(campaign_id)
+    c = await reader.get_campaign(campaign_id)
     if not c:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
@@ -96,6 +96,8 @@ async def get_campaign(
         system_prompt=c.get("system_prompt", ""),
         service_info=c.get("service_info", ""),
         manager_ids=c.get("manager_ids", []),
+        work_hour_start=c.get("work_hour_start"),
+        work_hour_end=c.get("work_hour_end"),
         recipients_total=len(recipients),
         sent_count=c.get("sent_count", 0),
         warm_count=c.get("warm_count", 0),
@@ -112,10 +114,10 @@ async def list_recipients(
     search: str | None = Query(default=None),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> RecipientsResponse:
     """Список получателей кампании с фильтрами."""
-    c = reader.get_campaign(campaign_id)
+    c = await reader.get_campaign(campaign_id)
     if not c:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
@@ -167,7 +169,9 @@ async def create_campaign(
     system_prompt: str = Form(""),
     user_id: int = Form(0),
     manager_ids: str = Form(""),
-    reader: DataReader = Depends(get_data_reader),
+    work_hour_start: int | None = Form(None),
+    work_hour_end: int | None = Form(None),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> CampaignCreateResponse:
     """Создать кампанию из загруженного файла (CSV/XLSX)."""
     if not file.filename:
@@ -224,14 +228,32 @@ async def create_campaign(
         "service_info": service_info,
     }
 
-    # Сохраняем: data/outreach/campaign_{user_id}_{campaign_id}.json
-    outreach_dir = reader.outreach_dir
-    outreach_dir.mkdir(parents=True, exist_ok=True)
-    file_path = outreach_dir / f"campaign_{user_id}_{campaign_id}.json"
-    file_path.write_text(
-        json.dumps(campaign_data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+    # Сохраняем в БД через DbOutreachStorage
+    from services.db_storage import DbOutreachStorage
+    storage = DbOutreachStorage()
+
+    # Конвертируем в OutreachCampaign для сохранения
+    from services.outreach_manager import _ensure_bot_importable
+    _ensure_bot_importable()
+    from bot.models.outreach import OutreachCampaign, OutreachRecipient
+
+    campaign_recipients = [
+        OutreachRecipient.from_dict(r) for r in recipients
+    ]
+    campaign_obj = OutreachCampaign(
+        user_id=user_id,
+        offer=offer,
+        recipients=campaign_recipients,
+        campaign_id=campaign_id,
+        name=campaign_name,
+        status="pending",
+        manager_ids=parsed_manager_ids,
+        system_prompt=system_prompt,
+        service_info=service_info,
     )
+    campaign_obj.work_hour_start = work_hour_start
+    campaign_obj.work_hour_end = work_hour_end
+    storage.save(campaign_obj)
 
     return CampaignCreateResponse(
         campaign_id=campaign_id,
@@ -457,3 +479,30 @@ async def cancel_campaign(
         return CampaignActionResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{campaign_id}", response_model=CampaignActionResponse)
+async def delete_campaign(
+    campaign_id: str,
+    reader: DbDataReader = Depends(get_data_reader),
+) -> CampaignActionResponse:
+    """Удаляет кампанию (только cancelled/completed)."""
+    c = await reader.get_campaign(campaign_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if c.get("status") not in ("cancelled", "completed"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Можно удалить только отменённые или завершённые кампании (текущий статус: {c.get('status')})",
+        )
+
+    from services.db_storage import DbOutreachStorage
+    storage = DbOutreachStorage()
+    storage.delete(c.get("user_id", 0), campaign_id)
+
+    return CampaignActionResponse(
+        campaign_id=campaign_id,
+        status="deleted",
+        message="Кампания удалена",
+    )

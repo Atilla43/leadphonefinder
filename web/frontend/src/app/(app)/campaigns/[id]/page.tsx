@@ -10,7 +10,9 @@ import {
   Play,
   Pause,
   XOctagon,
+  Trash2,
   Loader2,
+  Clock,
 } from "lucide-react";
 import {
   useCampaign,
@@ -19,6 +21,7 @@ import {
   pauseCampaign,
   resumeCampaign,
   cancelCampaign,
+  deleteCampaign,
 } from "@/hooks/use-campaigns";
 import { StatusBadge } from "@/components/ui/status-dot";
 import { Input } from "@/components/ui/input";
@@ -51,8 +54,11 @@ export default function CampaignDetailPage() {
     }
   );
 
-  async function handleAction(action: "launch" | "pause" | "resume" | "cancel") {
+  async function handleAction(action: "launch" | "pause" | "resume" | "cancel" | "delete") {
     if (action === "cancel" && !confirm("Отменить кампанию? Это действие необратимо.")) {
+      return;
+    }
+    if (action === "delete" && !confirm("Удалить кампанию и все данные? Это действие необратимо.")) {
       return;
     }
 
@@ -62,8 +68,9 @@ export default function CampaignDetailPage() {
       if (action === "launch") await launchCampaign(id);
       else if (action === "pause") await pauseCampaign(id);
       else if (action === "resume") await resumeCampaign(id);
+      else if (action === "delete") await deleteCampaign(id);
       else await cancelCampaign(id);
-      if (action === "cancel") {
+      if (action === "cancel" || action === "delete") {
         router.push("/campaigns");
         return;
       }
@@ -177,6 +184,21 @@ export default function CampaignDetailPage() {
                 </Button>
               </>
             )}
+            {campaign.status === "cancelled" && (
+              <Button
+                variant="outline"
+                onClick={() => handleAction("delete")}
+                disabled={actionLoading}
+                className="gap-1.5 text-rose-400 border-rose-400/30 hover:bg-rose-400/10"
+              >
+                {actionLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                Удалить
+              </Button>
+            )}
           </div>
         </div>
         {actionError && (
@@ -186,6 +208,14 @@ export default function CampaignDetailPage() {
           <p className="text-muted-foreground text-sm mt-1">
             {campaign.offer}
           </p>
+        )}
+        {(campaign.work_hour_start != null || campaign.work_hour_end != null) && (
+          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+            <Clock size={12} />
+            <span>
+              Рабочие часы: {campaign.work_hour_start ?? 10}:00–{campaign.work_hour_end ?? 17}:00 МСК
+            </span>
+          </div>
         )}
       </motion.div>
 
@@ -208,7 +238,7 @@ export default function CampaignDetailPage() {
             label: "Конверсия",
             value:
               campaign.sent_count > 0
-                ? formatPercent(campaign.warm_count / campaign.sent_count)
+                ? formatPercent((campaign.warm_count / campaign.sent_count) * 100)
                 : "—",
             isText: true,
             color: "text-emerald-400",

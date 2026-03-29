@@ -35,6 +35,8 @@ class CampaignDetail(BaseModel):
     system_prompt: str = ""
     service_info: str = ""
     manager_ids: list[int] = []
+    work_hour_start: int | None = None
+    work_hour_end: int | None = None
     recipients_total: int = 0
     sent_count: int = 0
     warm_count: int = 0

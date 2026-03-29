@@ -69,3 +69,9 @@ export async function cancelCampaign(id: string): Promise<CampaignActionResponse
     method: "POST",
   });
 }
+
+export async function deleteCampaign(id: string): Promise<CampaignActionResponse> {
+  return apiFetch<CampaignActionResponse>(`/api/campaigns/${id}`, {
+    method: "DELETE",
+  });
+}

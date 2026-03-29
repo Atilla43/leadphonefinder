@@ -37,8 +37,13 @@ async def lifespan(app: FastAPI):
     logger.info(f"Project root: {project_root}")
     logger.info(f"Outreach dir: {settings.outreach_dir}")
     logger.info(f"Cache dir: {settings.cache_dir}")
+    logger.info(f"DB path: {settings.db_path}")
 
-    # Запускаем file watcher для WebSocket
+    # Создаём таблицы БД если не существуют
+    from db.engine import create_tables
+    create_tables(settings.db_path)
+
+    # Запускаем file watcher для WebSocket (DB callback подключится позже)
     await ws_manager.start_file_watcher(
         settings.outreach_dir,
         interval=settings.ws_check_interval_seconds,

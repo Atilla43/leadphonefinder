@@ -103,15 +103,32 @@ class OutreachManager:
 
         bot = self._bot_modules()
 
-        # Патчим относительные пути в bot модулях — CWD = web/backend/,
-        # а все данные лежат в project root
+        # Патчим bot модули для работы с DB вместо JSON
         import bot.services.account_pool as _ap_mod
         import bot.services.outreach_storage as _os_mod
         _ap_mod.ACCOUNTS_FILE = settings.project_root / "data" / "telethon_accounts.json"
-        _os_mod.OutreachStorage.STORAGE_DIR = settings.project_root / "data" / "outreach"
+
+        # Подменяем OutreachStorage на DB-backed версию
+        from services.db_storage import DbOutreachStorage, set_db_path, set_on_save_callback
+        set_db_path(settings.db_path)
+        _os_mod.OutreachStorage = DbOutreachStorage
+
+        # Патчим также в outreach.py (он делает from ... import OutreachStorage)
+        import bot.services.outreach as _outreach_mod
+        _outreach_mod.OutreachStorage = DbOutreachStorage
+
+        # WebSocket уведомления при save()
+        from services.ws_manager import ws_manager
+        set_on_save_callback(ws_manager.notify_campaign_saved)
+
+        logger.info(f"OutreachStorage → DbOutreachStorage (db={settings.db_path})")
 
         # Создаём AccountPool и подключаем все аккаунты
+        # Подменяем _save/_load на DB-версии
+        from services.db_account_storage import db_save_accounts, db_load_accounts
         self._pool = bot["AccountPool"]()
+        self._pool._save = lambda: db_save_accounts(self._pool.accounts, settings.db_path)
+        self._pool._load = lambda: db_load_accounts(self._pool, settings.db_path)
         connected = await self._pool.connect_all(session_dir=str(settings.project_root))
         logger.info(f"AccountPool: {connected} account(s) connected")
 
@@ -139,8 +156,8 @@ class OutreachManager:
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled")
 
-        # Восстанавливаем активные кампании
-        storage = bot["OutreachStorage"]()
+        # Восстанавливаем активные кампании (используем DB-backed storage напрямую)
+        storage = DbOutreachStorage()
         active_campaigns = storage.load_all_active()
         for campaign in active_campaigns:
             try:
@@ -252,10 +269,11 @@ class OutreachManager:
     async def launch_campaign(self, campaign_id: str) -> dict:
         """Запускает кампанию (pending → sending)."""
         bot = self._bot_modules()
-        storage = bot["OutreachStorage"]()
 
-        # Ищем кампанию в JSON-файлах
-        campaign = self._find_campaign(campaign_id, storage)
+        # Ищем кампанию в DB
+        from services.db_storage import DbOutreachStorage
+        storage = DbOutreachStorage()
+        campaign = storage.load(0, campaign_id)
         if not campaign:
             raise ValueError(f"Campaign {campaign_id} not found")
 
@@ -270,6 +288,13 @@ class OutreachManager:
 
         # Создаём OutreachService
         service = bot["OutreachService"](ai_engine=self._ai_engine)
+        # Per-campaign working hours override
+        wh_start = getattr(campaign, "work_hour_start", None)
+        wh_end = getattr(campaign, "work_hour_end", None)
+        if wh_start is not None:
+            service._work_hour_start = wh_start
+        if wh_end is not None:
+            service._work_hour_end = wh_end
         notify_cb = self._make_notify_callback(campaign.user_id)
         if notify_cb:
             service.set_notify_callback(notify_cb)
@@ -277,6 +302,9 @@ class OutreachManager:
 
         # Регистрируем в глобальном реестре бота
         bot["add_service"](campaign.user_id, campaign_id, service)
+
+        # Обновляем статус в DB сразу
+        self._update_campaign_status_in_db(campaign_id, "sending", allowed=("pending",))
 
         # Запускаем в фоне
         task = asyncio.create_task(
@@ -310,6 +338,13 @@ class OutreachManager:
             return
 
         service = bot["OutreachService"](ai_engine=self._ai_engine)
+        # Per-campaign working hours override
+        wh_start = getattr(campaign, "work_hour_start", None)
+        wh_end = getattr(campaign, "work_hour_end", None)
+        if wh_start is not None:
+            service._work_hour_start = wh_start
+        if wh_end is not None:
+            service._work_hour_end = wh_end
         notify_cb = self._make_notify_callback(campaign.user_id)
         if notify_cb:
             service.set_notify_callback(notify_cb)
@@ -342,14 +377,17 @@ class OutreachManager:
     async def pause_campaign(self, campaign_id: str) -> dict:
         """Ставит кампанию на паузу."""
         service = self._active_services.get(campaign_id)
-        if not service:
-            raise ValueError(f"Campaign {campaign_id} not active")
+        if service and service.campaign:
+            if service.campaign.status not in ("sending", "listening", "paused"):
+                raise ValueError(f"Cannot pause campaign with status '{service.campaign.status}'")
+            if service.campaign.status != "paused":
+                service.pause()
 
-        campaign = service.campaign
-        if not campaign or campaign.status not in ("sending", "listening"):
-            raise ValueError(f"Cannot pause campaign with status '{campaign.status if campaign else 'unknown'}'")
+        # Всегда синхронизируем DB
+        self._update_campaign_status_in_db(
+            campaign_id, "paused", allowed=("sending", "listening", "paused"),
+        )
 
-        service.pause()
         return {
             "campaign_id": campaign_id,
             "status": "paused",
@@ -359,15 +397,20 @@ class OutreachManager:
     async def resume_campaign(self, campaign_id: str) -> dict:
         """Возобновляет кампанию после паузы."""
         service = self._active_services.get(campaign_id)
-        if not service:
-            raise ValueError(f"Campaign {campaign_id} not active")
+        if service and service.campaign:
+            if service.campaign.status not in ("paused", "listening"):
+                raise ValueError(f"Cannot resume campaign with status '{service.campaign.status}'")
+            if service.campaign.status == "paused":
+                service.resume()
+            new_status = service.campaign.status
+        else:
+            new_status = "listening"
 
-        campaign = service.campaign
-        if not campaign or campaign.status != "paused":
-            raise ValueError(f"Cannot resume campaign with status '{campaign.status if campaign else 'unknown'}'")
+        # Всегда синхронизируем DB
+        self._update_campaign_status_in_db(
+            campaign_id, new_status, allowed=("paused", "listening", "sending"),
+        )
 
-        service.resume()
-        new_status = campaign.status  # resume() sets it
         return {
             "campaign_id": campaign_id,
             "status": new_status,
@@ -377,31 +420,65 @@ class OutreachManager:
     async def cancel_campaign(self, campaign_id: str) -> dict:
         """Отменяет кампанию."""
         bot = self._bot_modules()
+
+        # Сначала обновляем статус в DB (до service.cancel() который может удалить)
+        try:
+            self._update_campaign_status_in_db(campaign_id, "cancelled")
+        except ValueError:
+            pass  # Кампания уже удалена — ок
+
         service = self._active_services.get(campaign_id)
+        if service:
+            campaign = service.campaign
+            user_id = campaign.user_id if campaign else 0
 
-        if not service:
-            raise ValueError(f"Campaign {campaign_id} not active")
+            # Отменяем фоновую задачу
+            task = self._campaign_tasks.pop(campaign_id, None)
+            if task and not task.done():
+                task.cancel()
 
-        campaign = service.campaign
-        user_id = campaign.user_id if campaign else 0
+            # Отменяем сервис (удаляет контакты)
+            # Подменяем delete чтобы не удалял из DB (мы уже поставили cancelled)
+            original_delete = service._storage.delete
+            service._storage.delete = lambda *a, **kw: None
+            await service.cancel()
+            service._storage.delete = original_delete
 
-        # Отменяем фоновую задачу
-        task = self._campaign_tasks.pop(campaign_id, None)
-        if task and not task.done():
-            task.cancel()
-
-        # Отменяем сервис (удаляет контакты, чистит файл)
-        await service.cancel()
-
-        # Убираем из реестров
-        self._active_services.pop(campaign_id, None)
-        bot["remove_service"](user_id, campaign_id)
+            # Убираем из реестров
+            self._active_services.pop(campaign_id, None)
+            bot["remove_service"](user_id, campaign_id)
 
         return {
             "campaign_id": campaign_id,
             "status": "cancelled",
             "message": "Кампания отменена",
         }
+
+    def _update_campaign_status_in_db(
+        self, campaign_id: str, new_status: str, allowed: tuple[str, ...] | None = None,
+    ) -> None:
+        """Обновляет статус кампании напрямую в DB (когда нет активного сервиса)."""
+        import sqlite3
+        conn = sqlite3.connect(str(settings.db_path))
+        conn.row_factory = sqlite3.Row
+        try:
+            row = conn.execute(
+                "SELECT status FROM campaigns WHERE campaign_id=?", (campaign_id,)
+            ).fetchone()
+            if not row:
+                raise ValueError(f"Campaign {campaign_id} not found")
+            if allowed and row["status"] not in allowed:
+                raise ValueError(
+                    f"Cannot change campaign from '{row['status']}' to '{new_status}'"
+                )
+            conn.execute(
+                "UPDATE campaigns SET status=?, updated_at=datetime('now') WHERE campaign_id=?",
+                (new_status, campaign_id),
+            )
+            conn.commit()
+            logger.info(f"Campaign {campaign_id} status → {new_status} (DB direct)")
+        finally:
+            conn.close()
 
     def get_campaign_status(self, campaign_id: str) -> Optional[dict]:
         """Статус активной кампании."""
@@ -418,19 +495,6 @@ class OutreachManager:
             "not_found_count": c.not_found_count,
             "recipients_total": len(c.recipients),
         }
-
-    def _find_campaign(self, campaign_id: str, storage) -> Optional[object]:
-        """Ищет кампанию по ID в JSON-файлах."""
-        for path in settings.outreach_dir.glob("campaign_*.json"):
-            try:
-                import json
-                data = json.loads(path.read_text(encoding="utf-8"))
-                if data.get("campaign_id") == campaign_id:
-                    bot = self._bot_modules()
-                    return bot["OutreachCampaign"].from_dict(data)
-            except Exception:
-                continue
-        return None
 
     # ─── Account Management ───
 

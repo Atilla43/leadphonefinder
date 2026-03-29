@@ -102,6 +102,9 @@ class OutreachService:
         self._debounce_tasks: dict[int, asyncio.Task] = {}  # sender_id → task
         self._process_locks: dict[int, asyncio.Lock] = {}  # sender_id → lock
         self.next_send_at: Optional[datetime] = None  # время следующей отправки (UTC)
+        # Per-campaign working hours override (None = use global settings)
+        self._work_hour_start: Optional[int] = None
+        self._work_hour_end: Optional[int] = None
 
     def set_notify_callback(self, callback: Callable[..., Awaitable]) -> None:
         """Устанавливает callback для уведомлений (тёплый лид, прогресс и т.д.)."""
@@ -140,7 +143,7 @@ class OutreachService:
     def _calc_send_interval(self) -> float:
         """Рассчитывает интервал между отправками чтобы растянуть на рабочий день."""
         now_msk = datetime.now(timezone.utc) + MSK_OFFSET
-        end_hour = settings.outreach_work_hour_end
+        end_hour = self._work_hour_end if self._work_hour_end is not None else settings.outreach_work_hour_end
         remaining_hours = max(end_hour - now_msk.hour - now_msk.minute / 60, 0.5)
         remaining_seconds = remaining_hours * 3600
 
@@ -376,8 +379,27 @@ class OutreachService:
                     contact_name = f"{c.first_name or ''} {c.last_name or ''}".strip()
                     text += f"\n[Контакт: {contact_name}, {contact_phone}]"
 
-                # Голосовое сообщение → транскрибация
-                if not text.strip() and event.message.voice:
+                # Голосовое / аудио сообщение → транскрибация
+                is_voice = getattr(event.message, 'voice', None)
+                is_audio = (
+                    not is_voice
+                    and event.message.media
+                    and hasattr(event.message.media, 'document')
+                    and event.message.media.document
+                    and any(
+                        getattr(a, 'mime_type', '').startswith('audio/')
+                        for a in (event.message.media.document.attributes or [])
+                        if hasattr(a, 'mime_type')
+                    )
+                )
+                if not is_audio and not is_voice and event.message.media:
+                    # Проверяем mime_type документа напрямую
+                    doc = getattr(event.message.media, 'document', None)
+                    if doc and getattr(doc, 'mime_type', '').startswith('audio/'):
+                        is_audio = True
+
+                if not text.strip() and (is_voice or is_audio):
+                    logger.info(f"[VOICE] Received voice/audio from {sender_id}, attempting transcription")
                     transcriber = get_voice_transcriber()
                     if transcriber:
                         import tempfile, os
@@ -387,6 +409,9 @@ class OutreachService:
                             transcribed = await transcriber.transcribe(tmp_path)
                             if transcribed:
                                 text = f"[голосовое] {transcribed}"
+                                logger.info(f"[VOICE] Transcribed from {sender_id}: {text[:80]}")
+                            else:
+                                logger.warning(f"[VOICE] Transcription returned empty for {sender_id}")
                         except Exception as e:
                             logger.error(f"[VOICE] Download/transcribe error: {e}")
                         finally:
@@ -394,8 +419,12 @@ class OutreachService:
                                 os.remove(tmp_path)
                             except OSError:
                                 pass
+                    else:
+                        logger.warning(f"[VOICE] No transcriber available (GROQ_API_KEY not set?)")
 
                 if not text.strip():
+                    if event.message.media:
+                        logger.debug(f"[LISTENER] Skipping media-only message from {sender_id} (no text extracted)")
                     return
 
                 logger.info(f"[LISTENER] New message from {sender_id}: {text[:80]}")
@@ -1064,30 +1093,34 @@ class OutreachService:
         return "\n".join(parts) if parts else None
 
     def _is_working_hours(self) -> bool:
-        """Проверяет рабочее время (10:00-17:00 МСК)."""
+        """Проверяет рабочее время (МСК). Использует per-campaign override если задан."""
         now_msk = datetime.now(timezone.utc) + MSK_OFFSET
-        return settings.outreach_work_hour_start <= now_msk.hour < settings.outreach_work_hour_end
+        start = self._work_hour_start if self._work_hour_start is not None else settings.outreach_work_hour_start
+        end = self._work_hour_end if self._work_hour_end is not None else settings.outreach_work_hour_end
+        return start <= now_msk.hour < end
 
     async def _wait_for_working_hours(self) -> None:
         """Ждёт наступления рабочих часов (МСК). Если сейчас вне часов — спит до начала."""
         while not self._is_working_hours():
             if self._cancelled:
                 return
+            start = self._work_hour_start if self._work_hour_start is not None else settings.outreach_work_hour_start
+            end = self._work_hour_end if self._work_hour_end is not None else settings.outreach_work_hour_end
             now_msk = datetime.now(timezone.utc) + MSK_OFFSET
-            if now_msk.hour >= settings.outreach_work_hour_end:
+            if now_msk.hour >= end:
                 # Уже вечер — ждём до завтра
                 tomorrow = now_msk + timedelta(days=1)
                 target = tomorrow.replace(
-                    hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
+                    hour=start, minute=0, second=0, microsecond=0
                 )
             else:
                 # Утро до начала рабочего дня
                 target = now_msk.replace(
-                    hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
+                    hour=start, minute=0, second=0, microsecond=0
                 )
             sleep_seconds = (target - now_msk).total_seconds()
             self.next_send_at = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
-            logger.info(f"Outside working hours ({now_msk.strftime('%H:%M')} MSK). Sleeping {sleep_seconds/3600:.1f}h until {settings.outreach_work_hour_start}:00")
+            logger.info(f"Outside working hours ({now_msk.strftime('%H:%M')} MSK). Sleeping {sleep_seconds/3600:.1f}h until {start}:00")
             await self._notify("waiting_hours", campaign=self._campaign, sleep_hours=sleep_seconds / 3600)
             # Спим порциями по 5 минут чтобы можно было отменить
             while sleep_seconds > 0 and not self._cancelled:
@@ -1096,15 +1129,16 @@ class OutreachService:
                 sleep_seconds -= chunk
 
     async def _wait_until_next_work_day(self) -> None:
-        """Ждёт до 10:00 МСК следующего дня (при достижении дневного лимита)."""
+        """Ждёт до начала рабочего дня МСК следующего дня (при достижении дневного лимита)."""
+        start = self._work_hour_start if self._work_hour_start is not None else settings.outreach_work_hour_start
         now_msk = datetime.now(timezone.utc) + MSK_OFFSET
         tomorrow = now_msk + timedelta(days=1)
         target = tomorrow.replace(
-            hour=settings.outreach_work_hour_start, minute=0, second=0, microsecond=0
+            hour=start, minute=0, second=0, microsecond=0
         )
         sleep_seconds = (target - now_msk).total_seconds()
         self.next_send_at = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
-        logger.info(f"Daily limit reached. Sleeping {sleep_seconds/3600:.1f}h until tomorrow {settings.outreach_work_hour_start}:00 MSK")
+        logger.info(f"Daily limit reached. Sleeping {sleep_seconds/3600:.1f}h until tomorrow {start}:00 MSK")
         while sleep_seconds > 0 and not self._cancelled:
             chunk = min(sleep_seconds, 300)
             await asyncio.sleep(chunk)

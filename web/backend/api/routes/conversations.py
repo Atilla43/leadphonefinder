@@ -12,7 +12,7 @@ from api.schemas.conversation import (
     RecipientInfo,
 )
 from core.deps import get_data_reader
-from services.data_reader import DataReader
+from services.db_data_reader import DbDataReader
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -48,12 +48,12 @@ async def list_conversations(
     search: str | None = Query(default=None),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> ConversationsResponse:
     """Список диалогов (recipients с conversation_history)."""
     all_convs: list[tuple[str, dict]] = []
 
-    for c in reader.get_all_campaigns():
+    for c in await reader.get_all_campaigns():
         cid = c.get("campaign_id") or str(c.get("user_id", ""))
         if campaign_id and cid != campaign_id:
             continue
@@ -104,10 +104,10 @@ async def list_conversations(
 async def get_conversation(
     campaign_id: str,
     phone: str,
-    reader: DataReader = Depends(get_data_reader),
+    reader: DbDataReader = Depends(get_data_reader),
 ) -> ConversationDetail:
     """Полная переписка с лидом."""
-    c = reader.get_campaign(campaign_id)
+    c = await reader.get_campaign(campaign_id)
     if not c:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
